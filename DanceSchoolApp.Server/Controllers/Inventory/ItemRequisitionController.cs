@@ -221,6 +221,26 @@ namespace DanceSchoolApp.Server.Controllers.Inventory
             }
         }
 
+        // ─── GET /api/item-categories/{id} ───────────────────────────────────────
+        [HttpGet("{id}")]
+        [Authorize]
+        public async Task<IActionResult> GetCategory(int id)
+        {
+            try
+            {
+                var result = await _categoryService.GetByIdAsync(id);
+                return Ok(result);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+            }
+        }
+
         // ─── POST /api/item-categories ────────────────────────────────────────
         [HttpPost]
         [Authorize(Roles = "staff")]
