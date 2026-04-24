@@ -51,6 +51,30 @@ namespace DanceSchoolApp.Server.Controllers.Inventory
             }
         }
 
+        // ─── GET /api/requisitions/parent/{parentId} ─────────────────────────
+        /// <summary>Get all requisitions for a specific parent. Staff may fetch any parent; a parent may fetch their own only.</summary>
+        [HttpGet("parent/{parentId}")]
+        [Authorize(Roles = "staff")]
+        public async Task<IActionResult> GetRequisitionsByParent(int parentId)
+        {
+            try
+            {
+                if (!IsStaff() && parentId != GetUserId())
+                    return Forbid();
+
+                var result = await _requisitionService.GetByParentAsync(parentId);
+
+                if (!result.Any())
+                    return NoContent();
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+            }
+        }
+
         // ─── GET /api/requisitions/{id} ───────────────────────────────────────
         [HttpGet("{id}")]
         [Authorize]

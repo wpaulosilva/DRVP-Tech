@@ -14,8 +14,12 @@ namespace DanceSchoolApp.Server.DTOs.Billing
     {
         public int StudentId { get; set; }
         public string StudentName { get; set; } = null!;
-        public decimal HoursCompleted { get; set; }
+        // Split hours by weekday / weekend
+        public decimal HoursWeekday { get; set; }
+        public decimal HoursWeekend { get; set; }
+        public decimal HoursCompleted => HoursWeekday + HoursWeekend;
         public decimal TotalAmount { get; set; }
+        public string? Nif { get; set; }
         public string? PaymentStatus { get; set; }    // null — deferred
         public DateTime? LastPaymentDate { get; set; } // null — deferred
     }
@@ -44,8 +48,12 @@ namespace DanceSchoolApp.Server.DTOs.Billing
         public int CoachId { get; set; }
         public string CoachName { get; set; } = null!;
         public List<string> Modalities { get; set; } = new();
-        public decimal HoursTaught { get; set; }
+        // split hours by weekday/weekend for coach
+        public decimal HoursWeekday { get; set; }
+        public decimal HoursWeekend { get; set; }
+        public decimal HoursTaught => HoursWeekday + HoursWeekend;
         public decimal TotalAmount { get; set; }
+        public string? Nif { get; set; }
         public string? PaymentStatus { get; set; }    // null — deferred
         public DateTime? LastPaymentDate { get; set; } // null — deferred
     }

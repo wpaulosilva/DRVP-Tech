@@ -72,7 +72,7 @@ public static class SeedData
 
     public static Student SeedStudent(AppDbContext db, User parentUser, string firstName = "Ana")
     {
-        var personInfo = new PersonInfo { FirstName = firstName, LastName = "Silva" };
+        var personInfo = new PersonInfo { FirstName = firstName, LastName = "Silva" , Nif = "384093574" };
         db.PersonInfos.Add(personInfo);
         db.SaveChanges();
 

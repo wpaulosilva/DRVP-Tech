@@ -2977,6 +2977,35 @@
           "name": "Inventory",
           "item": [
             {
+              "name": "Item Categories",
+              "item": [
+                {
+                  "name": "GET Item Categories",
+                  "request": {
+                    "method": "GET",
+                    "header": []
+                  },
+                  "response": []
+                },
+                {
+                  "name": "GET Item Categories by Id",
+                  "request": {
+                    "method": "GET",
+                    "header": []
+                  },
+                  "response": []
+                },
+                {
+                  "name": "POST Item Categories",
+                  "request": {
+                    "method": "GET",
+                    "header": []
+                  },
+                  "response": []
+                }
+              ]
+            },
+            {
               "name": "Item",
               "item": [
                 {
@@ -3036,6 +3065,14 @@
                 },
                 {
                   "name": "GET Item Community",
+                  "request": {
+                    "method": "GET",
+                    "header": []
+                  },
+                  "response": []
+                },
+                {
+                  "name": "GET Item by Categories",
                   "request": {
                     "method": "GET",
                     "header": []
@@ -3144,6 +3181,122 @@
                 },
                 {
                   "name": "DELETE Deactivate Item",
+                  "request": {
+                    "method": "GET",
+                    "header": []
+                  },
+                  "response": []
+                }
+              ]
+            },
+            {
+              "name": "Item Variant",
+              "item": [
+                {
+                  "name": "GET Item Variant",
+                  "request": {
+                    "method": "GET",
+                    "header": []
+                  },
+                  "response": []
+                },
+                {
+                  "name": "POST Item Variant",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "exec": [
+                          "if (pm.response.code === 201) {",
+                          "    pm.collectionVariables.set(\"item_id\", pm.response.json().itemId);",
+                          "}"
+                        ],
+                        "type": "text/javascript",
+                        "packages": {},
+                        "requests": {}
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"color\": \"Rosa\",\n  \"size\": \"M\",\n  \"quantity\": 10,\n  \"price\": 15.99\n}",
+                      "options": {
+                        "raw": {
+                          "language": "json"
+                        }
+                      }
+                    },
+                    "url": {
+                      "raw": "{{base_url}}/api/items/{id}/variants",
+                      "host": [
+                        "{{base_url}}"
+                      ],
+                      "path": [
+                        "api",
+                        "items",
+                        "{id}",
+                        "variants"
+                      ]
+                    },
+                    "description": "[staff]"
+                  },
+                  "response": []
+                },
+                {
+                  "name": "PATCH Update Item Variant",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "exec": [
+                          "pm.test(\"Coach accepted\", () => pm.response.to.have.status(204));",
+                          "console.log(\"Class\", pm.collectionVariables.get(\"class_id\"), \"→ Approved(1). Parent + staff notified.\");"
+                        ],
+                        "type": "text/javascript",
+                        "packages": {},
+                        "requests": {}
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "POST",
+                    "header": [],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\r\n  \"color\": \"Azul\",\r\n  \"size\": \"L\",\r\n  \"quantity\": 5,\r\n  \"price\": 12.50\r\n}",
+                      "options": {
+                        "raw": {
+                          "language": "json"
+                        }
+                      }
+                    },
+                    "url": {
+                      "raw": "{{base_url}}/api/items/{id}/variants/{variantId}",
+                      "host": [
+                        "{{base_url}}"
+                      ],
+                      "path": [
+                        "api",
+                        "items",
+                        "{id}",
+                        "variants",
+                        "{variantId}"
+                      ]
+                    },
+                    "description": "[coach] Transitions StaffApproved(7) → Approved(1). Must be the assigned coach. Parent + all staff notified."
+                  },
+                  "response": []
+                },
+                {
+                  "name": "DELETE Deactivate Item Variant",
                   "request": {
                     "method": "GET",
                     "header": []
@@ -3342,35 +3495,6 @@
                       ]
                     },
                     "description": "[staff] note field stores defect description if item returned damaged."
-                  },
-                  "response": []
-                }
-              ]
-            },
-            {
-              "name": "Item Categories",
-              "item": [
-                {
-                  "name": "GET Item Categories",
-                  "request": {
-                    "method": "GET",
-                    "header": []
-                  },
-                  "response": []
-                },
-                {
-                  "name": "GET Item Categories by Id",
-                  "request": {
-                    "method": "GET",
-                    "header": []
-                  },
-                  "response": []
-                },
-                {
-                  "name": "POST Item Categories",
-                  "request": {
-                    "method": "GET",
-                    "header": []
                   },
                   "response": []
                 }

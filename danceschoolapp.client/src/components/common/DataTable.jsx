@@ -1,3 +1,5 @@
+import './DataTable.css'
+
 function DataTable({
     columns = [],
     rows = [],
@@ -6,7 +8,7 @@ function DataTable({
 }) {
     return (
         <div className="table-wrap">
-            <table className="app-table">
+            <table className="app-table data-table">
                 <thead>
                     <tr>
                         {columns.map((col) => (

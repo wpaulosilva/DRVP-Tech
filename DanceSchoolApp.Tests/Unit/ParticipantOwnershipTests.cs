@@ -198,7 +198,7 @@ public class ParticipantOwnershipTests
         var coach      = SeedData.SeedCoach(db, coachUser);
 
         // Build the PersonInfo + Student inline so AcceptanceStatus stays Pending(0)
-        var personInfo = new PersonInfo { FirstName = "Carlos", LastName = "Silva" };
+        var personInfo = new PersonInfo { FirstName = "Carlos", LastName = "Silva", Nif = "384092764" };
         db.PersonInfos.Add(personInfo);
         db.SaveChanges();
 
