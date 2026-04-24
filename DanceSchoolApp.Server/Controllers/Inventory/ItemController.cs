@@ -53,7 +53,7 @@ namespace DanceSchoolApp.Server.Controllers.Inventory
         {
             try
             {
-                var result = await _itemService.GetItemsAsync(fromSchool, ownerId: null, query ?? new PagedQuery());
+                var result = await _itemService.GetItemsAsync(fromSchool, query ?? new PagedQuery());
 
                 if (result.TotalCount == 0)
                     return NoContent();
@@ -67,7 +67,7 @@ namespace DanceSchoolApp.Server.Controllers.Inventory
         }
 
         // ─── GET /api/items/{id} ──────────────────────────────────────────────
-        [HttpGet("{id:int}")]
+        [HttpGet("{id}")]
         [Authorize]
         public async Task<IActionResult> GetItem(int id)
         {
@@ -94,7 +94,7 @@ namespace DanceSchoolApp.Server.Controllers.Inventory
         {
             try
             {
-                var result = await _itemService.GetItemsAsync(fromSchool: true, ownerId: null, query ?? new PagedQuery());
+                var result = await _itemService.GetItemsAsync(fromSchool: true, query ?? new PagedQuery());
 
                 if (result.TotalCount == 0)
                     return NoContent();
@@ -115,12 +115,46 @@ namespace DanceSchoolApp.Server.Controllers.Inventory
         {
             try
             {
-                var result = await _itemService.GetItemsAsync(fromSchool: false, ownerId: null, query ?? new PagedQuery());
+                var result = await _itemService.GetItemsAsync(fromSchool: false, query ?? new PagedQuery());
 
                 if (result.TotalCount == 0)
                     return NoContent();
 
                 return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+            }
+        }
+
+        // ─── GET /api/items/{source}/category/{categoryId} ────────────────────
+        /// <summary>Returns items filtered by source (school/community) and category.</summary>
+        [HttpGet("{source}/category/{categoryId:int}")]
+        [Authorize]
+        public async Task<IActionResult> GetItemsBySourceAndCategory(
+            string source,
+            int categoryId,
+            [FromQuery] PagedQuery? query = null)
+        {
+            if (source != "school" && source != "community")
+                return BadRequest("Source must be 'school' or 'community'.");
+
+            var fromSchool = source == "school";
+
+            try
+            {
+                var result = await _itemService.GetItemsByCategoryAsync(
+                    categoryId, fromSchool, query ?? new PagedQuery());
+
+                if (result.TotalCount == 0)
+                    return NoContent();
+
+                return Ok(result);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ex.Message);
             }
             catch (Exception ex)
             {
@@ -170,7 +204,7 @@ namespace DanceSchoolApp.Server.Controllers.Inventory
 
         // ─── PATCH /api/items/{id} ────────────────────────────────────────────
         /// <summary>Staff or item owner updates item metadata.</summary>
-        [HttpPatch("{id:int}")]
+        [HttpPatch("{id}")]
         [Authorize(Roles = "staff,parent")]
         public async Task<IActionResult> UpdateItem(int id, [FromBody] ItemUpdateRequest request)
         {
@@ -199,7 +233,7 @@ namespace DanceSchoolApp.Server.Controllers.Inventory
 
         // ─── DELETE /api/items/{id} ───────────────────────────────────────────
         /// <summary>Staff or item owner deactivates an item (soft-delete).</summary>
-        [HttpDelete("{id:int}")]
+        [HttpDelete("{id}")]
         [Authorize(Roles = "staff,parent")]
         public async Task<IActionResult> DeactivateItem(int id)
         {
@@ -229,7 +263,7 @@ namespace DanceSchoolApp.Server.Controllers.Inventory
 
         // ─── POST /api/items/{id}/images ──────────────────────────────────────
         /// <summary>Staff or item owner adds an image to an item.</summary>
-        [HttpPost("{id:int}/images")]
+        [HttpPost("{id}/images")]
         [Authorize(Roles = "staff,parent")]
         public async Task<IActionResult> AddImage(int id, [FromBody] ItemImageAddRequest request)
         {
@@ -258,7 +292,7 @@ namespace DanceSchoolApp.Server.Controllers.Inventory
 
         // ─── DELETE /api/items/{id}/images/{imageId} ──────────────────────────
         /// <summary>Staff or item owner removes an image from an item.</summary>
-        [HttpDelete("{id:int}/images/{imageId:int}")]
+        [HttpDelete("{id}/images/{imageId}")]
         [Authorize(Roles = "staff,parent")]
         public async Task<IActionResult> RemoveImage(int id, int imageId)
         {
@@ -287,7 +321,7 @@ namespace DanceSchoolApp.Server.Controllers.Inventory
         // ═══════════════════════════════════════════════════════════════════════
 
         // ─── GET /api/items/{id}/variants ─────────────────────────────────────
-        [HttpGet("{id:int}/variants")]
+        [HttpGet("{id}/variants")]
         [Authorize]
         public async Task<IActionResult> GetVariants(int id)
         {
@@ -312,7 +346,7 @@ namespace DanceSchoolApp.Server.Controllers.Inventory
 
         // ─── POST /api/items/{id}/variants ────────────────────────────────────
         /// <summary>Staff or item owner creates a variant.</summary>
-        [HttpPost("{id:int}/variants")]
+        [HttpPost("{id}/variants")]
         [Authorize(Roles = "staff,parent")]
         public async Task<IActionResult> CreateVariant(int id, [FromBody] ItemVariantCreateRequest request)
         {
@@ -341,7 +375,7 @@ namespace DanceSchoolApp.Server.Controllers.Inventory
 
         // ─── PATCH /api/items/{id}/variants/{variantId} ───────────────────────
         /// <summary>Staff or item owner updates a variant (including activate/deactivate).</summary>
-        [HttpPatch("{id:int}/variants/{variantId:int}")]
+        [HttpPatch("{id}/variants/{variantId}")]
         [Authorize(Roles = "staff,parent")]
         public async Task<IActionResult> UpdateVariant(int id, int variantId, [FromBody] ItemVariantUpdateRequest request)
         {
@@ -370,7 +404,7 @@ namespace DanceSchoolApp.Server.Controllers.Inventory
 
         // ─── DELETE /api/items/{id}/variants/{variantId} ──────────────────────
         /// <summary>Staff or item owner hard-deletes a variant (if no active requisitions).</summary>
-        [HttpDelete("{id:int}/variants/{variantId:int}")]
+        [HttpDelete("{id}/variants/{variantId}")]
         [Authorize(Roles = "staff,parent")]
         public async Task<IActionResult> DeleteVariant(int id, int variantId)
         {

@@ -17,7 +17,7 @@ namespace DanceSchoolApp.Server.Services.Inventory
 
         // ─── Item Queries ─────────────────────────────────────────────────────────
 
-        public async Task<PagedResult<ItemListResponse>> GetItemsAsync(bool? fromSchool, int? ownerId, PagedQuery query)
+        public async Task<PagedResult<ItemListResponse>> GetItemsAsync(bool? fromSchool, PagedQuery query)
         {
             var dbQuery = _context.Items
                 .Include(i => i.IdCategoryNavigation)
@@ -27,9 +27,6 @@ namespace DanceSchoolApp.Server.Services.Inventory
 
             if (fromSchool.HasValue)
                 dbQuery = dbQuery.Where(i => i.FromSchool == fromSchool.Value);
-
-            if (ownerId.HasValue)
-                dbQuery = dbQuery.Where(i => i.IdOwner == ownerId.Value);
 
             var total = await dbQuery.CountAsync();
 
@@ -80,6 +77,61 @@ namespace DanceSchoolApp.Server.Services.Inventory
                 throw new KeyNotFoundException($"Item with id {id} was not found.");
 
             return MapToDetail(item);
+        }
+
+        public async Task<PagedResult<ItemListResponse>> GetItemsByCategoryAsync(
+    int categoryId, bool? fromSchool, PagedQuery query)
+        {
+            var categoryExists = await _context.ItemCategories
+                .AnyAsync(c => c.CategoryId == categoryId && c.IsActive);
+
+            if (!categoryExists)
+                throw new KeyNotFoundException($"Category with id {categoryId} was not found.");
+
+            var dbQuery = _context.Items
+                .Include(i => i.IdCategoryNavigation)
+                .Include(i => i.ItemImages)
+                .Where(i => i.IsActive && i.IdCategory == categoryId)
+                .AsQueryable();
+
+            if (fromSchool.HasValue)
+                dbQuery = dbQuery.Where(i => i.FromSchool == fromSchool.Value);
+
+            var total = await dbQuery.CountAsync();
+
+            var items = await dbQuery
+                .OrderByDescending(i => i.CreatedAt)
+                .Skip((query.Page - 1) * query.PageSize)
+                .Take(query.PageSize)
+                .Select(i => new ItemListResponse
+                {
+                    ItemId = i.ItemId,
+                    Name = i.Name,
+                    Description = i.Description,
+                    FromSchool = i.FromSchool,
+                    IdOwner = i.IdOwner,
+                    IsActive = i.IsActive,
+                    CreatedAt = i.CreatedAt,
+                    Category = i.IdCategoryNavigation == null ? null : new ItemCategorySummaryResponse
+                    {
+                        CategoryId = i.IdCategoryNavigation.CategoryId,
+                        CatgName = i.IdCategoryNavigation.CatgName
+                    },
+                    Images = i.ItemImages.Select(img => new ItemImageResponse
+                    {
+                        ImageId = img.ImageId,
+                        ImageUrl = img.ImageUrl
+                    }).ToList()
+                })
+                .ToListAsync();
+
+            return new PagedResult<ItemListResponse>
+            {
+                Items = items,
+                TotalCount = total,
+                Page = query.Page,
+                PageSize = query.PageSize
+            };
         }
 
         // ─── Item Commands ────────────────────────────────────────────────────────
