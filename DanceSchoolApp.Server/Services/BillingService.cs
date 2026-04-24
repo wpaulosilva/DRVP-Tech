@@ -43,7 +43,7 @@ namespace DanceSchoolApp.Server.Services
                 .ToListAsync();
 
             // Aggregate per-student in-memory so the rate branch stays in C#.
-            var studentTotals = new Dictionary<int, (string Name, decimal Hours, decimal Amount)>();
+            var studentTotals = new Dictionary<int, (string Name, decimal HoursWeekday, decimal HoursWeekend, decimal Amount)>();
 
             foreach (var cls in classes)
             {
@@ -58,24 +58,42 @@ namespace DanceSchoolApp.Server.Services
                     var student = p.IdStudentNavigation;
                     int sid = student.StudentId;
                     string name = ResolveStudentName(student);
+                    string? nif = student.PersonInfo?.Nif ?? student.PersonInfo?.Nif;
 
                     if (studentTotals.TryGetValue(sid, out var existing))
-                        studentTotals[sid] = (name,
-                            existing.Hours  + durationHours,
-                            existing.Amount + amount);
+                    {
+                        if (isWeekend)
+                            studentTotals[sid] = (name, existing.HoursWeekday, existing.HoursWeekend + durationHours, existing.Amount + amount);
+                        else
+                            studentTotals[sid] = (name, existing.HoursWeekday + durationHours, existing.HoursWeekend, existing.Amount + amount);
+                    }
                     else
-                        studentTotals[sid] = (name, durationHours, amount);
+                    {
+                        if (isWeekend)
+                            studentTotals[sid] = (name, 0m, durationHours, amount);
+                        else
+                            studentTotals[sid] = (name, durationHours, 0m, amount);
+                    }
                 }
             }
 
             // Build the full row list (for summary totals + search + paging).
+            // Fetch NIFs for all students in a single query to avoid per-row async calls
+            var studentIds = studentTotals.Keys.ToList();
+            var nifMap = await _context.Students
+                .Where(s => studentIds.Contains(s.StudentId))
+                .Select(s => new { s.StudentId, Nif = s.PersonInfo != null ? s.PersonInfo.Nif : null })
+                .ToDictionaryAsync(x => x.StudentId, x => x.Nif!);
+
             var allRows = studentTotals
                 .Select(kv => new BillingStudentRow
                 {
                     StudentId      = kv.Key,
                     StudentName    = kv.Value.Name,
-                    HoursCompleted = Math.Round(kv.Value.Hours,  2),
+                    HoursWeekday   = Math.Round(kv.Value.HoursWeekday, 2),
+                    HoursWeekend   = Math.Round(kv.Value.HoursWeekend, 2),
                     TotalAmount    = Math.Round(kv.Value.Amount, 2),
+                    Nif            = nifMap.TryGetValue(kv.Key, out var nif) ? nif : null,
                     PaymentStatus  = null,
                     LastPaymentDate = null
                 })
@@ -143,7 +161,7 @@ namespace DanceSchoolApp.Server.Services
 
             // Group by coach and accumulate hours + amount using weekday/weekend
             // rates (same pricing as student billing).
-            var coachTotals = new Dictionary<int, (Coach Coach, decimal Hours, decimal Amount)>();
+            var coachTotals = new Dictionary<int, (Coach Coach, decimal HoursWeekday, decimal HoursWeekend, decimal Amount)>();
 
             foreach (var cls in classes)
             {
@@ -155,11 +173,19 @@ namespace DanceSchoolApp.Server.Services
 
                 int cid = cls.IdCoach;
                 if (coachTotals.TryGetValue(cid, out var existing))
-                    coachTotals[cid] = (existing.Coach,
-                        existing.Hours  + durationHours,
-                        existing.Amount + amount);
+                {
+                    if (isWeekend)
+                        coachTotals[cid] = (existing.Coach, existing.HoursWeekday, existing.HoursWeekend + durationHours, existing.Amount + amount);
+                    else
+                        coachTotals[cid] = (existing.Coach, existing.HoursWeekday + durationHours, existing.HoursWeekend, existing.Amount + amount);
+                }
                 else
-                    coachTotals[cid] = (cls.IdCoachNavigation, durationHours, amount);
+                {
+                    if (isWeekend)
+                        coachTotals[cid] = (cls.IdCoachNavigation, 0m, durationHours, amount);
+                    else
+                        coachTotals[cid] = (cls.IdCoachNavigation, durationHours, 0m, amount);
+                }
             }
 
             var allRows = coachTotals
@@ -171,16 +197,18 @@ namespace DanceSchoolApp.Server.Services
                         .OrderBy(n => n)
                         .ToList();
 
-                    return new BillingCoachRow
-                    {
-                        CoachId         = kv.Key,
-                        CoachName       = ResolveCoachName(coach),
-                        Modalities      = modalities,
-                        HoursTaught     = Math.Round(kv.Value.Hours,  2),
-                        TotalAmount     = Math.Round(kv.Value.Amount, 2),
-                        PaymentStatus   = null,
-                        LastPaymentDate = null
-                    };
+                return new BillingCoachRow
+                {
+                    CoachId         = kv.Key,
+                    CoachName       = ResolveCoachName(coach),
+                    Modalities      = modalities,
+                    HoursWeekday    = Math.Round(kv.Value.HoursWeekday, 2),
+                    HoursWeekend    = Math.Round(kv.Value.HoursWeekend, 2),
+                    TotalAmount     = Math.Round(kv.Value.Amount, 2),
+                    Nif             = coach.CoachNavigation?.PersonInfo?.Nif,
+                    PaymentStatus   = null,
+                    LastPaymentDate = null
+                };
                 })
                 .OrderBy(r => r.CoachName)
                 .ToList();
