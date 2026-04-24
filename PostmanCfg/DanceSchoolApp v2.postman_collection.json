@@ -2977,6 +2977,35 @@
           "name": "Inventory",
           "item": [
             {
+              "name": "Item Categories",
+              "item": [
+                {
+                  "name": "GET Item Categories",
+                  "request": {
+                    "method": "GET",
+                    "header": []
+                  },
+                  "response": []
+                },
+                {
+                  "name": "GET Item Categories by Id",
+                  "request": {
+                    "method": "GET",
+                    "header": []
+                  },
+                  "response": []
+                },
+                {
+                  "name": "POST Item Categories",
+                  "request": {
+                    "method": "GET",
+                    "header": []
+                  },
+                  "response": []
+                }
+              ]
+            },
+            {
               "name": "Item",
               "item": [
                 {
@@ -3036,6 +3065,14 @@
                 },
                 {
                   "name": "GET Item Community",
+                  "request": {
+                    "method": "GET",
+                    "header": []
+                  },
+                  "response": []
+                },
+                {
+                  "name": "GET Item by Categories",
                   "request": {
                     "method": "GET",
                     "header": []
@@ -3144,6 +3181,19 @@
                 },
                 {
                   "name": "DELETE Deactivate Item",
+                  "request": {
+                    "method": "GET",
+                    "header": []
+                  },
+                  "response": []
+                }
+              ]
+            },
+            {
+              "name": "Item Variant",
+              "item": [
+                {
+                  "name": "New Request",
                   "request": {
                     "method": "GET",
                     "header": []
@@ -3342,35 +3392,6 @@
                       ]
                     },
                     "description": "[staff] note field stores defect description if item returned damaged."
-                  },
-                  "response": []
-                }
-              ]
-            },
-            {
-              "name": "Item Categories",
-              "item": [
-                {
-                  "name": "GET Item Categories",
-                  "request": {
-                    "method": "GET",
-                    "header": []
-                  },
-                  "response": []
-                },
-                {
-                  "name": "GET Item Categories by Id",
-                  "request": {
-                    "method": "GET",
-                    "header": []
-                  },
-                  "response": []
-                },
-                {
-                  "name": "POST Item Categories",
-                  "request": {
-                    "method": "GET",
-                    "header": []
                   },
                   "response": []
                 }
