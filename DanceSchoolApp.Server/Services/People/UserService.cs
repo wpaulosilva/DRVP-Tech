@@ -25,6 +25,7 @@ namespace DanceSchoolApp.Server.Services.People
             _logger = logger;
         }
 
+   
         // ─── Queries ──────────────────────────────────────────────────────────
 
         public async Task<List<UserListResponse>> GetUsersAsync()
@@ -133,6 +134,13 @@ namespace DanceSchoolApp.Server.Services.People
 
             string generatedPassword = Guid.NewGuid().ToString("N")[..8];
 
+            if (request.PersonInfo?.Nif is not null)
+                await EnsureNifUniqueAsync(request.PersonInfo.Nif);
+
+            // Validate birth date if provided
+            if (request.PersonInfo?.BirthDate is not null)
+                ValidateBirthDate(request.PersonInfo.BirthDate.Value);
+
             var user = new User
             {
                 Username = request.Username,
@@ -144,7 +152,7 @@ namespace DanceSchoolApp.Server.Services.People
                 {
                     FirstName = request.PersonInfo.FirstName,
                     LastName = request.PersonInfo.LastName,
-                    BirthDate = request.PersonInfo.BirthDate,
+                    BirthDate = request.PersonInfo.BirthDate ?? default,
                     Phone = request.PersonInfo.Phone,
                     Address = request.PersonInfo.Address,
                     Nif = request.PersonInfo.Nif
@@ -198,10 +206,42 @@ namespace DanceSchoolApp.Server.Services.People
             if (request.LastName  is not null) user.PersonInfo.LastName  = request.LastName;
             if (request.Phone     is not null) user.PersonInfo.Phone     = request.Phone;
             if (request.Address   is not null) user.PersonInfo.Address   = request.Address;
-            if (request.BirthDate is not null) user.PersonInfo.BirthDate = request.BirthDate;
-            if (request.Nif       is not null) user.PersonInfo.Nif       = request.Nif;
+            if (request.BirthDate != default)
+            {
+                ValidateBirthDate(request.BirthDate);
+                user.PersonInfo.BirthDate = request.BirthDate;
+            }
+            if (request.Nif       is not null)
+            {
+                await EnsureNifUniqueAsync(request.Nif, user.PersonInfo.PersonId);
+                user.PersonInfo.Nif = request.Nif;
+            }
 
             await _context.SaveChangesAsync();
+        }
+
+        // ─── Private helpers ──────────────────────────────────────────────────
+
+        private static void ValidateBirthDate(DateOnly birthDate)
+        {
+            var today = DateOnly.FromDateTime(DateTime.UtcNow);
+            if (birthDate > today)
+                throw new InvalidOperationException("BirthDate cannot be in the future.");
+
+            var hundredYearsAgo = today.AddYears(-100);
+            if (birthDate < hundredYearsAgo)
+                throw new InvalidOperationException("BirthDate is too far in the past.");
+        }
+        private async Task EnsureNifUniqueAsync(string nif, int? excludePersonId = null)
+        {
+            var query = _context.PersonInfos
+                .Where(p => p.Nif == nif);
+
+            if (excludePersonId.HasValue)
+                query = query.Where(p => p.PersonId != excludePersonId.Value);
+
+            if (await query.AnyAsync())
+                throw new InvalidOperationException($"NIF '{nif}' is already in use.");
         }
 
         public async Task SetUserStateAsync(int userId, bool isActive)

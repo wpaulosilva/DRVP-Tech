@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using DanceSchoolApp.Server.DTOs;
 
 namespace DanceSchoolApp.Server.DTOs.Social
 {
@@ -32,6 +33,13 @@ namespace DanceSchoolApp.Server.DTOs.Social
         public DateTime? ReadAt { get; set; }
         public bool IsRead => ReadAt.HasValue;
         public bool IsSent { get; set; }
+    }
+
+    // Extends the generic paged result with a pre-computed unread count so
+    // the client does not have to enumerate all pages to show the badge.
+    public class NotificationPagedResult : PagedResult<NotificationResponse>
+    {
+        public int TotalUnread { get; set; }
     }
 
     // ─── Requests ─────────────────────────────────────────────────────────────

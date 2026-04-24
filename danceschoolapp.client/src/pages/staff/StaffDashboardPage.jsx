@@ -53,7 +53,7 @@ function StaffDashboardPage() {
                 />
             </div>
 
-            <div className="kpi-grid" style={{ marginTop: '0' }}>
+            <div className="kpi-grid">
                 <KpiCard
                     label="Aulas Marcadas (Mês)"
                     value={stats?.classesScheduledThisMonth}

@@ -20,6 +20,7 @@ namespace DanceSchoolApp.Server.Services.People
             _notificationService = notificationService;
         }
 
+
         // ─── Queries ──────────────────────────────────────────────────────────
 
         public async Task<List<StudentListResponse>> GetStudentsAsync()
@@ -107,6 +108,13 @@ namespace DanceSchoolApp.Server.Services.People
             if (!parentExists)
                 throw new KeyNotFoundException($"User with id {request.ParentId} was not found.");
 
+            if (request.Nif is not null)
+                await EnsureNifUniqueAsync(request.Nif);
+
+            // Validate birth date bounds
+            if (request.BirthDate is not null)
+                ValidateBirthDate(request.BirthDate.Value);
+
             var student = new Student
             {
                 ParentUserId = request.ParentId,
@@ -115,7 +123,7 @@ namespace DanceSchoolApp.Server.Services.People
                 {
                     FirstName = request.FirstName,
                     LastName = request.LastName,
-                    BirthDate = request.BirthDate,
+                    BirthDate = request.BirthDate ?? default,
                     Phone = request.Phone,
                     Address = request.Address,
                     Nif = request.Nif
@@ -140,9 +148,14 @@ namespace DanceSchoolApp.Server.Services.People
             if (student.PersonInfo is null)
                 throw new InvalidOperationException($"Student with id {id} has no personal info record.");
 
+            if (request.Nif is not null)
+                await EnsureNifUniqueAsync(request.Nif, student.PersonInfo.PersonId);
+
             student.PersonInfo.FirstName = request.FirstName;
             student.PersonInfo.LastName = request.LastName;
-            student.PersonInfo.BirthDate = request.BirthDate;
+            if (request.BirthDate is not null)
+                ValidateBirthDate(request.BirthDate.Value);
+            student.PersonInfo.BirthDate = request.BirthDate ?? default;
             student.PersonInfo.Phone = request.Phone;
             student.PersonInfo.Address = request.Address;
             student.PersonInfo.Nif = request.Nif;
@@ -167,9 +180,14 @@ namespace DanceSchoolApp.Server.Services.People
                 throw new InvalidOperationException(
                     $"Student with id {studentId} has no personal info record.");
 
+            if (request.Nif is not null)
+                await EnsureNifUniqueAsync(request.Nif, student.PersonInfo.PersonId);
+
             student.PersonInfo.FirstName = request.FirstName;
             student.PersonInfo.LastName  = request.LastName;
-            student.PersonInfo.BirthDate = request.BirthDate;
+            if (request.BirthDate is not null)
+                ValidateBirthDate(request.BirthDate.Value);
+            student.PersonInfo.BirthDate = request.BirthDate ?? default;
             student.PersonInfo.Phone     = request.Phone;
             student.PersonInfo.Address   = request.Address;
             student.PersonInfo.Nif       = request.Nif;
@@ -272,6 +290,29 @@ namespace DanceSchoolApp.Server.Services.People
         }
 
         // ─── Private helpers ──────────────────────────────────────────────────
+
+        private static void ValidateBirthDate(DateOnly birthDate)
+        {
+            var today = DateOnly.FromDateTime(DateTime.UtcNow);
+            if (birthDate > today)
+                throw new InvalidOperationException("BirthDate cannot be in the future.");
+
+            var hundredYearsAgo = today.AddYears(-100);
+            if (birthDate < hundredYearsAgo)
+                throw new InvalidOperationException("BirthDate is too far in the past.");
+        }
+
+        private async Task EnsureNifUniqueAsync(string nif, int? excludePersonId = null)
+        {
+            var query = _context.PersonInfos
+                .Where(p => p.Nif == nif);
+
+            if (excludePersonId.HasValue)
+                query = query.Where(p => p.PersonId != excludePersonId.Value);
+
+            if (await query.AnyAsync())
+                throw new InvalidOperationException($"NIF '{nif}' is already in use.");
+        }
 
         private static string ResolveCoachName(Coach coach)
         {

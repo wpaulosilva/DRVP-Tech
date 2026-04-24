@@ -205,6 +205,26 @@ namespace DanceSchoolApp.Server.Services.Classes
                 throw new KeyNotFoundException(
                     $"Coach with id {request.CoachId} was not found.");
 
+            // Ensure the coach actually teaches the requested modality
+            bool coachTeachesModality = await _context.Coaches
+                .Include(c => c.IdModalities)
+                .Where(c => c.CoachId == request.CoachId)
+                .AnyAsync(c => c.IdModalities.Any(m => m.ModalityId == request.ModalityId));
+
+            if (!coachTeachesModality)
+                throw new InvalidOperationException(
+                    $"Coach with id {request.CoachId} does not teach modality {request.ModalityId}.");
+
+            // Validate start/end chronology and duration limits (30 to 120 minutes)
+            if (request.EndDatetime <= request.StartDatetime)
+                throw new InvalidOperationException(
+                    "The class end time must be after the start time.");
+
+            var durationMinutes = (request.EndDatetime - request.StartDatetime).TotalMinutes;
+            if (durationMinutes < 30 || durationMinutes > 120)
+                throw new InvalidOperationException(
+                    "Classes must have a duration between 30 and 120 minutes.");
+
             // ── 2. Auto-select studio ──────────────────────────────────────────
             var candidateStudios = await _context.Studios
                 .Include(s => s.IdModalities)
@@ -399,22 +419,22 @@ namespace DanceSchoolApp.Server.Services.Classes
                 entityType: "CoachClass",
                 entityId: classId);
 
-            var staffIds = await _context.Users
-                .Include(u => u.IdRoles)
-                .Where(u => u.IdRoles.Any(r => r.RoleId == 1) && u.IsActive)
-                .Select(u => u.UserId)
-                .ToListAsync();
+            //var staffIds = await _context.Users
+            //    .Include(u => u.IdRoles)
+            //    .Where(u => u.IdRoles.Any(r => r.RoleId == 1) && u.IsActive)
+            //    .Select(u => u.UserId)
+            //    .ToListAsync();
 
-            foreach (var staffId in staffIds)
-            {
-                await _notificationService.SendAsync(
-                    userId: staffId,
-                    title: "Coach Accepted Class",
-                    message: $"Coach accepted class id {classId} on {coachClass.StartDatetime:dd/MM/yyyy HH:mm}.",
-                    type: NotificationType.ClassUpdate,
-                    entityType: "CoachClass",
-                    entityId: classId);
-            }
+            //foreach (var staffId in staffIds)
+            //{
+            //    await _notificationService.SendAsync(
+            //        userId: staffId,
+            //        title: "Coach Accepted Class",
+            //        message: $"Coach accepted class id {classId} on {coachClass.StartDatetime:dd/MM/yyyy HH:mm}.",
+            //        type: NotificationType.ClassUpdate,
+            //        entityType: "CoachClass",
+            //        entityId: classId);
+            //}
         }
 
         public async Task CoachRejectClassAsync(int classId, int coachUserId, string? reason)
@@ -492,23 +512,33 @@ namespace DanceSchoolApp.Server.Services.Classes
         {
             await TransitionStatusAsync(
                 classId,
-                allowedFrom: new[] { CoachClassStatus.Requested, CoachClassStatus.Approved },
+                allowedFrom: new[] { CoachClassStatus.Requested, CoachClassStatus.Finished, CoachClassStatus.Approved, CoachClassStatus.Pending},
                 newStatus: CoachClassStatus.Cancelled,
-                errorMessage: "Only a Requested or Approved class can be cancelled."
+                errorMessage: "Only a Requested or Finished or Approved class can be cancelled."
             );
 
             var coachClass = await _context.CoachClasses
                 .FirstOrDefaultAsync(c => c.ClassId == classId);
 
             if (coachClass is null) return;
+            
 
-            await _notificationService.SendAsync(
-                userId: coachClass.CreatedBy,
-                title: "Class Cancelled",
-                message: "A coaching class has been cancelled.",
-                type: NotificationType.Warning,
-                entityType: "CoachClass",
-                entityId: classId);
+            var parentsToNotify = coachClass.Participants
+                .Where(p => p.IdCoachClass == classId)
+                .Select(p => p.IdStudentNavigation.ParentUserId)
+                .Distinct()
+                .ToList();
+
+            foreach (var parentId in parentsToNotify)
+            {
+                await _notificationService.SendAsync(
+                   userId: parentId,
+                   title: "Class Cancelled",
+                   message: "A coaching class has been cancelled.",
+                   type: NotificationType.Warning,
+                   entityType: "CoachClass",
+                   entityId: classId);
+            }
 
             await _notificationService.SendAsync(
                 userId: coachClass.IdCoach,

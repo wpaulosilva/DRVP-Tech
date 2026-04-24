@@ -17,7 +17,7 @@ namespace DanceSchoolApp.Server.Services.Inventory
 
         // ─── Item Queries ─────────────────────────────────────────────────────────
 
-        public async Task<PagedResult<ItemListResponse>> GetItemsAsync(bool? fromSchool, PagedQuery query)
+        public async Task<PagedResult<ItemListResponse>> GetItemsAsync(bool? fromSchool, int? ownerId, PagedQuery query)
         {
             var dbQuery = _context.Items
                 .Include(i => i.IdCategoryNavigation)
@@ -27,6 +27,9 @@ namespace DanceSchoolApp.Server.Services.Inventory
 
             if (fromSchool.HasValue)
                 dbQuery = dbQuery.Where(i => i.FromSchool == fromSchool.Value);
+
+            if (ownerId.HasValue)
+                dbQuery = dbQuery.Where(i => i.IdOwner == ownerId.Value);
 
             var total = await dbQuery.CountAsync();
 
@@ -239,6 +242,24 @@ namespace DanceSchoolApp.Server.Services.Inventory
 
             _context.ItemVariants.Remove(variant);
             await _context.SaveChangesAsync();
+        }
+
+        // ─── Ownership ────────────────────────────────────────────────────────────
+
+        /// <summary>
+        /// Returns true when the given user owns the item (community item with
+        /// matching IdOwner). Staff callers should bypass this check entirely.
+        /// </summary>
+        public async Task<bool> IsItemOwnerAsync(int itemId, int userId)
+        {
+            var item = await _context.Items
+                .AsNoTracking()
+                .FirstOrDefaultAsync(i => i.ItemId == itemId);
+
+            if (item is null)
+                throw new KeyNotFoundException($"Item with id {itemId} was not found.");
+
+            return !item.FromSchool && item.IdOwner == userId;
         }
 
         // ─── Helpers ──────────────────────────────────────────────────────────────

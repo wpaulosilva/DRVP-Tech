@@ -1,4 +1,5 @@
 using DanceSchoolApp.Server.Data;
+using DanceSchoolApp.Server.Services;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Data.Sqlite;
@@ -11,15 +12,27 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
 {
     private readonly SqliteConnection _connection;
 
+    // Set env vars exactly once per process, avoiding repeated writes
+    // from multiple factory instances (one per IClassFixture test class).
+    private static readonly object _envLock = new();
+    private static bool _envInitialized;
+
     public CustomWebApplicationFactory()
     {
         _connection = new SqliteConnection("DataSource=:memory:");
         _connection.Open();
 
-        Environment.SetEnvironmentVariable("DanceSchoolApp_JWT_Secret",
-            "SuperSecretTestKey_AtLeast32Characters!!");
-        Environment.SetEnvironmentVariable("DanceSchoolApp_DB",
-            "placeholder-suppresses-warning");
+        lock (_envLock)
+        {
+            if (!_envInitialized)
+            {
+                Environment.SetEnvironmentVariable("DanceSchoolApp_JWT_Secret",
+                    "SuperSecretTestKey_AtLeast32Characters!!");
+                Environment.SetEnvironmentVariable("DanceSchoolApp_DB",
+                    "placeholder-suppresses-warning");
+                _envInitialized = true;
+            }
+        }
     }
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
@@ -44,6 +57,17 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
                 .ToList();
 
             foreach (var d in toRemove)
+                services.Remove(d);
+
+            // Remove the ClassLifecycleWorker background service.
+            // It fires immediately at startup and every 5 minutes after,
+            // mutating class statuses and creating notifications. This
+            // causes race conditions during integration tests because the
+            // worker modifies DB state concurrently with test assertions.
+            var workerDescriptors = services
+                .Where(d => d.ImplementationType == typeof(ClassLifecycleWorker))
+                .ToList();
+            foreach (var d in workerDescriptors)
                 services.Remove(d);
 
             // Re-register AppDbContext against the shared in-memory SQLite

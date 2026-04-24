@@ -152,46 +152,62 @@ namespace DanceSchoolApp.Server.Services
 
         // ─── Pending validations ──────────────────────────────────────────────
 
+        // Returns one entry per CLASS (not per participant).
+        // Only shows classes that have at least one of this parent's students
+        // still awaiting validation. The Participants list contains all of
+        // this parent's enrolled students — including those already responded.
         public async Task<PagedResult<ParentValidateItem>> GetPendingValidationsAsync(
             int userId, int page, int pageSize)
         {
-            var dbQuery = _context.Participants
-                .Include(p => p.IdStudentNavigation)
-                    .ThenInclude(s => s.PersonInfo)
-                .Include(p => p.IdCoachClassNavigation)
-                    .ThenInclude(c => c.IdModalityNavigation)
-                .Include(p => p.IdCoachClassNavigation)
-                    .ThenInclude(c => c.IdCoachNavigation)
-                        .ThenInclude(coach => coach.CoachNavigation)
-                            .ThenInclude(u => u.PersonInfo)
-                .Where(p =>
-                    p.IdStudentNavigation.ParentUserId == userId &&
-                    p.ValidationStatus == 0 &&
-                    p.IdCoachClassNavigation.CoachValidatedAt != null &&
-                    p.IdCoachClassNavigation.Status == (byte)CoachClassStatus.Finished);
+            var dbQuery = _context.CoachClasses
+                .Include(c => c.IdModalityNavigation)
+                .Include(c => c.IdCoachNavigation)
+                    .ThenInclude(coach => coach.CoachNavigation)
+                        .ThenInclude(u => u.PersonInfo)
+                .Include(c => c.CreatedByNavigation)
+                    .ThenInclude(u => u.PersonInfo)
+                .Include(c => c.Participants)
+                    .ThenInclude(p => p.IdStudentNavigation)
+                        .ThenInclude(s => s.PersonInfo)
+                .Where(c =>
+                    c.CoachValidatedAt != null &&
+                    (c.Status == (byte)CoachClassStatus.Finished ||
+                     c.Status == (byte)CoachClassStatus.Pending) &&
+                    c.Participants.Any(p =>
+                        p.IdStudentNavigation.ParentUserId == userId &&
+                        p.ValidationStatus == 0));
 
             var total = await dbQuery.CountAsync();
 
-            // Order by ExpiresAt ASC = StartDatetime ASC (most urgent first)
-            var participants = await dbQuery
-                .OrderBy(p => p.IdCoachClassNavigation.StartDatetime)
+            var classes = await dbQuery
+                .OrderBy(c => c.StartDatetime)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
                 .ToListAsync();
 
-            var items = participants.Select(p =>
+            var items = classes.Select(c =>
             {
-                var cls = p.IdCoachClassNavigation;
+                // Include only this parent's students in the participants list
+                var myParticipants = c.Participants
+                    .Where(p => p.IdStudentNavigation.ParentUserId == userId)
+                    .ToList();
+
                 return new ParentValidateItem
                 {
-                    ParticipantId    = p.ParticipantId,
-                    ClassId          = p.IdCoachClass,
-                    ModalityName     = cls.IdModalityNavigation.Name,
-                    StudentName      = ResolveStudentName(p.IdStudentNavigation),
-                    StartDatetime    = cls.StartDatetime,
-                    CoachName        = ResolveCoachName(cls.IdCoachNavigation),
-                    ExpiresAt        = cls.StartDatetime.AddHours(48),
-                    ValidationStatus = p.ValidationStatus
+                    ClassId       = c.ClassId,
+                    ModalityName  = c.IdModalityNavigation.Name,
+                    StartDatetime = c.StartDatetime,
+                    EndDatetime   = c.EndDatetime,
+                    CoachName     = ResolveCoachName(c.IdCoachNavigation),
+                    ExpiresAt     = c.StartDatetime.AddHours(48),
+                    MaxParticipants = c.MaxParticipants,
+                    CreatedByName = ResolveUserName(c.CreatedByNavigation),
+                    Participants  = myParticipants.Select(p => new ParticipantSummaryItem
+                    {
+                        ParticipantId    = p.ParticipantId,
+                        StudentName      = ResolveStudentName(p.IdStudentNavigation),
+                        ValidationStatus = p.ValidationStatus
+                    }).ToList()
                 };
             }).ToList();
 

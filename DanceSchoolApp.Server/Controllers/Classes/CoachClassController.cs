@@ -265,7 +265,7 @@ namespace DanceSchoolApp.Server.Controllers.Classes
         // Staff use — transitions Requested → Rejected.
         // Optional reason body is forwarded to notification (TODO).
         [Authorize(Roles = "staff")]
-        [HttpPatch("{id}/reject")]
+        [HttpPatch("{id}/staff-reject")]
         public async Task<IActionResult> Reject(int id,
             [FromBody] CoachClassRejectRequest? request)
         {

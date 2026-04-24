@@ -13,11 +13,12 @@ export function getStaffUsers({ page = 1, pageSize = 20, search = '', role = '' 
     return get(`/api/users?${params}`)
 }
 
-export function createUser({ email, firstRole }) {
+export function createUser({ email, username, firstRole, personInfo }) {
     return post('/api/users', {
-        username: email.split('@')[0],
+        username: username ?? email.split('@')[0],
         email,
         firstRole,
+        personInfo,
     })
 }
 

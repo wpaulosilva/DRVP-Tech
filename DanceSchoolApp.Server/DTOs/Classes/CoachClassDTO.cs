@@ -80,6 +80,16 @@ namespace DanceSchoolApp.Server.DTOs.Classes
         public byte ValidationStatus { get; set; }
     }
 
+    // Lightweight participant entry for portal validation views.
+    // ParentName is only populated in the staff view.
+    public class ParticipantSummaryItem
+    {
+        public int ParticipantId { get; set; }
+        public string StudentName { get; set; } = null!;
+        public byte ValidationStatus { get; set; }
+        public string? ParentName { get; set; }
+    }
+
     // Used by GET /open — only shows what a parent needs to decide to join.
     public class OpenClassResponse
     {

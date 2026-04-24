@@ -8,6 +8,16 @@ function CreateUserModal({
     description,
     email,
     onEmailChange,
+    firstName,
+    lastName,
+    birthDate,
+    nif,
+    username,
+    onFirstNameChange,
+    onLastNameChange,
+    onBirthDateChange,
+    onNifChange,
+    onUsernameChange,
     onClose,
     onConfirm,
     error,
@@ -24,11 +34,50 @@ function CreateUserModal({
                 value={email}
                 placeholder="carlos@entartes.pt"
                 onChange={onEmailChange}
-                onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                        onConfirm()
-                    }
-                }}
+            />
+
+            <label htmlFor="firstName">Nome *</label>
+            <Input
+                id="firstName"
+                type="text"
+                value={firstName}
+                placeholder="Primeiro nome"
+                onChange={onFirstNameChange}
+            />
+
+            <label htmlFor="lastName">Apelido *</label>
+            <Input
+                id="lastName"
+                type="text"
+                value={lastName}
+                placeholder="Apelido"
+                onChange={onLastNameChange}
+            />
+
+            <label htmlFor="birthDate">Data de Nascimento *</label>
+            <Input
+                id="birthDate"
+                type="date"
+                value={birthDate}
+                onChange={onBirthDateChange}
+            />
+
+            <label htmlFor="nif">NIF *</label>
+            <Input
+                id="nif"
+                type="text"
+                value={nif}
+                placeholder="123456789"
+                onChange={onNifChange}
+            />
+
+            <label htmlFor="username">Username (opcional)</label>
+            <Input
+                id="username"
+                type="text"
+                value={username}
+                placeholder="deixe em branco para usar a parte antes do @"
+                onChange={onUsernameChange}
             />
 
             {error && <p className="admin-modal-error">{error}</p>}

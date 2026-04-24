@@ -42,6 +42,7 @@
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     gap: 16px;
     margin-top: 24px;
+    margin-bottom: 8px;
 }
 
 .kpi-card {

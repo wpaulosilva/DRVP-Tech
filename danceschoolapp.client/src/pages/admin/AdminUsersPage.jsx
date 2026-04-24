@@ -25,6 +25,11 @@ function AdminUsersPage() {
 
     const [showModal, setShowModal] = useState(false)
     const [newEmail, setNewEmail] = useState('')
+    const [newFirstName, setNewFirstName] = useState('')
+    const [newLastName, setNewLastName] = useState('')
+    const [newBirthDate, setNewBirthDate] = useState('')
+    const [newNif, setNewNif] = useState('')
+    const [newUsername, setNewUsername] = useState('')
     const [modalError, setModalError] = useState('')
     const [creating, setCreating] = useState(false)
 
@@ -66,6 +71,18 @@ function AdminUsersPage() {
             setModalError('O email é obrigatório.')
             return
         }
+        if (!newFirstName.trim() || !newLastName.trim()) {
+            setModalError('Nome e apelido são obrigatórios.')
+            return
+        }
+        if (!newBirthDate) {
+            setModalError('Data de nascimento é obrigatória.')
+            return
+        }
+        if (!newNif.trim()) {
+            setModalError('NIF é obrigatório.')
+            return
+        }
 
         setCreating(true)
         setModalError('')
@@ -73,11 +90,23 @@ function AdminUsersPage() {
         try {
             await createUser({
                 email: newEmail.trim(),
+                username: newUsername.trim() || undefined,
                 firstRole: 1,
+                personInfo: {
+                    firstName: newFirstName.trim(),
+                    lastName: newLastName.trim(),
+                    birthDate: newBirthDate,
+                    nif: newNif.trim(),
+                }
             })
 
             setShowModal(false)
             setNewEmail('')
+            setNewFirstName('')
+            setNewLastName('')
+            setNewBirthDate('')
+            setNewNif('')
+            setNewUsername('')
             setPage(1)
             fetchUsersData(1, debouncedSearch)
         } catch (err) {
@@ -180,6 +209,16 @@ function AdminUsersPage() {
                 description="Criar uma nova conta com acesso de Direção."
                 email={newEmail}
                 onEmailChange={setNewEmail}
+                firstName={newFirstName}
+                lastName={newLastName}
+                birthDate={newBirthDate}
+                nif={newNif}
+                username={newUsername}
+                onFirstNameChange={setNewFirstName}
+                onLastNameChange={setNewLastName}
+                onBirthDateChange={setNewBirthDate}
+                onNifChange={setNewNif}
+                onUsernameChange={setNewUsername}
                 onClose={() => setShowModal(false)}
                 onConfirm={handleCreate}
                 error={modalError}

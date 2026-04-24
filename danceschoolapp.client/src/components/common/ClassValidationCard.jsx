@@ -1,121 +1,319 @@
-function ClassValidationCard({ aula, onConfirm, onReject, tipo }) {
-    const id = aula?.ClassId ?? aula?.classId ?? aula?.id ?? null
+import { useState } from 'react'
+import '../../styles/ValidateClasses.css'
 
-    const formatDate = (iso) => {
-        if (!iso) return 'Data não informada'
-        try {
-            const d = new Date(iso)
-            return d.toLocaleString('pt-PT', {
-                day: '2-digit', month: 'long', year: 'numeric',
-                hour: '2-digit', minute: '2-digit'
-            })
-        } catch (e) {
-            return String(iso)
-        }
+function formatDate(iso) {
+    if (!iso) return ''
+    try {
+        const d = new Date(iso)
+        return d.toLocaleDateString('pt-PT')
+    } catch {
+        return String(iso)
     }
+}
 
-    // Fields for requests
-    const modality = aula?.ModalityName ?? aula?.modalityName ?? aula?.Modality ?? aula?.modality ?? ''
-    const studio = aula?.StudioName ?? aula?.studioName ?? aula?.Studio ?? aula?.studio ?? ''
-    const preferred = aula?.PreferredDatetime ?? aula?.preferredDatetime ?? aula?.PreferredDate ?? aula?.Preferred ?? aula?.StartDatetime ?? aula?.startDatetime ?? null
-    const requestedAt = aula?.RequestedAt ?? aula?.requestedAt ?? aula?.RequestedOn ?? null
-    const duration = aula?.DurationMinutes ?? aula?.durationMinutes ?? aula?.Duration ?? null
-    const parentName = aula?.ParentName ?? aula?.parentName ?? aula?.Parent ?? aula?.ParentRequester ?? ''
-    const studentNames = aula?.StudentNames ?? aula?.studentNames ?? aula?.students ?? []
+function formatTime(iso) {
+    if (!iso) return ''
+    try {
+        const d = new Date(iso)
+        return d.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })
+    } catch {
+        return String(iso)
+    }
+}
 
-    // Fields for validations
-    const start = aula?.StartDatetime ?? aula?.startDatetime ?? aula?.PreferredDatetime ?? preferred
-    const expiresAt = aula?.ExpiresAt ?? aula?.expiresAt ?? null
-    const coachValidationStatus = aula?.CoachValidationStatus ?? aula?.coachValidationStatus ?? null
+function ValidationDot({ state, label }) {
+    const map = {
+        1: { cls: 'validation-dot-icon--green', symbol: '\u2713' },
+        2: { cls: 'validation-dot-icon--red', symbol: '\u2717' },
+        0: { cls: 'validation-dot-icon--amber', symbol: '\u23F3' },
+    }
+    const v = map[state ?? 0]
+    return (
+        <span className="validation-dot">
+            <span className={`validation-dot-icon ${v.cls}`}>{v.symbol}</span>
+            {label && <span>{label}</span>}
+        </span>
+    )
+}
 
-    const title = modality ? `${modality} - Individual` : (studentNames[0] ?? 'Aula')
+function ParentTally({ participants }) {
+    const validated = (participants || []).filter(p => (p.ValidationStatus ?? p.validationStatus) === 1).length
+    const rejected = (participants || []).filter(p => (p.ValidationStatus ?? p.validationStatus) === 2).length
+    const pending = (participants || []).filter(p => (p.ValidationStatus ?? p.validationStatus ?? 0) === 0).length
+    const total = (participants || []).length
 
     return (
-        <div className="validation-card card">
-            <div className="validation-card-body">
-                <div className="validation-card-main">
-                    <div style={{display: 'flex', alignItems: 'center', gap: '0.75rem'}}>
-                        <h3 className="validation-title">{title}</h3>
-                        {tipo === 'professor' && (<span className="status-badge">Aguarda validação</span>)}
+        <span className="tally-badge">
+            <span className="tally-badge-label">EE</span>
+            <span className="tally-dot">
+                <span className="tally-dot-circle tally-dot-circle--green" />
+                {validated}
+            </span>
+            <span className="tally-dot">
+                <span className="tally-dot-circle tally-dot-circle--red" />
+                {rejected}
+            </span>
+            <span className="tally-dot">
+                <span className="tally-dot-circle tally-dot-circle--amber" />
+                {pending}
+            </span>
+            <span className="tally-count">/ {total}</span>
+        </span>
+    )
+}
+
+function CoachBadge({ state }) {
+    return (
+        <span className="tally-badge">
+            <span className="tally-badge-label">Coach</span>
+            <ValidationDot state={state} />
+        </span>
+    )
+}
+
+function ClassValidationCard({
+    aula,
+    tipo,
+    variant = 'purple',
+    onConfirm,
+    onReject,
+    showParticipants = true,
+    showCoachValidation = false,
+    showParentTally = false,
+    confirmLabel,
+    rejectLabel,
+}) {
+    const [expanded, setExpanded] = useState(false)
+
+    const id = aula?.ClassId ?? aula?.classId ?? aula?.id ?? null
+    const modality = aula?.ModalityName ?? aula?.modalityName ?? aula?.Modality ?? aula?.modality ?? ''
+    const studio = aula?.StudioName ?? aula?.studioName ?? aula?.Studio ?? aula?.studio ?? ''
+    const coach = aula?.CoachName ?? aula?.coachName ?? aula?.Coach ?? aula?.coach ?? ''
+    const createdBy = aula?.CreatedBy ?? aula?.createdBy ?? aula?.ParentName ?? aula?.parentName ?? ''
+    const startDt = aula?.StartDatetime ?? aula?.startDatetime ?? aula?.PreferredDatetime ?? aula?.preferredDatetime ?? null
+    const endDt = aula?.EndDatetime ?? aula?.endDatetime ?? null
+    const maxParticipants = aula?.MaxParticipants ?? aula?.maxParticipants ?? aula?.max_participants ?? aula?.MaxStudents ?? aula?.maxStudents ?? '?'
+    const participants = aula?.Participants ?? aula?.participants ?? []
+    const studentNames = aula?.StudentNames ?? aula?.studentNames ?? aula?.students ?? []
+    const enrolled = participants.length || studentNames.length || 0
+    const coachValidationStatus = aula?.CoachValidationStatus ?? aula?.coachValidationStatus ?? null
+    const coachValidatedAt = aula?.CoachValidatedAt ?? aula?.coachValidatedAt ?? null
+
+    const date = formatDate(startDt)
+    const startTime = formatTime(startDt)
+    const endTime = formatTime(endDt)
+    const timeStr = endTime ? `${startTime}\u2013${endTime}` : startTime
+
+    const hasDisputed = participants.some(p => (p.ValidationStatus ?? p.validationStatus ?? 0) === 2)
+    const coachDenied = coachValidationStatus === 2
+
+    // Contested state overrides the normal border on the staff pending view
+    const isContested = showCoachValidation && (hasDisputed || coachDenied)
+    const borderClass = isContested ? 'class-card--contested'
+        : variant === 'amber' ? 'class-card--amber'
+            : variant === 'orange' ? 'class-card--orange'
+                : variant === 'green' ? 'class-card--green' : ''
+
+    const capacityClass = variant === 'amber' ? 'class-card-capacity--amber'
+        : variant === 'orange' ? 'class-card-capacity--orange' : ''
+
+    const expandedClass = isContested ? 'class-card-expanded--contested'
+        : variant === 'amber' ? 'class-card-expanded--amber'
+            : variant === 'orange' ? 'class-card-expanded--orange' : ''
+
+    const confirmText = confirmLabel
+        || (tipo === 'coach-request' ? 'Aceitar Aula' : 'Realizada')
+    const rejectText = rejectLabel
+        || (tipo === 'coach-request' ? 'Recusar Aula' : 'Não realizada')
+
+    return (
+        <div className={`class-card ${borderClass}`}>
+            <button
+                type="button"
+                className="class-card-header"
+                onClick={() => setExpanded(prev => !prev)}
+            >
+                <div style={{ flex: '1 1 auto', minWidth: 0 }}>
+                    <div className="class-card-title-row">
+                        <h3 className="class-card-title">
+                            {modality || (studentNames[0] ?? 'Aula')}
+                        </h3>
+                        <span className={`class-card-capacity ${capacityClass}`}>
+                            Alunos {enrolled}/{maxParticipants}
+                        </span>
+                        {/* Contested badge — shown on staff pending view when anyone disputed */}
+                        {showCoachValidation && (hasDisputed || coachDenied) && (
+                            <span className="status-pill status-pill--rejected">Contestada</span>
+                        )}
+                        {/* Awaiting validation badge — parent view */}
+                        {tipo === 'professor' && (
+                            <span className="status-pill status-pill--pending">Aguarda validação</span>
+                        )}
                     </div>
 
-                    {/* Info grid */}
-                    <div className="validation-info">
-                        {requestedAt && (
-                            <div className="info-item">
-                                <strong>Requisitado em:</strong>
-                                <span>{formatDate(requestedAt)}</span>
+                    <div className="class-card-info-grid">
+                        {date && (
+                            <div>
+                                <span className="label">Data: </span>
+                                {date} · {timeStr}
                             </div>
                         )}
-
-                        {studentNames && studentNames.length > 0 && (
-                            <div className="info-item">
-                                <strong>Aluno:</strong>
-                                <span>{studentNames.join(', ')}</span>
-                            </div>
-                        )}
-
-                        {preferred && (
-                            <div className="info-item">
-                                <strong>Data preferida:</strong>
-                                <span>{formatDate(preferred)}</span>
-                            </div>
-                        )}
-
                         {studio && (
-                            <div className="info-item">
-                                <strong>Estúdio:</strong>
-                                <span>{studio}</span>
+                            <div>
+                                <span className="label">Estúdio: </span>
+                                {studio}
                             </div>
                         )}
-
-                        {duration && (
-                            <div className="info-item">
-                                <strong>Duração:</strong>
-                                <span>{duration} minutos</span>
+                        {coach && (
+                            <div>
+                                <span className="label">Coach: </span>
+                                {coach}
                             </div>
                         )}
-
-                        {parentName && (
-                            <div className="info-item">
-                                <strong>Requisitado por:</strong>
-                                <span>{parentName}</span>
-                            </div>
-                        )}
-
-                        {expiresAt && (
-                            <div className="info-item">
-                                <strong>Expira em:</strong>
-                                <span>{formatDate(expiresAt)}</span>
+                        {createdBy && (
+                            <div>
+                                <span className="label">Criada por: </span>
+                                {createdBy}
                             </div>
                         )}
                     </div>
-                </div>
 
-                <div className="validation-actions">
-                    {tipo === 'coach-request' && (
-                        <>
-                            <button className="btn btn-accept" onClick={() => id && onConfirm(id)}>
-                                Aceitar Aula
-                            </button>
-                            <button className="btn btn-reject" onClick={() => id && onReject(id)}>
-                                Recusar Aula
-                            </button>
-                        </>
-                    )}
-
-                    {tipo === 'professor' && (
-                        <>
-                            <button className="btn btn-reject" onClick={() => id && onReject(id)}>
-                                Não realizada
-                            </button>
-                            <button className="btn btn-accept" onClick={() => id && onConfirm(id)}>
-                                Realizada
-                            </button>
-                        </>
+                    {(showParentTally || showCoachValidation) && (
+                        <div className="tally-row">
+                            {showParentTally && <ParentTally participants={participants} />}
+                            {showCoachValidation && <CoachBadge state={coachValidationStatus} />}
+                        </div>
                     )}
                 </div>
-            </div>
+
+                <svg
+                    className={`class-card-chevron ${expanded ? 'class-card-chevron--open' : ''}`}
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                >
+                    <path
+                        fillRule="evenodd"
+                        d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"
+                        clipRule="evenodd"
+                    />
+                </svg>
+            </button>
+
+            {expanded && (
+                <div className={`class-card-expanded ${expandedClass}`}>
+                    {/* Participant list */}
+                    {showParticipants && participants.length > 0 && (
+                        <div>
+                            <p className="class-card-section-title">
+                                Participantes ({enrolled}/{maxParticipants})
+                            </p>
+                            {participants.map((p, idx) => {
+                                const pId = p.ParticipantId ?? p.participantId ?? p.id ?? idx
+                                const studentName = p.StudentName ?? p.studentName ?? p.student_name ?? ''
+                                const parentName = p.ParentName ?? p.parentName ?? p.parent_name ?? ''
+                                const price = p.ClassPrice ?? p.classPrice ?? p.class_price ?? null
+                                const vs = p.ValidationStatus ?? p.validationStatus ?? p.validation_status ?? 0
+
+                                return (
+                                    <div key={pId} className="participant-row">
+                                        <div>
+                                            <p className="participant-name">{studentName}</p>
+                                            {parentName && <p className="participant-parent">EE: {parentName}</p>}
+                                        </div>
+                                        <div className="participant-right">
+                                            {price != null && <span>{price}€</span>}
+                                            {tipo === 'professor' ? (
+                                                vs === 0 ? (
+                                                    <div className="participant-actions">
+                                                        <button
+                                                            className="btn-participant-confirm"
+                                                            onClick={(e) => { e.stopPropagation(); onConfirm && onConfirm(pId) }}
+                                                        >
+                                                            {'\u2713'} Realizada
+                                                        </button>
+                                                        <button
+                                                            className="btn-participant-reject"
+                                                            onClick={(e) => { e.stopPropagation(); onReject && onReject(pId) }}
+                                                        >
+                                                            {'\u2717'} Não realizada
+                                                        </button>
+                                                    </div>
+                                                ) : (
+                                                    <ValidationDot
+                                                        state={vs}
+                                                        label={vs === 1 ? 'Realizada' : 'Não realizada'}
+                                                    />
+                                                )
+                                            ) : showCoachValidation ? (
+                                                <ValidationDot
+                                                    state={vs}
+                                                    label={vs === 1 ? 'Realizada' : vs === 2 ? 'Não realizada' : 'Aguarda'}
+                                                />
+                                            ) : (
+                                                <span>Inscrito</span>
+                                            )}
+                                        </div>
+                                    </div>
+                                )
+                            })}
+                        </div>
+                    )}
+
+                    {/* Student names fallback (when no participant objects) */}
+                    {showParticipants && participants.length === 0 && studentNames.length > 0 && (
+                        <div>
+                            <p className="class-card-section-title">Alunos</p>
+                            {studentNames.map((name, idx) => (
+                                <div key={idx} className="participant-row">
+                                    <p className="participant-name">{name}</p>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                    {/* Coach + Parent validation summary for pending tab */}
+                    {showCoachValidation && (
+                        <div className="validation-summary-row">
+                            <div className="validation-summary-card">
+                                <span className="validation-summary-card-label">Validação Coach</span>
+                                <div className="validation-summary-card-content">
+                                    <ValidationDot
+                                        state={coachValidationStatus}
+                                        label={coachValidationStatus === 1 ? 'Realizada' : coachValidationStatus === 2 ? 'Não realizada' : 'Aguarda'}
+                                    />
+                                    {coachValidatedAt && (
+                                        <span className="validation-summary-card-date">
+                                            {new Date(coachValidatedAt).toLocaleString('pt-PT')}
+                                        </span>
+                                    )}
+                                </div>
+                            </div>
+                            <div className="validation-summary-card">
+                                <span className="validation-summary-card-label">Resumo Encarregados</span>
+                                <ParentTally participants={participants} />
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Actions — hidden for parent view (per-participant buttons handle it) */}
+                    {!(tipo === 'professor' && participants.length > 0) && (
+                        <div className="class-card-actions">
+                            <button
+                                className="btn btn-accept"
+                                onClick={() => id && onConfirm(id)}
+                            >
+                                {confirmText}
+                            </button>
+                            <button
+                                className="btn btn-reject"
+                                onClick={() => id && onReject(id)}
+                            >
+                                {rejectText}
+                            </button>
+                        </div>
+                    )}
+                </div>
+            )}
         </div>
     )
 }

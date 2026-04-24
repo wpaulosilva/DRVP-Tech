@@ -127,6 +127,8 @@ namespace DanceSchoolApp.Server.Services.Scheduling
             await ValidateScopeReferencesAsync(
                 request.Scope, request.StudioId, request.CoachId);
 
+            ValidateFutureDateRange(request.StartDatetime, request.EndDatetime);
+
             var block = new BlockedPeriod
             {
                 Scope = (byte)request.Scope,
@@ -154,6 +156,8 @@ namespace DanceSchoolApp.Server.Services.Scheduling
             await ValidateScopeReferencesAsync(
                 request.Scope, request.StudioId, request.CoachId);
 
+            ValidateFutureDateRange(request.StartDatetime, request.EndDatetime);
+
             block.Scope = (byte)request.Scope;
             block.StartDatetime = request.StartDatetime;
             block.EndDatetime = request.EndDatetime;
@@ -175,6 +179,15 @@ namespace DanceSchoolApp.Server.Services.Scheduling
         }
 
         // ─── Private helpers ──────────────────────────────────────────────────
+
+        private static void ValidateFutureDateRange(DateTime start, DateTime end)
+        {
+            if (end <= start)
+                throw new ArgumentException("EndDatetime must be after StartDatetime.");
+
+            if (start <= DateTime.UtcNow)
+                throw new ArgumentException("Blocked periods must start in the future.");
+        }
 
         // Verifies that the referenced studio/coach actually exist in the DB.
         // Cross-field presence is already validated by IValidatableObject on

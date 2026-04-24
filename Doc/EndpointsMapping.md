@@ -177,23 +177,44 @@ The header mounts once per session. It does NOT call an endpoint on every naviga
 
 > Note: Mockup shows event "type" tags (Espetáculo, Reunião, etc.) but there is no `event_type` column in the DB. The mockup itself flagged this as wrong — do not implement until the field is added.
 
-### `/staff/inventory` — Inventário
+### `/staff/inventory` — Inventário (3-tab page: Escolar, Comunidade, Requisições)
 
 | Element | Call |
 |---|---|
 | Page mount | `GET /api/auth/me` |
-| Item grid (Escolar tab) | `GET /api/items?fromSchool=true&page=1&pageSize=12` (or via ee endpoint if staff also uses it) |
-| Category filter | `GET /api/item-categories` (populate dropdown) then `GET /api/items?categoryId={id}` |
-| Search | `GET /api/items?search={query}` |
-| Item card click | `GET /api/items/{id}` |
-| "Novo Item" → form submit | `POST /api/items` |
-| Edit item | `PUT /api/items/{id}` |
-| Deactivate item | `PATCH /api/items/{id}/deactivate` |
-| Add variant | `POST /api/items/{id}/variants` |
-| Edit variant | `PATCH /api/items/{id}/variants/{variantId}` |
-| Requisition list | `GET /api/requisitions` (staff sees all) |
+| Item grid (Escolar tab) | `GET /api/items?fromSchool=true&page=1&pageSize=12` |
+| Item grid (Comunidade tab) | `GET /api/items?fromSchool=false&page=1&pageSize=12` |
+| Category filter | `GET /api/item-categories` (populate dropdown) then re-call with `&categoryId={id}` |
+| Search | re-call with `&search={query}` |
+| Item card click → detail view | `GET /api/items/{id}` (returns images, variants, category) |
+| "Novo Item Escolar" → form submit | `POST /api/items/school` body: `{ name, description?, idCategory?, contactPhone?, contactEmail?, contactAddress? }` |
+| Edit item metadata | `PATCH /api/items/{id}` body: `{ name?, description?, idCategory?, contactPhone?, contactEmail?, contactAddress? }` |
+| Deactivate item (soft-delete) | `DELETE /api/items/{id}` |
+| Add image to item | `POST /api/items/{id}/images` body: `{ imageUrl }` |
+| Remove image from item | `DELETE /api/items/{id}/images/{imageId}` |
+| List variants | `GET /api/items/{id}/variants` |
+| Add variant | `POST /api/items/{id}/variants` body: `{ color?, size?, quantity, price? }` |
+| Edit variant (incl. activate/deactivate) | `PATCH /api/items/{id}/variants/{variantId}` body: `{ color?, size?, quantity?, price?, isActive? }` |
+| Delete variant (hard-delete, fails if active requisitions) | `DELETE /api/items/{id}/variants/{variantId}` |
+| Requisition list (Requisições tab) | `GET /api/requisitions` (staff sees all) |
 | Approve/reject requisition | `PATCH /api/requisitions/{id}/review` body: `{ approve, expectedReturnDate?, note? }` |
 | Record return | `PATCH /api/requisitions/{id}/return` body: `{ returnQuantity }` |
+
+### `/staff/blocked-periods` — Bloqueios
+
+| Element | Call |
+|---|---|
+| Page mount | `GET /api/auth/me` |
+| Monthly calendar — all blocked periods | `GET /api/blockedperiods?from={monthStart}&to={monthEnd}` |
+| Month navigation | re-calls with new `from`/`to` |
+| Scope filter dropdown (Estúdio, Professor, Feriado, etc.) | re-calls with `&scope={0-5}` |
+| Coach dropdown populate | `GET /api/coaches` |
+| Studio dropdown populate | `GET /api/studios` |
+| "Novo Bloqueio" → form submit | `POST /api/blockedperiods` body: `{ scope, startDatetime, endDatetime, reason?, idStudio?, idCoach? }` |
+| Edit blocked period | `PUT /api/blockedperiods/{id}` |
+| Delete blocked period | `DELETE /api/blockedperiods/{id}` |
+
+> Scope values: 0=Undefined, 1=NormalClass, 2=Studio, 3=Coach, 4=Event, 5=Holiday. Scope 0 (Indefinido) should NOT be selectable when creating — it's only a fallback value.
 
 ### `/staff/agenda` — Agenda Global
 
@@ -374,8 +395,18 @@ The header mounts once per session. It does NOT call an endpoint on every naviga
 | Search | re-call with `&search={query}` |
 | Pagination | `GET /api/ee/inventory/community?page={n}` |
 | "Ligar/Contactar" button | No API call — shows `contactPhone`/`contactEmail` from item card data |
-| "Anunciar Item" → form submit | `POST /api/items` body: `{ name, description, fromSchool: false, contactPhone?, contactEmail?, contactAddress?, idCategory? }` |
+| "Anunciar Item" → form submit | `POST /api/items/personal` body: `{ name, description?, contactPhone?, contactEmail?, contactAddress?, idCategory? }` |
 | "Itens Publicados" badge count | use `totalCount` from the community inventory response, filtered by `idOwner = me` |
+| **Own item management (owner only):** | |
+| Edit own community item | `PATCH /api/items/{id}` body: `{ name?, description?, ... }` (ownership checked server-side) |
+| Deactivate own community item | `DELETE /api/items/{id}` (ownership checked server-side) |
+| Add image to own item | `POST /api/items/{id}/images` body: `{ imageUrl }` |
+| Remove image from own item | `DELETE /api/items/{id}/images/{imageId}` |
+| Add variant to own item | `POST /api/items/{id}/variants` body: `{ color?, size?, quantity, price? }` |
+| Edit variant on own item | `PATCH /api/items/{id}/variants/{variantId}` body: `{ color?, size?, quantity?, price?, isActive? }` |
+| Delete variant on own item | `DELETE /api/items/{id}/variants/{variantId}` |
+
+> Note: Parents can only manage community items they own (`IdOwner` matches their user ID). The API returns 403 Forbidden if a parent tries to modify another user's item or a school item. Staff can manage all items regardless.
 
 ### `/ee/events` — Eventos (read-only)
 

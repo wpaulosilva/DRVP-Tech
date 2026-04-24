@@ -98,6 +98,7 @@ namespace DanceSchoolApp.Server.Services.Scheduling
 
             ValidateTimeRange(request.StartTime, request.EndTime);
             ValidateDateRange(request.ValidFrom, request.ValidUntil);
+            ValidateNotInPast(request.StartTime, request.ValidFrom);
 
             await CheckOverlapAsync(
                 request.CoachId,
@@ -135,6 +136,7 @@ namespace DanceSchoolApp.Server.Services.Scheduling
 
             ValidateTimeRange(request.StartTime, request.EndTime);
             ValidateDateRange(request.ValidFrom, request.ValidUntil);
+            ValidateNotInPast(request.StartTime, request.ValidFrom);
 
             await CheckOverlapAsync(
                 slot.IdCoach,       // coach doesn't change on update
@@ -177,6 +179,18 @@ namespace DanceSchoolApp.Server.Services.Scheduling
         {
             if (validFrom.HasValue && validUntil.HasValue && validUntil <= validFrom)
                 throw new ArgumentException("ValidUntil must be after ValidFrom.");
+        }
+
+        // Ensure the availability start (combination of ValidFrom or today and StartTime)
+        // is not in the past relative to UTC now. If ValidFrom is null the check uses
+        // today's date so creating a slot for earlier today will be rejected.
+        private static void ValidateNotInPast(TimeOnly startTime, DateOnly? validFrom)
+        {
+            var effectiveDate = validFrom ?? DateOnly.FromDateTime(DateTime.UtcNow);
+            var startDateTimeUtc = effectiveDate.ToDateTime(startTime, DateTimeKind.Utc);
+
+            if (startDateTimeUtc < DateTime.UtcNow)
+                throw new ArgumentException("Start time cannot be in the past.");
         }
 
         // Checks that the new/updated slot does not overlap an existing slot

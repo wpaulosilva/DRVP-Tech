@@ -1,11 +1,11 @@
 {
   "info": {
-    "_postman_id": "807893da-26e1-4916-939d-16c22344eb15",
+    "_postman_id": "fc1ddb28-56ba-4612-81b7-ba7870c633f6",
     "name": "DanceSchoolApp v2",
     "description": "FlowArtes / Ent'Artes Dance School API\n\n## Setup\n\n1. Select the **DanceSchoolApp** environment\n    \n2. Set `base_url` if needed (default: [https://localhost:7003](https://localhost:7003))\n    \n3. Run **POST Login** — the test script auto-saves `userId`, `roles`, and `expiresAt`\n    \n4. All requests use the shared cookie jar automatically (JWT is HttpOnly cookie)\n    \n\n## Variables\n\n- `base_url` — server base (change to switch between local/staging)\n    \n- `userId` — auto-set by Login\n    \n- `roles` — auto-set by Login\n    \n- `user_id`, `student_id`, `coach_id`, `class_id`, `participant_id`, `studio_id`, `modality_id`, `item_id` — set manually or auto-captured by POST scripts\n    \n\n## Status values\n\n- CoachClass: 0=Requested, 1=Approved, 2=Rejected, 3=Cancelled, 4=Finished, 5=Validated, 6=Pending, 7=StaffApproved\n    \n- StudentAcceptance: 0=Pending, 1=Accepted, 2=Rejected\n    \n- Roles: 0=Admin, 1=Staff, 2=Coach, 3=Parent",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "_exporter_id": "53613039",
-    "_collection_link": "https://go.postman.co/collection/53613039-807893da-26e1-4916-939d-16c22344eb15?source=collection_link"
+    "_exporter_id": "53613999",
+    "_collection_link": "https://go.postman.co/collection/53613999-fc1ddb28-56ba-4612-81b7-ba7870c633f6?source=collection_link"
   },
   "item": [
     {
@@ -3027,7 +3027,23 @@
                   "response": []
                 },
                 {
-                  "name": "POST Item",
+                  "name": "GET Item School",
+                  "request": {
+                    "method": "GET",
+                    "header": []
+                  },
+                  "response": []
+                },
+                {
+                  "name": "GET Item Community",
+                  "request": {
+                    "method": "GET",
+                    "header": []
+                  },
+                  "response": []
+                },
+                {
+                  "name": "POST Item School",
                   "event": [
                     {
                       "listen": "test",
@@ -3069,6 +3085,68 @@
                       ]
                     },
                     "description": "[staff]"
+                  },
+                  "response": []
+                },
+                {
+                  "name": "POST Item Personal",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "exec": [
+                          "if (pm.response.code === 201) {",
+                          "    pm.collectionVariables.set(\"item_id\", pm.response.json().itemId);",
+                          "}"
+                        ],
+                        "type": "text/javascript"
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n    \"name\": \"Ballet Shoes\",\n    \"description\": \"Pink satin ballet shoes\",\n    \"idCategory\": 1,\n    \"fromSchool\": true\n}",
+                      "options": {
+                        "raw": {
+                          "language": "json"
+                        }
+                      }
+                    },
+                    "url": {
+                      "raw": "{{base_url}}/api/items",
+                      "host": [
+                        "{{base_url}}"
+                      ],
+                      "path": [
+                        "api",
+                        "items"
+                      ]
+                    },
+                    "description": "[staff]"
+                  },
+                  "response": []
+                },
+                {
+                  "name": "PATCH Edit Item",
+                  "request": {
+                    "method": "GET",
+                    "header": []
+                  },
+                  "response": []
+                },
+                {
+                  "name": "DELETE Deactivate Item",
+                  "request": {
+                    "method": "GET",
+                    "header": []
                   },
                   "response": []
                 }
@@ -3264,6 +3342,35 @@
                       ]
                     },
                     "description": "[staff] note field stores defect description if item returned damaged."
+                  },
+                  "response": []
+                }
+              ]
+            },
+            {
+              "name": "Item Categories",
+              "item": [
+                {
+                  "name": "GET Item Categories",
+                  "request": {
+                    "method": "GET",
+                    "header": []
+                  },
+                  "response": []
+                },
+                {
+                  "name": "GET Item Categories by Id",
+                  "request": {
+                    "method": "GET",
+                    "header": []
+                  },
+                  "response": []
+                },
+                {
+                  "name": "POST Item Categories",
+                  "request": {
+                    "method": "GET",
+                    "header": []
                   },
                   "response": []
                 }
@@ -3558,20 +3665,12 @@
               "response": []
             },
             {
-              "name": "Get Student Info",
+              "name": "Student Info",
               "request": {
                 "method": "GET",
                 "header": [],
                 "url": {
-                  "raw": "{{base_url}}/api/students/5",
-                  "host": [
-                    "{{base_url}}"
-                  ],
-                  "path": [
-                    "api",
-                    "students",
-                    "5"
-                  ]
+                  "raw": ""
                 }
               },
               "response": []

@@ -1,14 +1,14 @@
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/useAuth'
+import NotificationButton from '../components/NotificationButton'
 
 function Topbar() {
     const { user, logout } = useAuth()
     const navigate = useNavigate()
 
-    const username = user?.username || 'Utilizador'
+    const username = user?.username || user?.Username || 'Utilizador'
 
     const handleLogout = async () => {
-   
         navigate('/')
         await logout()
     }
@@ -16,7 +16,6 @@ function Topbar() {
     return (
         <header className="dashboard-topbar">
             <div className="dashboard-brand">
-
                 <div>
                     <h1>Ent&apos;Artes</h1>
                     <span>Escola de Dança</span>
@@ -24,19 +23,23 @@ function Topbar() {
             </div>
 
             <div className="dashboard-topbar-right">
-                <div className="dashboard-user-pill">
-                    <div className="dashboard-user-avatar">
-                        {username.charAt(0).toUpperCase()}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <div className="dashboard-user-pill">
+                        <div className="dashboard-user-avatar">
+                            {username.charAt(0).toUpperCase()}
+                        </div>
+                        <span>{username}</span>
                     </div>
-                    <span>{username}</span>
-                </div>
 
-                <button
-                    className="dashboard-logout-btn"
-                    onClick={handleLogout}
-                >
-                    Sair
-                </button>
+                    <NotificationButton />
+
+                    <button
+                        className="dashboard-logout-btn"
+                        onClick={handleLogout}
+                    >
+                        Sair
+                    </button>
+                </div>
             </div>
         </header>
     )

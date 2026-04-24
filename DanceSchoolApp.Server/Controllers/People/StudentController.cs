@@ -123,7 +123,7 @@ namespace DanceSchoolApp.Server.Controllers.People
 
         // ─── PUT /api/students/{id} ───────────────────────────────────────────
         // Parent use — updates PersonInfo fields only (does NOT reset AcceptanceStatus).
-        [Authorize(Roles = "parent")]
+        [Authorize(Roles = "staff")]
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateStudentPersonInfo(
             int id, [FromBody] StudentUpdateRequest request)

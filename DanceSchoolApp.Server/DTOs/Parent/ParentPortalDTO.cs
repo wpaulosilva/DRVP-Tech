@@ -2,6 +2,7 @@ using DanceSchoolApp.Server.DTOs.Classes;
 
 namespace DanceSchoolApp.Server.DTOs.Parent
 {
+
     // ─── Dashboard ────────────────────────────────────────────────────────────
 
     public class ParentDashboardResponse
@@ -42,16 +43,19 @@ namespace DanceSchoolApp.Server.DTOs.Parent
 
     // ─── Validate ─────────────────────────────────────────────────────────────
 
+    // One entry per CLASS (not per participant). Contains all of the parent's
+    // students enrolled in that class, each with their current validation status.
     public class ParentValidateItem
     {
-        public int ParticipantId { get; set; }
         public int ClassId { get; set; }
         public string ModalityName { get; set; } = null!;
-        public string StudentName { get; set; } = null!;
         public DateTime StartDatetime { get; set; }
+        public DateTime EndDatetime { get; set; }
         public string CoachName { get; set; } = null!;
         public DateTime ExpiresAt { get; set; }            // StartDatetime + 48h, computed
-        public byte ValidationStatus { get; set; }
+        public int MaxParticipants { get; set; }
+        public string CreatedByName { get; set; } = null!;
+        public List<ParticipantSummaryItem> Participants { get; set; } = new();
     }
 
     // ─── Students ─────────────────────────────────────────────────────────────

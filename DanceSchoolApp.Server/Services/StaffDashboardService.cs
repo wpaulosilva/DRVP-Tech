@@ -148,6 +148,10 @@ namespace DanceSchoolApp.Server.Services
                 .Include(c => c.Participants)
                     .ThenInclude(p => p.IdStudentNavigation)
                         .ThenInclude(s => s.PersonInfo)
+                .Include(c => c.Participants)
+                    .ThenInclude(p => p.IdStudentNavigation)
+                        .ThenInclude(s => s.ParentUser)
+                            .ThenInclude(u => u.PersonInfo)
                 .Where(c => c.Status == statusByte);
 
             var total = await dbQuery.CountAsync();
@@ -167,11 +171,9 @@ namespace DanceSchoolApp.Server.Services
                     ModalityName          = c.IdModalityNavigation.Name,
                     StartDatetime         = c.StartDatetime,
                     EndDatetime           = c.EndDatetime,
+                    MaxParticipants       = c.MaxParticipants,
                     DurationMinutes       = (int)(c.EndDatetime - c.StartDatetime).TotalMinutes,
                     CoachName             = ResolveCoachName(c.IdCoachNavigation),
-                    StudentNames          = parts
-                        .Select(p => ResolveStudentName(p.IdStudentNavigation))
-                        .ToList(),
                     ParentName            = ResolveUserName(c.CreatedByNavigation),
                     CoachValidationStatus = c.CoachValidationStatus,
                     ParticipantSummary    = new ParticipantSummaryDto
@@ -180,7 +182,16 @@ namespace DanceSchoolApp.Server.Services
                         Confirmed = parts.Count(p => p.ValidationStatus == 1),
                         Disputed  = parts.Count(p => p.ValidationStatus == 2),
                         Pending   = parts.Count(p => p.ValidationStatus == 0)
-                    }
+                    },
+                    Participants          = parts.Select(p => new ParticipantSummaryItem
+                    {
+                        ParticipantId    = p.ParticipantId,
+                        StudentName      = ResolveStudentName(p.IdStudentNavigation),
+                        ValidationStatus = p.ValidationStatus,
+                        ParentName       = p.IdStudentNavigation.ParentUser is not null
+                            ? ResolveUserName(p.IdStudentNavigation.ParentUser)
+                            : null
+                    }).ToList()
                 };
             }).ToList();
 

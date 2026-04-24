@@ -17,7 +17,7 @@ namespace DanceSchoolApp.Server.Services.Social
 
         // ─── Queries ──────────────────────────────────────────────────────────
 
-        public async Task<PagedResult<NotificationResponse>> GetByUserAsync(int userId, PagedQuery query)
+        public async Task<NotificationPagedResult> GetByUserAsync(int userId, PagedQuery query)
         {
             bool userExists = await _context.Users
                 .AnyAsync(u => u.UserId == userId);
@@ -29,6 +29,7 @@ namespace DanceSchoolApp.Server.Services.Social
                 .Where(n => n.IdUser == userId && (n.IsDeleted == null || n.IsDeleted == false));
 
             var total = await dbQuery.CountAsync();
+            var totalUnread = await dbQuery.CountAsync(n => n.ReadAt == null);
 
             var items = await dbQuery
                 .OrderByDescending(n => n.CreatedAt)
@@ -37,10 +38,11 @@ namespace DanceSchoolApp.Server.Services.Social
                 .Select(n => MapToResponse(n))
                 .ToListAsync();
 
-            return new PagedResult<NotificationResponse>
+            return new NotificationPagedResult
             {
                 Items = items,
                 TotalCount = total,
+                TotalUnread = totalUnread,
                 Page = query.Page,
                 PageSize = query.PageSize
             };

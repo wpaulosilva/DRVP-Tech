@@ -25,6 +25,23 @@ namespace DanceSchoolApp.Server.Services.Inventory
                 }).ToListAsync();
         }
 
+        public async Task<ItemCategorySummaryResponse> GetByIdAsync(int id)
+        {
+            var category = await _context.ItemCategories
+                .Where(c => c.CategoryId == id && c.IsActive)
+                .Select(c => new ItemCategorySummaryResponse
+                {
+                    CategoryId = c.CategoryId,
+                    CatgName = c.CatgName
+                })
+                .FirstOrDefaultAsync();
+
+            if (category is null)
+                throw new KeyNotFoundException($"Category with id {id} was not found.");
+
+            return category;
+        }
+
         public async Task<int> CreateAsync(ItemCategoryCreateRequest request)
         {
             bool exists = await _context.ItemCategories

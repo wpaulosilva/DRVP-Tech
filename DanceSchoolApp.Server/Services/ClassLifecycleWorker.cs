@@ -128,6 +128,7 @@ namespace DanceSchoolApp.Server.Services
         // ── Rule 2: Finished → Pending (window expired) ───────────────────────
         // Any Finished class where FinishedAt + validation_window_hours <= now
         // is forced to Pending so staff can still do final sign-off.
+        // Staff notifications include the names of everyone who failed to respond.
         private static async Task AutoAdvanceExpiredFinishedClassesAsync(
             AppDbContext db,
             NotificationService notifications,
@@ -139,6 +140,13 @@ namespace DanceSchoolApp.Server.Services
             var cutoff = now.AddHours(-windowHours);
 
             var classes = await db.CoachClasses
+                .Include(c => c.IdCoachNavigation)
+                    .ThenInclude(coach => coach.CoachNavigation)
+                        .ThenInclude(u => u.PersonInfo)
+                .Include(c => c.Participants)
+                    .ThenInclude(p => p.IdStudentNavigation)
+                        .ThenInclude(s => s.ParentUser)
+                            .ThenInclude(u => u.PersonInfo)
                 .Where(c =>
                     c.Status == (byte)CoachClassStatus.Finished &&
                     c.FinishedAt != null &&
@@ -155,7 +163,41 @@ namespace DanceSchoolApp.Server.Services
 
             foreach (var cls in classes)
             {
+                
                 cls.Status = (byte)CoachClassStatus.Pending;
+
+                // Build list of individuals who did not submit a validation response.
+                var nonRespondents = new List<string>();
+
+                if (cls.CoachValidationStatus == (byte)CoachValidationStatus.Pending)
+                {
+                    var coachPerson = cls.IdCoachNavigation?.CoachNavigation?.PersonInfo;
+                    var coachName   = coachPerson is not null
+                        ? $"{coachPerson.FirstName} {coachPerson.LastName}".Trim()
+                        : cls.IdCoachNavigation?.CoachNavigation?.Username
+                          ?? $"Coach #{cls.IdCoach}";
+                    nonRespondents.Add($"Coach: {coachName}");
+                }
+
+                var silentParents = cls.Participants
+                    .Where(p => p.ValidationStatus == 0)   // ParticipantValidationStatus.Pending
+                    .Select(p => p.IdStudentNavigation?.ParentUser)
+                    .Where(u => u is not null)
+                    .DistinctBy(u => u!.UserId)
+                    .ToList();
+
+                foreach (var parent in silentParents)
+                {
+                    var pi = parent!.PersonInfo;
+                    var name = pi is not null
+                        ? $"{pi.FirstName} {pi.LastName}".Trim()
+                        : parent.Username;
+                    nonRespondents.Add($"EE: {name}");
+                }
+
+                var nonRespondersSummary = nonRespondents.Count > 0
+                    ? $" Sem resposta: {string.Join(", ", nonRespondents)}."
+                    : string.Empty;
 
                 foreach (var staffId in staffIds)
                 {
@@ -163,8 +205,8 @@ namespace DanceSchoolApp.Server.Services
                         userId: staffId,
                         title: "Validation Window Expired",
                         message: $"The 48-hour validation window for class id {cls.ClassId} " +
-                                 $"(scheduled {cls.StartDatetime:dd/MM/yyyy HH:mm}) has expired. " +
-                                 "Not all parties responded — manual review required.",
+                                 $"(scheduled {cls.StartDatetime:dd/MM/yyyy HH:mm}) has expired." +
+                                 nonRespondersSummary,
                         type: NotificationType.Warning,
                         entityType: "CoachClass",
                         entityId: cls.ClassId);
