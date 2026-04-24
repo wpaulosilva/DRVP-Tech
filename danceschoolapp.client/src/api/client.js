@@ -52,6 +52,6 @@ export function patch(url, body) {
     })
 }
 
-export function del(url) {
+export function del(url) { 
     return request(url, { method: 'DELETE' })
 }

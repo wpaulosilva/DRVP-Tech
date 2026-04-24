@@ -33,6 +33,9 @@ public class CoachClassCreateTests
 
         var coachUser  = SeedData.SeedUserWithRole(db, "coach1", "coach");
         var coach      = SeedData.SeedCoach(db, coachUser);
+        // Ensure coach teaches the modality used in tests
+        coach.IdModalities.Add(modality);
+        db.SaveChanges();
         var parentUser = SeedData.SeedUserWithRole(db, "parent1", "parent");
         var student    = SeedData.SeedStudent(db, parentUser);
 

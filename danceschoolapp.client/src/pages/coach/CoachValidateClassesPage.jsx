@@ -34,11 +34,6 @@ function CoachValidateClassesPage() {
         }
     }
 
-    // On mount, silently pre-fetch the validations count so the tab badge
-    // is populated immediately. The active tab data is loaded by the
-    // useEffect below — do NOT call fetchAulas here to avoid a race where
-    // init() finishes after the user has already switched tabs and overwrites
-    // the wrong data into aulas.
     useEffect(() => {
         const prefetchValidationsCount = async () => {
             try {
@@ -48,7 +43,9 @@ function CoachValidateClassesPage() {
                     ...prev,
                     validations: other?.ValidationsCount ?? other?.validationsCount ?? other?.totalCount ?? otherData.length,
                 }))
-            } catch { /* ignore */ }
+            } catch {
+                // ignore
+            }
         }
         prefetchValidationsCount()
     }, [])
@@ -61,7 +58,9 @@ function CoachValidateClassesPage() {
         try {
             await coachAccept(id)
             fetchAulas(activeTab)
-        } catch (e) { console.error(e) }
+        } catch (e) {
+            console.error(e)
+        }
     }
 
     const openRejectModal = (id) => {
@@ -74,6 +73,7 @@ function CoachValidateClassesPage() {
         e.preventDefault()
         const id = rejectTarget?.ClassId ?? rejectTarget?.classId ?? rejectTarget?.id
         if (!id) return
+
         setRejecting(true)
         try {
             await coachReject(id, rejectReason || undefined)
@@ -91,7 +91,9 @@ function CoachValidateClassesPage() {
         try {
             await coachValidate(id, didTeach)
             fetchAulas(activeTab)
-        } catch (e) { console.error(e) }
+        } catch (e) {
+            console.error(e)
+        }
     }
 
     const isRequests = activeTab === 'requests'
@@ -101,7 +103,6 @@ function CoachValidateClassesPage() {
             <h2>Validar Aulas</h2>
             <p>Aceite pedidos de aula aprovados pela direção e valide aulas pendentes após o prazo de 48h.</p>
 
-            {/* KPI cards */}
             <div className="validate-kpi-row" style={{ marginTop: '20px' }}>
                 <div className="validate-kpi">
                     <span className="validate-kpi-label">Pedidos por aceitar</span>
@@ -117,7 +118,6 @@ function CoachValidateClassesPage() {
                 </div>
             </div>
 
-            {/* Tabs */}
             <div className="validate-tabs">
                 <button
                     type="button"
@@ -135,7 +135,6 @@ function CoachValidateClassesPage() {
                 </button>
             </div>
 
-            {/* Content */}
             {loading && (
                 <div className="validate-empty">
                     <p>Carregando...</p>
@@ -154,40 +153,64 @@ function CoachValidateClassesPage() {
                 </div>
             )}
 
-            {!loading && aulas.map(aula => (
-                <ClassValidationCard
-                    key={aula.ClassId ?? aula.classId ?? aula.id}
-                    aula={aula}
-                    tipo={isRequests ? 'coach-request' : 'professor'}
-                    variant={isRequests ? 'purple' : 'orange'}
-                    showParticipants
-                    showCoachValidation={!isRequests}
-                    showParentTally={!isRequests}
-                    onConfirm={(id) => isRequests ? handleAccept(id) : handleValidar(id, true)}
-                    onReject={(id) => isRequests ? openRejectModal(id) : handleValidar(id, false)}
-                    confirmLabel={isRequests ? 'Aceitar Aula' : 'Realizada'}
-                    rejectLabel={isRequests ? 'Recusar' : 'Não realizada'}
-                />
-            ))}
+            {!loading && aulas.map(aula => {
+                const classId = aula.ClassId ?? aula.classId ?? aula.id
 
-            {/* Reject Modal */}
+                return (
+                    <ClassValidationCard
+                        key={classId}
+                        aula={aula}
+                        tipo={isRequests ? 'coach-request' : 'professor'}
+                        variant={isRequests ? 'purple' : 'orange'}
+                        showParticipants
+                        showCoachValidation={!isRequests}
+                        showParentTally={!isRequests}
+                        onConfirm={() => isRequests ? handleAccept(classId) : handleValidar(classId, true)}
+                        onReject={() => isRequests ? openRejectModal(classId) : handleValidar(classId, false)}
+                        confirmLabel={isRequests ? 'Aceitar Aula' : 'Realizada'}
+                        rejectLabel={isRequests ? 'Recusar' : 'Não realizada'}
+                    />
+                )
+            })}
+
             <Modal
                 open={!!rejectTarget}
                 title="Recusar pedido de aula"
-                onClose={() => { setRejectTarget(null); setRejectReason('') }}
+                onClose={() => {
+                    setRejectTarget(null)
+                    setRejectReason('')
+                }}
             >
                 <form onSubmit={submitReject}>
                     {rejectTarget && (
                         <div className="reject-class-summary">
-                            <div>Modalidade: {rejectTarget?.ModalityName ?? rejectTarget?.modalityName ?? rejectTarget?.Modality ?? rejectTarget?.modality ?? '\u2014'}</div>
-                            <div>Data: {rejectTarget?.StartDatetime ?? rejectTarget?.startDatetime ? new Date(rejectTarget.StartDatetime ?? rejectTarget.startDatetime).toLocaleString('pt-PT') : '\u2014'}</div>
-                            <div>Alunos: {(rejectTarget?.Participants ?? rejectTarget?.participants ?? []).length}/{rejectTarget?.MaxParticipants ?? rejectTarget?.maxParticipants ?? '?'}</div>
+                            <div>
+                                Modalidade: {rejectTarget?.ModalityName ?? rejectTarget?.modalityName ?? rejectTarget?.Modality ?? rejectTarget?.modality ?? '\u2014'}
+                            </div>
+                            <div>
+                                Data: {rejectTarget?.StartDatetime ?? rejectTarget?.startDatetime
+                                    ? new Date(rejectTarget.StartDatetime ?? rejectTarget.startDatetime).toLocaleString('pt-PT')
+                                    : '\u2014'}
+                            </div>
+                            <div>
+                                Alunos: {(rejectTarget?.Participants ?? rejectTarget?.participants ?? []).length}/
+                                {rejectTarget?.MaxParticipants ?? rejectTarget?.maxParticipants ?? '?'}
+                            </div>
                         </div>
                     )}
 
-                    <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.92rem', fontWeight: 600, color: '#475569' }}>
+                    <label
+                        style={{
+                            display: 'block',
+                            marginBottom: '8px',
+                            fontSize: '0.92rem',
+                            fontWeight: 600,
+                            color: '#475569',
+                        }}
+                    >
                         Motivo *
                     </label>
+
                     <textarea
                         required
                         rows={4}
@@ -201,7 +224,10 @@ function CoachValidateClassesPage() {
                         <button
                             type="button"
                             className="btn btn-secondary"
-                            onClick={() => { setRejectTarget(null); setRejectReason('') }}
+                            onClick={() => {
+                                setRejectTarget(null)
+                                setRejectReason('')
+                            }}
                         >
                             Voltar
                         </button>
