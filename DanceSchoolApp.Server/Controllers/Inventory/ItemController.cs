@@ -27,17 +27,38 @@ namespace DanceSchoolApp.Server.Controllers.Inventory
             User.IsInRole("staff");
 
         /// <summary>
-        /// Staff may manage any item. Parents may only manage their own
-        /// community items. Throws <see cref="UnauthorizedAccessException"/>
-        /// when the caller has no right to modify the item.
+        /// Garante que o caller pode GERIR (criar/editar) o item.
+        /// Staff só pode em itens da escola.
+        /// Parent só pode nos seus próprios itens.
         /// </summary>
         private async Task EnsureCanManageItem(int itemId)
+        {
+            if (IsStaff())
+            {
+                var isSchoolItem = await _itemService.IsSchoolItemAsync(itemId);
+                if (!isSchoolItem)
+                    throw new UnauthorizedAccessException(
+                        "Staff can only manage school items, not personal items from parents.");
+                return;
+            }
+
+            if (!await _itemService.IsItemOwnerAsync(itemId, GetUserId()))
+                throw new UnauthorizedAccessException(
+                    "You can only manage your own community items.");
+        }
+
+        /// <summary>
+        /// Garante que o caller pode DESATIVAR/MODIFICAR o item ou as suas variants.
+        /// Staff pode em qualquer item (escola e parent).
+        /// Parent só pode nos seus próprios itens.
+        /// </summary>
+        private async Task EnsureCanDeactivateItem(int itemId)
         {
             if (IsStaff()) return;
 
             if (!await _itemService.IsItemOwnerAsync(itemId, GetUserId()))
                 throw new UnauthorizedAccessException(
-                    "You can only manage your own community items.");
+                    "You can only deactivate your own items.");
         }
 
         // ═══════════════════════════════════════════════════════════════════════
@@ -239,7 +260,7 @@ namespace DanceSchoolApp.Server.Controllers.Inventory
         {
             try
             {
-                await EnsureCanManageItem(id);
+                await EnsureCanDeactivateItem(id);
                 await _itemService.DeactivateItemAsync(id);
                 return NoContent();
             }
@@ -298,7 +319,7 @@ namespace DanceSchoolApp.Server.Controllers.Inventory
         {
             try
             {
-                await EnsureCanManageItem(id);
+                await EnsureCanDeactivateItem(id);
                 await _itemService.RemoveImageAsync(id, imageId);
                 return NoContent();
             }
@@ -374,8 +395,8 @@ namespace DanceSchoolApp.Server.Controllers.Inventory
         }
 
         // ─── PATCH /api/items/{id}/variants/{variantId} ───────────────────────
-        /// <summary>Staff or item owner updates a variant (including activate/deactivate).</summary>
-        [HttpPatch("{id}/variants/{variantId}")]
+        /// <summary>Staff updates school variants. Parent updates their own variants.</summary>
+        [HttpPatch("{id:int}/variants/{variantId:int}")]
         [Authorize(Roles = "staff,parent")]
         public async Task<IActionResult> UpdateVariant(int id, int variantId, [FromBody] ItemVariantUpdateRequest request)
         {
@@ -384,7 +405,7 @@ namespace DanceSchoolApp.Server.Controllers.Inventory
 
             try
             {
-                await EnsureCanManageItem(id);
+                await EnsureCanManageItem(id); // staff só escola, parent só seus
                 await _itemService.UpdateVariantAsync(id, variantId, request);
                 return NoContent();
             }
@@ -403,14 +424,14 @@ namespace DanceSchoolApp.Server.Controllers.Inventory
         }
 
         // ─── DELETE /api/items/{id}/variants/{variantId} ──────────────────────
-        /// <summary>Staff or item owner hard-deletes a variant (if no active requisitions).</summary>
-        [HttpDelete("{id}/variants/{variantId}")]
+        /// <summary>Staff elimina qualquer variant. Parent só as suas.</summary>
+        [HttpDelete("{id:int}/variants/{variantId:int}")]
         [Authorize(Roles = "staff,parent")]
         public async Task<IActionResult> DeleteVariant(int id, int variantId)
         {
             try
             {
-                await EnsureCanManageItem(id);
+                await EnsureCanDeactivateItem(id); // staff pode em qualquer, parent só seus
                 await _itemService.DeleteVariantAsync(id, variantId);
                 return NoContent();
             }

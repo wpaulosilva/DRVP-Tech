@@ -348,5 +348,16 @@ namespace DanceSchoolApp.Server.Services.Inventory
                 IsActive = v.IsActive
             }).ToList()
         };
+        public async Task<bool> IsSchoolItemAsync(int itemId)
+        {
+            var item = await _context.Items
+                .AsNoTracking()
+                .FirstOrDefaultAsync(i => i.ItemId == itemId);
+
+            if (item is null)
+                throw new KeyNotFoundException($"Item with id {itemId} was not found.");
+
+            return item.FromSchool;
+        }
     }
 }
