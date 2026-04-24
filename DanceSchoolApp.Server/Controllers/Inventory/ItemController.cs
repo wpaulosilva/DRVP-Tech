@@ -3,7 +3,11 @@ using DanceSchoolApp.Server.DTOs.Inventory;
 using DanceSchoolApp.Server.Services.Inventory;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using System.Security.Claims;
+using System.IO;
+using System;
 
 namespace DanceSchoolApp.Server.Controllers.Inventory
 {
@@ -16,6 +20,55 @@ namespace DanceSchoolApp.Server.Controllers.Inventory
         public ItemController(ItemService itemService)
         {
             _itemService = itemService;
+        }
+
+        // ─── POST /api/items/{id}/images/file ─────────────────────────────────
+        /// <summary>Staff or item owner uploads an image file to an item. Saves file to wwwroot/uploads/items and creates an ItemImage record.</summary>
+        [HttpPost("{id:int}/images/file")]
+        [Authorize(Roles = "staff,parent")]
+        public async Task<IActionResult> AddImageFile(int id, [FromForm] IFormFile file)
+        {
+            if (file == null || file.Length == 0)
+                return BadRequest("No file provided.");
+
+            var permitted = new[] { ".jpg", ".jpeg", ".png", ".gif" };
+            var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
+            if (string.IsNullOrEmpty(ext) || !permitted.Contains(ext))
+                return BadRequest("Invalid file type.");
+
+            // save to wwwroot/uploads/items
+            var env = HttpContext.RequestServices.GetRequiredService<IWebHostEnvironment>();
+            var webroot = env.WebRootPath ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
+            var uploads = Path.Combine(webroot, "uploads", "items");
+            if (!Directory.Exists(uploads)) Directory.CreateDirectory(uploads);
+
+            var fileName = $"{Guid.NewGuid()}{ext}";
+            var filePath = Path.Combine(uploads, fileName);
+
+            using (var stream = System.IO.File.Create(filePath))
+            {
+                await file.CopyToAsync(stream);
+            }
+
+            var relativePath = $"/uploads/items/{fileName}";
+
+            try
+            {
+                var imageId = await _itemService.AddImageFromFileAsync(id, relativePath);
+                return CreatedAtAction(nameof(GetItem), new { id }, new { imageId });
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Forbid(ex.Message);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+            }
         }
 
         // ─── Helpers ──────────────────────────────────────────────────────────────
@@ -227,31 +280,71 @@ namespace DanceSchoolApp.Server.Controllers.Inventory
         // IMAGES  –  /api/items/{id}/images
         // ═══════════════════════════════════════════════════════════════════════
 
-        // ─── POST /api/items/{id}/images ──────────────────────────────────────
-        /// <summary>Staff or item owner adds an image to an item.</summary>
-        [HttpPost("{id:int}/images")]
+        // ─── POST /api/items/{id}/image ─────────────────────────────────────
+        [HttpPost("{id:int}/image")]
         [Authorize(Roles = "staff,parent")]
-        public async Task<IActionResult> AddImage(int id, [FromBody] ItemImageAddRequest request)
+        public async Task<IActionResult> UploadImage(int id, [FromForm] IFormFile file)
         {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
+            if (file == null || file.Length == 0)
+                return BadRequest("No file provided.");
+
+            var permitted = new[] { ".jpg", ".jpeg", ".png", ".gif" };
+            var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
+
+            if (string.IsNullOrEmpty(ext) || !permitted.Contains(ext))
+                return BadRequest("Invalid file type.");
+
+            string? filePath = null;
 
             try
             {
                 await EnsureCanManageItem(id);
-                var imageId = await _itemService.AddImageAsync(id, request);
-                return CreatedAtAction(nameof(GetItem), new { id }, new { imageId });
+
+                var env = HttpContext.RequestServices.GetRequiredService<IWebHostEnvironment>();
+                var webroot = env.WebRootPath ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
+
+                var itemFolder = Path.Combine(webroot, "uploads", "item");
+
+                if (!Directory.Exists(itemFolder))
+                    Directory.CreateDirectory(itemFolder);
+
+                var fileName = $"{Guid.NewGuid()}{ext}";
+                filePath = Path.Combine(itemFolder, fileName);
+
+                using (var stream = System.IO.File.Create(filePath))
+                {
+                    await file.CopyToAsync(stream);
+                }
+
+                var relativePath = $"/uploads/item/{fileName}";
+
+                var imageId = await _itemService.AddImageFromFileAsync(id, relativePath);
+
+                return Ok(new
+                {
+                    imageId,
+                    path = relativePath
+                });
             }
             catch (UnauthorizedAccessException ex)
             {
+                if (filePath != null && System.IO.File.Exists(filePath))
+                    System.IO.File.Delete(filePath);
+
                 return Forbid(ex.Message);
             }
             catch (KeyNotFoundException ex)
             {
+                if (filePath != null && System.IO.File.Exists(filePath))
+                    System.IO.File.Delete(filePath);
+
                 return NotFound(ex.Message);
             }
             catch (Exception ex)
             {
+                if (filePath != null && System.IO.File.Exists(filePath))
+                    System.IO.File.Delete(filePath);
+
                 return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
         }

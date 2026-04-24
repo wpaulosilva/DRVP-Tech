@@ -141,10 +141,30 @@ namespace DanceSchoolApp.Server.Services.Inventory
             if (!exists)
                 throw new KeyNotFoundException($"Item with id {itemId} was not found.");
 
+            // Ensure we store only relative path (already expected by client)
             var image = new ItemImage
             {
                 IdItem = itemId,
-                ImageUrl = request.ImageUrl
+                ImageUrl = request.ImageUrl?.Trim()
+            };
+
+            _context.ItemImages.Add(image);
+            await _context.SaveChangesAsync();
+
+            return image.ImageId;
+        }
+
+        public async Task<int> AddImageFromFileAsync(int itemId, string relativePath)
+        {
+            var exists = await _context.Items.AnyAsync(i => i.ItemId == itemId);
+
+            if (!exists)
+                throw new KeyNotFoundException($"Item with id {itemId} was not found.");
+
+            var image = new ItemImage
+            {
+                IdItem = itemId,
+                ImageUrl = relativePath.Trim()
             };
 
             _context.ItemImages.Add(image);

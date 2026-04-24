@@ -178,6 +178,12 @@ namespace DanceSchoolApp.Server.DTOs.Inventory
         public string ImageUrl { get; set; } = null!;
     }
 
+    // Upload response used by upload endpoint
+    public class UploadResultResponse
+    {
+        public string Path { get; set; } = null!; // relative path to saved file (e.g. /uploads/abc.jpg)
+    }
+
     // ─── ItemRequisition Responses ───────────────────────────────────────────────
 
     public class ItemRequisitionListResponse
