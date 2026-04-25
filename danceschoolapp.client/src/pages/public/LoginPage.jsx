@@ -1,8 +1,9 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+//import { useNavigate } from 'react-router-dom'
 import '../../styles/LoginPage.css'
 import logo from '../../assets/logo-entartes.png'
 import { useAuth } from '../../context/useAuth'
+import { Link, useNavigate } from 'react-router-dom'
 
 function LoginPage() {
     const [email, setEmail] = useState('')
@@ -103,7 +104,11 @@ function LoginPage() {
                             required
                         />
                     </div>
-
+                    <div className="login-links">
+                        <Link to="/forgot-password">
+                            Esqueceste-te da palavra-passe?
+                        </Link>
+                    </div>
                     <button
                         type="submit"
                         className="login-btn"

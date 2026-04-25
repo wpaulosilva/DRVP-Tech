@@ -6,6 +6,8 @@ import DashboardLayout from './layouts/DashboardLayout'
 import HomePage from './pages/public/HomePage'
 import LoginPage from './pages/public/LoginPage'
 import UnauthorizedPage from './pages/public/UnauthorizedPage'
+import ForgotPasswordPage from './pages/public/ForgotPasswordPage'
+import ResetPasswordPage from './pages/public/ResetPasswordPage'
 
 // Admin
 import AdminDashboardPage from './pages/admin/AdminDashboardPage'
@@ -47,6 +49,8 @@ function App() {
 
             <Route element={<AppLayout simple />}>
                 <Route path="/login" element={<LoginPage />} />
+                <Route path="/reset-password" element={<ResetPasswordPage />} />
+                <Route path="/forgot-password" element={<ForgotPasswordPage />} />
                 <Route path="/unauthorized" element={<UnauthorizedPage />} />
             </Route>
 
