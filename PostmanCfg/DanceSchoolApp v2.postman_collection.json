@@ -3075,7 +3075,20 @@
                   "name": "GET Item by Categories",
                   "request": {
                     "method": "GET",
-                    "header": []
+                    "header": [],
+                    "url": {
+                      "raw": "{{base_url}}/api/items/{source}/category/1",
+                      "host": [
+                        "{{base_url}}"
+                      ],
+                      "path": [
+                        "api",
+                        "items",
+                        "{source}",
+                        "category",
+                        "1"
+                      ]
+                    }
                   },
                   "response": []
                 },
@@ -3394,7 +3407,7 @@
                   "response": []
                 },
                 {
-                  "name": "PATCH Requisition Approve",
+                  "name": "PATCH Requisition Validation",
                   "request": {
                     "method": "PATCH",
                     "header": [
@@ -3405,7 +3418,7 @@
                     ],
                     "body": {
                       "mode": "raw",
-                      "raw": "{\n    \"expectedReturnDate\": \"2026-05-21\"\n}",
+                      "raw": "{\n    \"Approve\": false,\n    \"expectedReturnDate\": \"2026-05-21\"\n}",
                       "options": {
                         "raw": {
                           "language": "json"
@@ -3413,53 +3426,18 @@
                       }
                     },
                     "url": {
-                      "raw": "{{base_url}}/api/itemrequisitions/{{requisition_id}}/approve",
+                      "raw": "{{base_url}}/api/requisitions/1/review",
                       "host": [
                         "{{base_url}}"
                       ],
                       "path": [
                         "api",
-                        "itemrequisitions",
-                        "{{requisition_id}}",
-                        "approve"
+                        "requisitions",
+                        "1",
+                        "review"
                       ]
                     },
                     "description": "[staff] Staff sets expectedReturnDate when approving."
-                  },
-                  "response": []
-                },
-                {
-                  "name": "PATCH Requisition Reject",
-                  "request": {
-                    "method": "PATCH",
-                    "header": [
-                      {
-                        "key": "Content-Type",
-                        "value": "application/json"
-                      }
-                    ],
-                    "body": {
-                      "mode": "raw",
-                      "raw": "{\n    \"reason\": \"Item not available during that period.\"\n}",
-                      "options": {
-                        "raw": {
-                          "language": "json"
-                        }
-                      }
-                    },
-                    "url": {
-                      "raw": "{{base_url}}/api/itemrequisitions/{{requisition_id}}/reject",
-                      "host": [
-                        "{{base_url}}"
-                      ],
-                      "path": [
-                        "api",
-                        "itemrequisitions",
-                        "{{requisition_id}}",
-                        "reject"
-                      ]
-                    },
-                    "description": "[staff]"
                   },
                   "response": []
                 },
