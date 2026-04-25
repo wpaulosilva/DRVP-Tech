@@ -75,7 +75,6 @@ namespace DanceSchoolApp.Server.Controllers.Inventory
         {
             try
             {
-                //var result = await _itemService.GetItemsAsync(fromSchool, ownerId: null, query ?? new PagedQuery());
                 var result = await _itemService.GetItemsAsync(fromSchool, query ?? new PagedQuery());
 
                 if (result.TotalCount == 0)
@@ -117,7 +116,6 @@ namespace DanceSchoolApp.Server.Controllers.Inventory
         {
             try
             {
-                //var result = await _itemService.GetItemsAsync(fromSchool: true, ownerId: null, query ?? new PagedQuery());
                 var result = await _itemService.GetItemsAsync(true, query ?? new PagedQuery());
 
                 if (result.TotalCount == 0)
@@ -139,7 +137,6 @@ namespace DanceSchoolApp.Server.Controllers.Inventory
         {
             try
             {
-                //var result = await _itemService.GetItemsAsync(fromSchool: false, ownerId: null, query ?? new PagedQuery());
                 var result = await _itemService.GetItemsAsync(false, query ?? new PagedQuery());
 
                 if (result.TotalCount == 0)
