@@ -22,55 +22,6 @@ namespace DanceSchoolApp.Server.Controllers.Inventory
             _itemService = itemService;
         }
 
-        // ─── POST /api/items/{id}/images/file ─────────────────────────────────
-        /// <summary>Staff or item owner uploads an image file to an item. Saves file to wwwroot/uploads/items and creates an ItemImage record.</summary>
-        [HttpPost("{id:int}/images/file")]
-        [Authorize(Roles = "staff,parent")]
-        public async Task<IActionResult> AddImageFile(int id, [FromForm] IFormFile file)
-        {
-            if (file == null || file.Length == 0)
-                return BadRequest("No file provided.");
-
-            var permitted = new[] { ".jpg", ".jpeg", ".png", ".gif" };
-            var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
-            if (string.IsNullOrEmpty(ext) || !permitted.Contains(ext))
-                return BadRequest("Invalid file type.");
-
-            // save to wwwroot/uploads/items
-            var env = HttpContext.RequestServices.GetRequiredService<IWebHostEnvironment>();
-            var webroot = env.WebRootPath ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
-            var uploads = Path.Combine(webroot, "uploads", "items");
-            if (!Directory.Exists(uploads)) Directory.CreateDirectory(uploads);
-
-            var fileName = $"{Guid.NewGuid()}{ext}";
-            var filePath = Path.Combine(uploads, fileName);
-
-            using (var stream = System.IO.File.Create(filePath))
-            {
-                await file.CopyToAsync(stream);
-            }
-
-            var relativePath = $"/uploads/items/{fileName}";
-
-            try
-            {
-                var imageId = await _itemService.AddImageFromFileAsync(id, relativePath);
-                return CreatedAtAction(nameof(GetItem), new { id }, new { imageId });
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                return Forbid(ex.Message);
-            }
-            catch (KeyNotFoundException ex)
-            {
-                return NotFound(ex.Message);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
-            }
-        }
-
         // ─── Helpers ──────────────────────────────────────────────────────────────
 
         private int GetUserId() =>
@@ -80,17 +31,35 @@ namespace DanceSchoolApp.Server.Controllers.Inventory
             User.IsInRole("staff");
 
         /// <summary>
-        /// Staff may manage any item. Parents may only manage their own
-        /// community items. Throws <see cref="UnauthorizedAccessException"/>
-        /// when the caller has no right to modify the item.
+        /// GERIR (criar/editar) — staff só em itens escola, parent só nos seus.
         /// </summary>
         private async Task EnsureCanManageItem(int itemId)
+        {
+            if (IsStaff())
+            {
+                var isSchoolItem = await _itemService.IsSchoolItemAsync(itemId);
+                if (!isSchoolItem)
+                    throw new UnauthorizedAccessException(
+                        "Staff can only manage school items, not personal items from parents.");
+                return;
+            }
+
+            if (!await _itemService.IsItemOwnerAsync(itemId, GetUserId()))
+                throw new UnauthorizedAccessException(
+                    "You can only manage your own community items.");
+        }
+
+        /// <summary>
+        /// ELIMINAR — staff pode eliminar qualquer item (escola e community).
+        /// Parent só pode eliminar os seus próprios itens.
+        /// </summary>
+        private async Task EnsureCanDeactivateItem(int itemId)
         {
             if (IsStaff()) return;
 
             if (!await _itemService.IsItemOwnerAsync(itemId, GetUserId()))
                 throw new UnauthorizedAccessException(
-                    "You can only manage your own community items.");
+                    "You can only deactivate your own items.");
         }
 
         // ═══════════════════════════════════════════════════════════════════════
@@ -204,6 +173,39 @@ namespace DanceSchoolApp.Server.Controllers.Inventory
             }
         }
 
+        // ─── GET /api/items/{source}/category/{categoryId} ────────────────────
+        [HttpGet("{source}/category/{categoryId:int}")]
+        [Authorize]
+        public async Task<IActionResult> GetItemsBySourceAndCategory(
+            string source,
+            int categoryId,
+            [FromQuery] PagedQuery? query = null)
+        {
+            if (source != "school" && source != "community")
+                return BadRequest("Source must be 'school' or 'community'.");
+
+            var fromSchool = source == "school";
+
+            try
+            {
+                var result = await _itemService.GetItemsByCategoryAsync(
+                    categoryId, fromSchool, query ?? new PagedQuery());
+
+                if (result.TotalCount == 0)
+                    return NoContent();
+
+                return Ok(result);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+            }
+        }
+
         // ─── POST /api/items/personal ─────────────────────────────────────────
         /// <summary>Parent creates a personal item to share/sell.</summary>
         [HttpPost("personal")]
@@ -261,7 +263,7 @@ namespace DanceSchoolApp.Server.Controllers.Inventory
         {
             try
             {
-                await EnsureCanManageItem(id);
+                await EnsureCanDeactivateItem(id);
                 await _itemService.DeactivateItemAsync(id);
                 return NoContent();
             }
@@ -283,8 +285,9 @@ namespace DanceSchoolApp.Server.Controllers.Inventory
         // IMAGES  –  /api/items/{id}/images
         // ═══════════════════════════════════════════════════════════════════════
 
-        // ─── POST /api/items/{id}/image ─────────────────────────────────────
-        [HttpPost("{id:int}/image")]
+        // ─── POST /api/items/{id}/images ──────────────────────────────────────
+        /// <summary>Staff or item owner uploads an image file to an item.</summary>
+        [HttpPost("{id:int}/images")]
         [Authorize(Roles = "staff,parent")]
         public async Task<IActionResult> UploadImage(int id, [FromForm] IFormFile file)
         {
@@ -293,7 +296,6 @@ namespace DanceSchoolApp.Server.Controllers.Inventory
 
             var permitted = new[] { ".jpg", ".jpeg", ".png", ".gif" };
             var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
-
             if (string.IsNullOrEmpty(ext) || !permitted.Contains(ext))
                 return BadRequest("Invalid file type.");
 
@@ -301,38 +303,31 @@ namespace DanceSchoolApp.Server.Controllers.Inventory
 
             try
             {
-                await EnsureCanManageItem(id);
+                await EnsureCanManageItem(id); 
 
                 var env = HttpContext.RequestServices.GetRequiredService<IWebHostEnvironment>();
                 var webroot = env.WebRootPath ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
-
-                var itemFolder = Path.Combine(webroot, "uploads", "item");
-
-                if (!Directory.Exists(itemFolder))
-                    Directory.CreateDirectory(itemFolder);
+                var uploads = Path.Combine(webroot, "uploads", "items"); 
+                if (!Directory.Exists(uploads)) Directory.CreateDirectory(uploads);
 
                 var fileName = $"{Guid.NewGuid()}{ext}";
-                filePath = Path.Combine(itemFolder, fileName);
+                filePath = Path.Combine(uploads, fileName);
 
                 using (var stream = System.IO.File.Create(filePath))
                 {
                     await file.CopyToAsync(stream);
                 }
 
-                var relativePath = $"/uploads/item/{fileName}";
+                var relativePath = $"/uploads/items/{fileName}"; 
 
                 var imageId = await _itemService.AddImageFromFileAsync(id, relativePath);
 
-                return Ok(new
-                {
-                    imageId,
-                    path = relativePath
-                });
+                return Ok(new { imageId, path = relativePath }); 
             }
             catch (UnauthorizedAccessException ex)
             {
                 if (filePath != null && System.IO.File.Exists(filePath))
-                    System.IO.File.Delete(filePath);
+                    System.IO.File.Delete(filePath); 
 
                 return Forbid(ex.Message);
             }
@@ -360,7 +355,7 @@ namespace DanceSchoolApp.Server.Controllers.Inventory
         {
             try
             {
-                await EnsureCanManageItem(id);
+                await EnsureCanDeactivateItem(id);
                 await _itemService.RemoveImageAsync(id, imageId);
                 return NoContent();
             }
@@ -472,7 +467,7 @@ namespace DanceSchoolApp.Server.Controllers.Inventory
         {
             try
             {
-                await EnsureCanManageItem(id);
+                await EnsureCanDeactivateItem(id);
                 await _itemService.DeleteVariantAsync(id, variantId);
                 return NoContent();
             }

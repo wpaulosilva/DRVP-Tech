@@ -69,9 +69,6 @@ namespace DanceSchoolApp.Server.DTOs.Inventory
         [MaxLength(256)]
         public string? Description { get; set; }
 
-        [Required]
-        public bool FromSchool { get; set; }
-
         public int? IdCategory { get; set; }
 
         [MaxLength(20)]
