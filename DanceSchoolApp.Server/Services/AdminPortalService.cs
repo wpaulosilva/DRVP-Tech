@@ -35,7 +35,11 @@ namespace DanceSchoolApp.Server.Services
         // ─── Staff users list ─────────────────────────────────────────────────
 
         public async Task<PagedResult<AdminUserRow>> GetStaffUsersAsync(
-            string? search, int page, int pageSize)
+     string? search,
+     int page,
+     int pageSize,
+     string? sortBy,
+     string? sortDir)
         {
             var baseQuery = _context.Users
                 .Include(u => u.PersonInfo)
@@ -44,6 +48,7 @@ namespace DanceSchoolApp.Server.Services
             if (!string.IsNullOrWhiteSpace(search))
             {
                 var term = search.Trim().ToLower();
+
                 baseQuery = baseQuery.Where(u =>
                     (u.PersonInfo != null &&
                      (u.PersonInfo.FirstName + " " + u.PersonInfo.LastName)
@@ -54,28 +59,46 @@ namespace DanceSchoolApp.Server.Services
 
             var total = await baseQuery.CountAsync();
 
+            var asc = sortDir?.ToLower() != "desc";
+
+            baseQuery = sortBy switch
+            {
+                "name" => asc
+                    ? baseQuery.OrderBy(u => u.PersonInfo != null ? u.PersonInfo.FirstName : u.Username)
+                    : baseQuery.OrderByDescending(u => u.PersonInfo != null ? u.PersonInfo.FirstName : u.Username),
+
+                "email" => asc
+                    ? baseQuery.OrderBy(u => u.Email)
+                    : baseQuery.OrderByDescending(u => u.Email),
+
+                "status" => asc
+                    ? baseQuery.OrderBy(u => u.IsActive)
+                    : baseQuery.OrderByDescending(u => u.IsActive),
+
+                _ => baseQuery.OrderBy(u => u.UserId)
+            };
+
             var users = await baseQuery
-                .OrderBy(u => u.UserId)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
                 .ToListAsync();
 
             var items = users.Select(u => new AdminUserRow
             {
-                UserId   = u.UserId,
-                Name     = u.PersonInfo is not null
+                UserId = u.UserId,
+                Name = u.PersonInfo is not null
                     ? $"{u.PersonInfo.FirstName} {u.PersonInfo.LastName}".Trim()
                     : u.Username,
-                Email    = u.Email,
+                Email = u.Email,
                 IsActive = u.IsActive
             }).ToList();
 
             return new PagedResult<AdminUserRow>
             {
-                Items      = items,
+                Items = items,
                 TotalCount = total,
-                Page       = page,
-                PageSize   = pageSize
+                Page = page,
+                PageSize = pageSize
             };
         }
     }
