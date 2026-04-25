@@ -111,3 +111,19 @@
             font-size: 1.7rem;
         }
 }
+
+.login-links {
+    text-align: right;
+    margin-top: -8px;
+}
+
+    .login-links a {
+        font-size: 0.9rem;
+        color: #7c3aed;
+        font-weight: 600;
+        text-decoration: none;
+    }
+
+        .login-links a:hover {
+            text-decoration: underline;
+        }
