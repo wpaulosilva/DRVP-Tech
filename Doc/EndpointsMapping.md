@@ -79,6 +79,7 @@ The header mounts once per session. It does NOT call an endpoint on every naviga
 | Page mount | `GET /api/auth/me` |
 | User table (initial load) | `GET /api/admin/users?page=1&pageSize=20` |
 | Search box (on change/submit) | `GET /api/admin/users?search={query}&page=1&pageSize=20` |
+| Column sort | `GET /api/admin/users?sortBy={field}&sortDir={asc\|desc}&page=1&pageSize=20` |
 | Pagination arrows | `GET /api/admin/users?page={n}&pageSize=20` |
 | "Nova Conta" button → form submit | `POST /api/users` body: `{ username, email, firstRole: 1 }` |
 | Edit icon (✏) → form submit | `PATCH /api/users/{id}/personinfo` body: `{ firstName, lastName, ... }` |
@@ -132,7 +133,7 @@ The header mounts once per session. It does NOT call an endpoint on every naviga
 | Tab "Pendentes" | `GET /api/staff/validate-classes?tab=pending&page=1&pageSize=15` |
 | Pagination | `GET /api/staff/validate-classes?tab={tab}&page={n}` |
 | "Aceitar Aula" button (Requisitadas) | `PATCH /api/coachclasses/{id}/staff-approve` |
-| "Recusar Aula" button (Requisitadas) | `PATCH /api/coachclasses/{id}/reject` body: `{ reason? }` |
+| "Recusar Aula" button (Requisitadas) | `PATCH /api/coachclasses/{id}/staff-reject` body: `{ reason? }` |
 | "Validar" button (Pendentes tab) | `PATCH /api/coachclasses/{id}/staff-validate` |
 | "Cancelar" button (Pendentes tab) | `PATCH /api/coachclasses/{id}/cancel` |
 
@@ -302,7 +303,7 @@ The header mounts once per session. It does NOT call an endpoint on every naviga
 | Element | Call |
 |---|---|
 | Page mount | `GET /api/auth/me` |
-| Events list | `GET /api/events` |
+| Events list | `GET /api/events/active` (coach/parent use `/active` — `GET /api/events` is staff-only) |
 
 ---
 
@@ -331,7 +332,7 @@ The header mounts once per session. It does NOT call an endpoint on every naviga
 | Element | Call |
 |---|---|
 | Modality dropdown populate | `GET /api/modalities` |
-| Coach dropdown populate | `GET /api/coaches` *(currently staff-only — needs opening to parent role for this dropdown, or provide via a dedicated parent-facing coach list endpoint)* |
+| Coach dropdown populate | `GET /api/ee/coaches` (parent-facing endpoint — returns active coaches with modalities) |
 | Calendar slot grid (on dropdown change or initial) | `GET /api/ee/classes/available-slots?from={weekStart}&to={weekEnd}&modalityId={id}&coachId={id}` |
 | Navigation arrows on slot calendar | re-calls with new date range |
 | "Pedir Aula" button on a slot → modal open | no API call yet (just opens modal) |
@@ -413,7 +414,7 @@ The header mounts once per session. It does NOT call an endpoint on every naviga
 | Element | Call |
 |---|---|
 | Page mount | `GET /api/auth/me` |
-| Events list | `GET /api/events` |
+| Events list | `GET /api/events/active` (non-staff use `/active` — `GET /api/events` is staff-only) |
 
 ---
 
@@ -421,10 +422,13 @@ The header mounts once per session. It does NOT call an endpoint on every naviga
 
 | Gap | Impact | Fix |
 |---|---|---|
-| `GET /api/coaches` is staff-only | Parent cannot populate coach dropdown in "Criar Aula" | Add `parent` to the `[Authorize]` on `GET /api/coaches`, or add `GET /api/ee/coaches` returning only `{ coachId, name, modalities[] }` for active coaches |
+| ~~`GET /api/coaches` is staff-only~~ | ~~Parent cannot populate coach dropdown~~ | **Resolved** — `GET /api/ee/coaches` exists (ParentPortalController) returning active coaches with modalities for parent dropdown |
 | `GET /api/users/me` does not exist as a unified endpoint | Header must branch by role to call the correct `/me` | Either keep the 3 role-specific calls (recommended — they return richer data anyway), or add `GET /api/users/me` that resolves PersonInfo for any role |
 | Coach cannot create blocked periods for own absences | Mockup shows "Adicionar Bloco" implies absences too | This is intentional — blocked periods are staff-managed. Coach UI should only show their availability slots, not blocked periods. Clarify in frontend design. |
 | `PUT /api/students/{id}` — verify it exists | Parent "Editar" student modal | Was in prompt 5 as a task. Confirm it's in StudentController before implementing the modal. |
 | `PATCH /api/users/{id}/personinfo` — verify it exists | Profile editing for coach/parent/staff | Was in prompt 6 task B. Confirm it exists in UserController. |
 | Staff "cancel" on coach agenda | Mockup shows "Cancelar" button in coach agenda view | `PATCH /api/coachclasses/{id}/cancel` is staff-only — this button should not appear in coach view, or only appear on Requested/StaffApproved classes where coach-reject is the right action. |
 | No `GET /api/newsposts` page in React | News posts API exists but no frontend page | Add a simple `/news` or integrate into home/dashboard. Not blocking. |
+| `GET /api/events` is staff-only; coach/parent use `/active` | Docs and frontend may incorrectly call `/api/events` | Coach and parent pages must call `GET /api/events/active` — `GET /api/events` returns all including inactive and is staff-only. |
+| `PATCH /api/coachclasses/{id}/staff-reject` not `/reject` | Wrong URL in old docs/Postman | Use `staff-reject` — `reject` would 404. |
+| `GET /api/admin/users` accepts `sortBy` and `sortDir` params | Not documented in EndpointsMapping | Add `?sortBy={field}&sortDir={asc|desc}` to the admin users table entry. |
