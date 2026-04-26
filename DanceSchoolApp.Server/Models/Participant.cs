@@ -11,8 +11,6 @@ public partial class Participant
 
     public int IdStudent { get; set; }
 
-    public decimal ClassPrice { get; set; }
-
     public DateOnly JoinedAt { get; set; }
 
     public DateTime? ParentValidatedAt { get; set; }

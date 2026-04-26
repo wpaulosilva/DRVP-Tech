@@ -146,20 +146,29 @@ public class ItemOwnershipTests
         var db = DbContextFactory.Create();
         var (service, itemId) = SeedItem(db, fromSchool: false, ownerUserId: 10);
 
-        var imageId = await service.AddImageAsync(itemId,
+        // Add two images — the rule requires at least one image at all times,
+        // so we need a second image in place before the first can be removed.
+        var imageId1 = await service.AddImageAsync(itemId,
             new Server.DTOs.Inventory.ItemImageAddRequest
             {
-                ImageUrl = "https://example.com/photo.jpg"
+                ImageUrl = "https://example.com/photo1.jpg"
             });
 
-        imageId.Should().BeGreaterThan(0);
+        var imageId2 = await service.AddImageAsync(itemId,
+            new Server.DTOs.Inventory.ItemImageAddRequest
+            {
+                ImageUrl = "https://example.com/photo2.jpg"
+            });
+
+        imageId1.Should().BeGreaterThan(0);
 
         var detail = await service.GetItemAsync(itemId);
-        detail.Images.Should().HaveCount(1);
+        detail.Images.Should().HaveCount(2);
 
-        await service.RemoveImageAsync(itemId, imageId);
+        await service.RemoveImageAsync(itemId, imageId1);
 
         detail = await service.GetItemAsync(itemId);
-        detail.Images.Should().BeEmpty();
+        detail.Images.Should().HaveCount(1);
+        detail.Images[0].ImageId.Should().Be(imageId2);
     }
 }

@@ -99,7 +99,6 @@ namespace DanceSchoolApp.Server.DTOs.People
         public DateOnly JoinedAt { get; set; }
         public ParticipantValidationStatus ValidationStatus { get; set; }
         public DateTime? ParentValidatedAt { get; set; }
-        public decimal ClassPrice { get; set; }
     }
 
 }

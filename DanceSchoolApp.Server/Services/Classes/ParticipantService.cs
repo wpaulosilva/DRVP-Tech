@@ -12,15 +12,12 @@ namespace DanceSchoolApp.Server.Services.Classes
     {
         private readonly AppDbContext _context;
         private readonly NotificationService _notificationService;
-        private readonly AppSettingService _appSettings;
 
         public ParticipantService(AppDbContext context,
-            NotificationService notificationService,
-            AppSettingService appSettings)
+            NotificationService notificationService)
         {
             _context = context;
             _notificationService = notificationService;
-            _appSettings = appSettings;
         }
 
         // ─── Queries ──────────────────────────────────────────────────────────
@@ -55,7 +52,6 @@ namespace DanceSchoolApp.Server.Services.Classes
                         : "Student " + p.IdStudent.ToString(),
                     ParentUserId      = p.IdStudentNavigation.ParentUserId,
                     JoinedAt          = p.JoinedAt,
-                    ClassPrice        = p.ClassPrice,
                     ValidationStatus  = (ParticipantValidationStatus)p.ValidationStatus,
                     ParentValidatedAt = p.ParentValidatedAt
                 })
@@ -133,28 +129,12 @@ namespace DanceSchoolApp.Server.Services.Classes
                 throw new InvalidOperationException(
                     "This student is already enrolled in another class at this time.");
 
-            // ── 6. Resolve class price ────────────────────────────────────────
-            decimal classPrice;
-            if (request.ClassPrice.HasValue)
-            {
-                classPrice = request.ClassPrice.Value;
-            }
-            else
-            {
-                var dow = coachClass.StartDatetime.DayOfWeek;
-                bool isWeekend = dow == DayOfWeek.Saturday || dow == DayOfWeek.Sunday;
-                classPrice = isWeekend
-                    ? await _appSettings.GetDecimalAsync("class_price_weekend", 43.20m)
-                    : await _appSettings.GetDecimalAsync("class_price_weekday", 36.00m);
-            }
-
-            // ── 7. Enroll ─────────────────────────────────────────────────────
+            // ── 6. Enroll ─────────────────────────────────────────────────────
             var participant = new Participant
             {
                 IdCoachClass = request.ClassId,
                 IdStudent = request.StudentId,
                 JoinedAt = DateOnly.FromDateTime(DateTime.UtcNow),
-                ClassPrice = classPrice,
                 ValidationStatus = (byte)ParticipantValidationStatus.Pending
             };
 

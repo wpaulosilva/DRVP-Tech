@@ -211,7 +211,6 @@ function ClassValidationCard({
                                 const pId = p.ParticipantId ?? p.participantId ?? p.id ?? idx
                                 const studentName = p.StudentName ?? p.studentName ?? p.student_name ?? ''
                                 const parentName = p.ParentName ?? p.parentName ?? p.parent_name ?? ''
-                                const price = p.ClassPrice ?? p.classPrice ?? p.class_price ?? null
                                 const vs = p.ValidationStatus ?? p.validationStatus ?? p.validation_status ?? 0
 
                                 return (
@@ -221,7 +220,6 @@ function ClassValidationCard({
                                             {parentName && <p className="participant-parent">EE: {parentName}</p>}
                                         </div>
                                         <div className="participant-right">
-                                            {price != null && <span>{price}€</span>}
                                             {tipo === 'professor' ? (
                                                 vs === 0 ? (
                                                     <div className="participant-actions">

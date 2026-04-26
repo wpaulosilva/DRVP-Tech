@@ -233,6 +233,11 @@ namespace DanceSchoolApp.Server.Services.Inventory
             if (image is null)
                 throw new KeyNotFoundException($"Image with id {imageId} not found on item {itemId}.");
 
+            var imageCount = await _context.ItemImages.CountAsync(img => img.IdItem == itemId);
+            if (imageCount <= 1)
+                throw new InvalidOperationException(
+                    "An item must have at least one image. Add a replacement image before removing this one.");
+
             _context.ItemImages.Remove(image);
             await _context.SaveChangesAsync();
         }
@@ -311,6 +316,11 @@ namespace DanceSchoolApp.Server.Services.Inventory
 
             if (hasActiveRequisitions)
                 throw new InvalidOperationException("Cannot delete a variant with active requisitions.");
+
+            var variantCount = await _context.ItemVariants.CountAsync(v => v.IdItem == itemId);
+            if (variantCount <= 1)
+                throw new InvalidOperationException(
+                    "An item must have at least one variant. Add a replacement variant before removing this one.");
 
             _context.ItemVariants.Remove(variant);
             await _context.SaveChangesAsync();

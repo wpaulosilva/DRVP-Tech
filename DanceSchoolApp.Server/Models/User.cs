@@ -29,8 +29,6 @@ public partial class User
 
     public virtual ICollection<Item> Items { get; set; } = new List<Item>();
 
-    public virtual ICollection<NewsPost> NewsPosts { get; set; } = new List<NewsPost>();
-
     public virtual ICollection<Notification> Notifications { get; set; } = new List<Notification>();
 
     public virtual PersonInfo? PersonInfo { get; set; }

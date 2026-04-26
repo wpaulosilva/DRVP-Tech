@@ -44,7 +44,7 @@ public class BillingServiceTests
             IdStudent        = student.StudentId,
             JoinedAt         = DateOnly.FromDateTime(start),
             ValidationStatus = 0,
-            ClassPrice       = 0m
+
         });
         db.SaveChanges();
 
@@ -83,7 +83,7 @@ public class BillingServiceTests
             IdStudent        = student.StudentId,
             JoinedAt         = DateOnly.FromDateTime(start),
             ValidationStatus = 0,
-            ClassPrice       = 0m
+
         });
         db.SaveChanges();
 
@@ -122,7 +122,7 @@ public class BillingServiceTests
             IdStudent        = student.StudentId,
             JoinedAt         = DateOnly.FromDateTime(start),
             ValidationStatus = 0,
-            ClassPrice       = 0m
+
         });
         db.SaveChanges();
 
@@ -166,7 +166,7 @@ public class BillingServiceTests
                 IdStudent        = student.StudentId,
                 JoinedAt         = DateOnly.FromDateTime(weekdayStart),
                 ValidationStatus = 0,
-                ClassPrice       = 0m
+
             },
             new Participant
             {
@@ -174,7 +174,7 @@ public class BillingServiceTests
                 IdStudent        = student.StudentId,
                 JoinedAt         = DateOnly.FromDateTime(weekendStart),
                 ValidationStatus = 0,
-                ClassPrice       = 0m
+
             }
         );
         db.SaveChanges();
@@ -220,7 +220,7 @@ public class BillingServiceTests
                 IdStudent        = student1.StudentId,
                 JoinedAt         = DateOnly.FromDateTime(start1),
                 ValidationStatus = 0,
-                ClassPrice       = 0m
+
             },
             new Participant
             {
@@ -228,7 +228,7 @@ public class BillingServiceTests
                 IdStudent        = student2.StudentId,
                 JoinedAt         = DateOnly.FromDateTime(start2),
                 ValidationStatus = 0,
-                ClassPrice       = 0m
+
             }
         );
         db.SaveChanges();

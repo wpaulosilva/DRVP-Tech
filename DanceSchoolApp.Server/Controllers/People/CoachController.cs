@@ -9,7 +9,6 @@ using System;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
-using System.Security.Claims;
 
 namespace DanceSchoolApp.Server.Controllers.People
 {
@@ -72,6 +71,10 @@ namespace DanceSchoolApp.Server.Controllers.People
         [Authorize(Roles = "coach,staff")]
         public async Task<IActionResult> UploadPhoto(int id, [FromForm] IFormFile file)
         {
+            // A coach may only update their own photo; staff may update any.
+            if (User.IsInRole("coach") && GetUserId() != id)
+                return Forbid();
+
             if (file == null || file.Length == 0)
                 return BadRequest("No file provided.");
 
@@ -82,8 +85,7 @@ namespace DanceSchoolApp.Server.Controllers.People
 
             var env = HttpContext.RequestServices.GetRequiredService<IWebHostEnvironment>();
             var webroot = env.WebRootPath ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
-            var uploadsRoot = Path.Combine(webroot, "uploads");
-            var coachFolder = Path.Combine(uploadsRoot, "coach");
+            var coachFolder = Path.Combine(webroot, "uploads", "coach");
             if (!Directory.Exists(coachFolder)) Directory.CreateDirectory(coachFolder);
 
             var fileName = $"{Guid.NewGuid()}{ext}";
@@ -98,11 +100,12 @@ namespace DanceSchoolApp.Server.Controllers.People
 
             try
             {
-                // before setting, if coach had previous photo, service should remove existing file
                 await _CoachService.ReplacePhotoFileAsync(id, relativePath, webroot);
             }
             catch (KeyNotFoundException ex)
             {
+                if (System.IO.File.Exists(filePath))
+                    System.IO.File.Delete(filePath);
                 return NotFound(ex.Message);
             }
 

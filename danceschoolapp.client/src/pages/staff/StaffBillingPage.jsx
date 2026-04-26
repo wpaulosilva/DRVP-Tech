@@ -100,27 +100,6 @@ function downloadExcelFormatted(data, filename = 'export.xlsx', headerKeys = nul
 
   const ws = XLSX.utils.aoa_to_sheet(aoa)
 
-  // header styling (best-effort) using site purple; some style features depend on writer support.
-  // Use full ARGB codes (FF + hex) to increase compatibility.
-  const headerColor = 'FF6D28D9' // site purple (ARGB)
-  const totalsBg = 'FFF3E8FF' // light purple for totals row (ARGB)
-  try {
-    keys.forEach((h, c) => {
-      const cellRef = XLSX.utils.encode_cell({ r: 0, c })
-      const cell = ws[cellRef]
-      if (cell) {
-        // apply simple style: bold + white font + purple fill
-        cell.s = {
-          font: { bold: true, color: { rgb: 'FFFFFFFF' } },
-          fill: { patternType: 'solid', fgColor: { rgb: headerColor } },
-          alignment: { vertical: 'center', horizontal: 'center' }
-        }
-      }
-    })
-  } catch {
-    // styling may not be supported by the writer; ignore silently
-  }
-
   // auto column widths (approx)
   ws['!cols'] = keys.map(h => ({ wch: Math.max(8, Math.min(30, String(h).length + 8)) }))
 

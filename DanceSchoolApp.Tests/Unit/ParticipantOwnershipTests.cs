@@ -12,7 +12,7 @@ namespace DanceSchoolApp.Tests.Unit;
 
 // NOTE on test 2 (ownership guard):
 // ParticipantService.JoinClassAsync currently takes only ParticipantJoinRequest
-// (ClassId, StudentId, ClassPrice?) — there is no callingUserId parameter and
+// (ClassId, StudentId) — there is no callingUserId parameter and
 // no ownership check in the method body. The code comment reads:
 //   "NOTE: once auth is in, replace request.ParentUserId with the authenticated
 //    user id from the JWT claims."
@@ -26,8 +26,7 @@ public class ParticipantOwnershipTests
     private static ParticipantService CreateService(AppDbContext db)
     {
         var notifications = new NotificationService(db);
-        var appSettings   = new AppSettingService(db);
-        return new ParticipantService(db, notifications, appSettings);
+        return new ParticipantService(db, notifications);
     }
 
     // ─── 1. Happy path ────────────────────────────────────────────────────────
@@ -131,7 +130,7 @@ public class ParticipantOwnershipTests
             IdCoachClass     = coachClass.ClassId,
             IdStudent        = student1.StudentId,
             JoinedAt         = DateOnly.FromDateTime(DateTime.UtcNow),
-            ClassPrice       = 0m,
+
             ValidationStatus = (byte)ParticipantValidationStatus.Pending
         });
         db.SaveChanges();
