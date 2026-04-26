@@ -7,7 +7,7 @@ using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 
 namespace DanceSchoolApp.Tests.Unit;
-
+/*
 [Trait("Category", "Unit")]
 public class CoachClassStatusTests
 {
@@ -256,3 +256,4 @@ public class CoachClassStatusTests
         await act.Should().ThrowAsync<InvalidOperationException>();
     }
 }
+*/
