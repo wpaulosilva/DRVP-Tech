@@ -11,7 +11,6 @@ erDiagram
         person_info_id int FK
     }
 
-
     dbo.Person_Info {
         person_id int PK
         first_name nvarchar(64)
@@ -24,14 +23,16 @@ erDiagram
 
     dbo.Student {
         student_id int PK
-        id_parent int
+        parent_user_id int FK
         person_info_id int FK
+        acceptance_status tinyint
         is_active bit
     }
 
     dbo.Participant {
-        id_coach_class int
-        id_student int
+        participant_id int PK
+        id_coach_class int FK
+        id_student int FK
         joined_at date
         parent_validated_at datetime2(7)
         validation_status tinyint
@@ -42,7 +43,7 @@ erDiagram
         id_modality int FK
         id_studio int FK
         id_coach int FK
-        created_by int
+        created_by int FK
         start_datetime datetime2(7)
         end_datetime datetime2(7)
         status tinyint
@@ -51,11 +52,11 @@ erDiagram
         coach_validated_at datetime2(7)
         staff_validated_at datetime2(7)
         coach_validation_status tinyint
-        finished_at datetime2(27)
+        finished_at datetime2(7)
     }
 
     dbo.Coach {
-        coach_id int PK
+        coach_id int PK "FK to User.user_id (shared PK)"
         biography nvarchar(256)
         photo_url nvarchar(256)
     }
@@ -76,28 +77,28 @@ erDiagram
     }
 
     dbo.Studio_Modality {
-        id_studio int
-        id_modality int
+        id_studio int FK
+        id_modality int FK
     }
 
     dbo.Coach_Modality {
-        id_coach int
-        id_modality int
+        id_coach int FK
+        id_modality int FK
     }
 
     dbo.Blocked_Period {
         blocked_id int PK
         start_datetime datetime2(7)
         end_datetime datetime2(7)
-        id_coach int
-        id_studio int
+        id_coach int FK
+        id_studio int FK
         scope tinyint
         reason nvarchar(128)
     }
 
     dbo.Coach_Availability {
         coachav_id int PK
-        id_coach int
+        id_coach int FK
         weekday tinyint
         start_time time(7)
         end_time time(7)
@@ -113,7 +114,7 @@ erDiagram
         end_datetime datetime2(7)
         image_url nvarchar(256)
         is_active bit
-        created_by int
+        created_by int FK
     }
 
     dbo.App_Setting {
@@ -125,7 +126,7 @@ erDiagram
 
     dbo.Notification {
         notification_id int PK
-        id_user int
+        id_user int FK
         title nvarchar(128)
         message nvarchar(256)
         type tinyint
@@ -138,9 +139,9 @@ erDiagram
     }
 
     dbo.Item_Requisition {
-        item_variant_id int FK
-        id_parent int
         requisition_id int PK
+        item_variant_id int FK
+        id_parent int FK
         quantity int
         requested_at datetime2(7)
         need_from datetime2(7)
@@ -156,18 +157,28 @@ erDiagram
         name nvarchar(128)
         description nvarchar(256)
         from_school bit
-        id_owner int
-        id_category int
+        id_owner int FK
+        id_category int FK
         created_at date
         is_active bit
         contact_address nvarchar(128)
         contact_phone nvarchar(15)
-        contact_email nvarchar(1238)
+        contact_email nvarchar(254)
+    }
+
+    dbo.Item_Variant {
+        variant_id int PK
+        id_item int FK
+        color nvarchar(32)
+        size nvarchar(8)
+        quantity int
+        price decimal(10,2)
+        is_active bit
     }
 
     dbo.Item_Images {
         image_id int PK
-        id_item int
+        id_item int FK
         image_url nvarchar(256)
     }
 
@@ -178,8 +189,8 @@ erDiagram
     }
 
     dbo.User_Role {
-        id_user int
-        id_role tinyint
+        id_user int FK
+        id_role tinyint FK
     }
 
     dbo.Role {
@@ -193,42 +204,43 @@ relationships (1, 0 , "*" = many, "/" = or, "-" = to)
     user
         User 1—0/1 Person_Info
         User 1—0/* User_Role
-        User 1-1 Coach_Class
+        User 1-0/* Coach_Class (created_by)
         User 1-0/* Notification
         User 1-0/* Item_Requisition
         User 1-0/* Item
         User 1-0/* Event
+        User 0/1-0/1 Coach (coach_id is shared PK/FK)
 
     role
         Role 1-0/* User_Role
 
     student
-        Student 0/*-1 User (Parent)
+        Student 0/*-1 User (Parent via parent_user_id)
         Student 1—0/* Participant
-        Student 1—0/1 Person_Info
+        Student 1—1 Person_Info
 
     coach
         Coach 0/*—1 User
         Coach 1-0/* Coach_Modality
         Coach 1-0/* Coach_Availability
-        Coach 0/1-0/* BlockedPeriod
-        Coach 1-1/*
-        Coach 1—0/* Coach_Class
+        Coach 0/1-0/* Blocked_Period
+        Coach 1-0/* Coach_Class
 
     studio
         Studio 1—0/* Studio_Modality
-        Studio 1-1/* Coach_Class
+        Studio 1-0/* Coach_Class
         Studio 0/1-0/* Blocked_Period
 
     modality
-        Modality 1-1/* Coach_Class
+        Modality 1-0/* Coach_Class
         Modality 1-0/* Coach_Modality
         Modality 1-0/* Studio_Modality
- 
+
     item
         Item 1—1/* Item_Variant
         Item 1—1/* Item_Images
-        Item 0/*-1 Item_Category
+        Item 0/*-0/1 Item_Category
 
     item_requisition
         Item_Requisition 0/*-1 Item_Variant
+        Item_Requisition 0/*-1 User (Parent via id_parent)
