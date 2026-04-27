@@ -7,17 +7,17 @@ public partial class PersonInfo
 {
     public int PersonId { get; set; }
 
-    public string FirstName { get; set; } = null!;
+    public string? FirstName { get; set; }
 
-    public string LastName { get; set; } = null!;
+    public string? LastName { get; set; }
 
-    public DateOnly BirthDate { get; set; }
+    public DateOnly? BirthDate { get; set; }
 
     public string? Phone { get; set; }
 
     public string? Address { get; set; }
 
-    public string Nif { get; set; } = null!;
+    public string? Nif { get; set; }
 
     public virtual ICollection<Student> Students { get; set; } = new List<Student>();
 
