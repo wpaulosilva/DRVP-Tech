@@ -272,8 +272,9 @@ namespace DanceSchoolApp.Server.Services
                 : $"Student {student.StudentId}";
         }
 
-        private static string ResolveUserName(User user)
+        private static string? ResolveUserName(User? user)
         {
+            if (user is null) return null;
             var p = user.PersonInfo;
             return p is not null
                 ? $"{p.FirstName} {p.LastName}".Trim()
