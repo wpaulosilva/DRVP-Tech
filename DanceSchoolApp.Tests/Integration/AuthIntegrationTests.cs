@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using DanceSchoolApp.Tests.Helpers;
 
 namespace DanceSchoolApp.Tests.Integration;
-/*
+
 [Trait("Category", "Integration")]
 public class AuthIntegrationTests : IClassFixture<CustomWebApplicationFactory>
 {
@@ -178,4 +178,3 @@ public class AuthIntegrationTests : IClassFixture<CustomWebApplicationFactory>
             because: "the cleared cookie must have an empty value");
     }
 }
-*/

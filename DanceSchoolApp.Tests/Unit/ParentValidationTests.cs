@@ -9,7 +9,7 @@ using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 
 namespace DanceSchoolApp.Tests.Unit;
-/*
+
 [Trait("Category", "Unit")]
 public class ParentValidationTests
 {
@@ -210,4 +210,3 @@ public class ParentValidationTests
             .WithMessage("*already been validated*");
     }
 }
-*/
