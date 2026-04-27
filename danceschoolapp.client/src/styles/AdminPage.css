@@ -482,3 +482,15 @@
         max-width: 100%;
     }
 }
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* 2 colunas iguais */
+    gap: 12px; /* espaço entre os inputs */
+    margin-bottom: 12px; /* espaço em baixo */
+}
+
+@media (max-width: 600px) {
+    .form-row {
+        grid-template-columns: 1fr; /* 1 coluna no mobile */
+    }
+}

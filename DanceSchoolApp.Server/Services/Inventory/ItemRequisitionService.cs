@@ -61,10 +61,32 @@ namespace DanceSchoolApp.Server.Services.Inventory
         public async Task<int> CreateAsync(ItemRequisitionCreateRequest request, int parentUserId)
         {
             var variant = await _context.ItemVariants
+                .Include(v => v.IdItemNavigation) // ← adicionar este Include
                 .FirstOrDefaultAsync(v => v.VariantId == request.ItemVariantId && v.IsActive == true);
 
             if (variant is null)
                 throw new KeyNotFoundException($"Variant with id {request.ItemVariantId} was not found or is inactive.");
+
+            // ── Só itens da escola podem ser requisitados ──────────────────────
+            if (!variant.IdItemNavigation.FromSchool)
+                throw new InvalidOperationException(
+                    "Only school items can be requisitioned. Community items cannot be requisitioned.");
+            // ── Validação de datas ─────────────────────────────────────────────
+            var today = DateTime.UtcNow.Date;
+
+            if (request.NeedFrom.HasValue && request.NeedFrom.Value.Date < today)
+                throw new InvalidOperationException(
+                    "NeedFrom cannot be in the past.");
+
+            if (request.NeedUntil.HasValue && request.NeedUntil.Value.Date < today)
+                throw new InvalidOperationException(
+                    "NeedUntil cannot be in the past.");
+
+            if (request.NeedFrom.HasValue && request.NeedUntil.HasValue
+                && request.NeedUntil.Value.Date < request.NeedFrom.Value.Date)
+                throw new InvalidOperationException(
+                    "NeedUntil cannot be before NeedFrom.");
+
 
             if (variant.Quantity < request.Quantity)
                 throw new InvalidOperationException(

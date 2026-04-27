@@ -69,9 +69,6 @@ namespace DanceSchoolApp.Server.DTOs.Inventory
         [MaxLength(256)]
         public string? Description { get; set; }
 
-        [Required]
-        public bool FromSchool { get; set; }
-
         public int? IdCategory { get; set; }
 
         [MaxLength(20)]
@@ -176,6 +173,12 @@ namespace DanceSchoolApp.Server.DTOs.Inventory
         [Required]
         [MaxLength(256)]
         public string ImageUrl { get; set; } = null!;
+    }
+
+    // Upload response used by upload endpoint
+    public class UploadResultResponse
+    {
+        public string Path { get; set; } = null!; // relative path to saved file (e.g. /uploads/abc.jpg)
     }
 
     // ─── ItemRequisition Responses ───────────────────────────────────────────────

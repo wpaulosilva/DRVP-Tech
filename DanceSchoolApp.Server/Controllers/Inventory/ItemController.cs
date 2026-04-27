@@ -3,7 +3,11 @@ using DanceSchoolApp.Server.DTOs.Inventory;
 using DanceSchoolApp.Server.Services.Inventory;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using System.Security.Claims;
+using System.IO;
+using System;
 
 namespace DanceSchoolApp.Server.Controllers.Inventory
 {
@@ -27,17 +31,35 @@ namespace DanceSchoolApp.Server.Controllers.Inventory
             User.IsInRole("staff");
 
         /// <summary>
-        /// Staff may manage any item. Parents may only manage their own
-        /// community items. Throws <see cref="UnauthorizedAccessException"/>
-        /// when the caller has no right to modify the item.
+        /// GERIR (criar/editar) — staff só em itens escola, parent só nos seus.
         /// </summary>
         private async Task EnsureCanManageItem(int itemId)
+        {
+            if (IsStaff())
+            {
+                var isSchoolItem = await _itemService.IsSchoolItemAsync(itemId);
+                if (!isSchoolItem)
+                    throw new UnauthorizedAccessException(
+                        "Staff can only manage school items, not personal items from parents.");
+                return;
+            }
+
+            if (!await _itemService.IsItemOwnerAsync(itemId, GetUserId()))
+                throw new UnauthorizedAccessException(
+                    "You can only manage your own community items.");
+        }
+
+        /// <summary>
+        /// ELIMINAR — staff pode eliminar qualquer item (escola e community).
+        /// Parent só pode eliminar os seus próprios itens.
+        /// </summary>
+        private async Task EnsureCanDeactivateItem(int itemId)
         {
             if (IsStaff()) return;
 
             if (!await _itemService.IsItemOwnerAsync(itemId, GetUserId()))
                 throw new UnauthorizedAccessException(
-                    "You can only manage your own community items.");
+                    "You can only deactivate your own items.");
         }
 
         // ═══════════════════════════════════════════════════════════════════════
@@ -53,7 +75,7 @@ namespace DanceSchoolApp.Server.Controllers.Inventory
         {
             try
             {
-                var result = await _itemService.GetItemsAsync(fromSchool, ownerId: null, query ?? new PagedQuery());
+                var result = await _itemService.GetItemsAsync(fromSchool, query ?? new PagedQuery());
 
                 if (result.TotalCount == 0)
                     return NoContent();
@@ -94,7 +116,7 @@ namespace DanceSchoolApp.Server.Controllers.Inventory
         {
             try
             {
-                var result = await _itemService.GetItemsAsync(fromSchool: true, ownerId: null, query ?? new PagedQuery());
+                var result = await _itemService.GetItemsAsync(true, query ?? new PagedQuery());
 
                 if (result.TotalCount == 0)
                     return NoContent();
@@ -115,7 +137,7 @@ namespace DanceSchoolApp.Server.Controllers.Inventory
         {
             try
             {
-                var result = await _itemService.GetItemsAsync(fromSchool: false, ownerId: null, query ?? new PagedQuery());
+                var result = await _itemService.GetItemsAsync(false, query ?? new PagedQuery());
 
                 if (result.TotalCount == 0)
                     return NoContent();
@@ -141,6 +163,39 @@ namespace DanceSchoolApp.Server.Controllers.Inventory
             {
                 var newId = await _itemService.CreateItemAsync(request, GetUserId(), fromSchool: true);
                 return CreatedAtAction(nameof(GetItem), new { id = newId }, new { itemId = newId });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+            }
+        }
+
+        // ─── GET /api/items/{source}/category/{categoryId} ────────────────────
+        [HttpGet("{source}/category/{categoryId:int}")]
+        [Authorize]
+        public async Task<IActionResult> GetItemsBySourceAndCategory(
+            string source,
+            int categoryId,
+            [FromQuery] PagedQuery? query = null)
+        {
+            if (source != "school" && source != "community")
+                return BadRequest("Source must be 'school' or 'community'.");
+
+            var fromSchool = source == "school";
+
+            try
+            {
+                var result = await _itemService.GetItemsByCategoryAsync(
+                    categoryId, fromSchool, query ?? new PagedQuery());
+
+                if (result.TotalCount == 0)
+                    return NoContent();
+
+                return Ok(result);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ex.Message);
             }
             catch (Exception ex)
             {
@@ -205,7 +260,7 @@ namespace DanceSchoolApp.Server.Controllers.Inventory
         {
             try
             {
-                await EnsureCanManageItem(id);
+                await EnsureCanDeactivateItem(id);
                 await _itemService.DeactivateItemAsync(id);
                 return NoContent();
             }
@@ -228,30 +283,63 @@ namespace DanceSchoolApp.Server.Controllers.Inventory
         // ═══════════════════════════════════════════════════════════════════════
 
         // ─── POST /api/items/{id}/images ──────────────────────────────────────
-        /// <summary>Staff or item owner adds an image to an item.</summary>
+        /// <summary>Staff or item owner uploads an image file to an item.</summary>
         [HttpPost("{id:int}/images")]
         [Authorize(Roles = "staff,parent")]
-        public async Task<IActionResult> AddImage(int id, [FromBody] ItemImageAddRequest request)
+        public async Task<IActionResult> UploadImage(int id, [FromForm] IFormFile file)
         {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
+            if (file == null || file.Length == 0)
+                return BadRequest("No file provided.");
+
+            var permitted = new[] { ".jpg", ".jpeg", ".png", ".gif" };
+            var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
+            if (string.IsNullOrEmpty(ext) || !permitted.Contains(ext))
+                return BadRequest("Invalid file type.");
+
+            string? filePath = null;
 
             try
             {
-                await EnsureCanManageItem(id);
-                var imageId = await _itemService.AddImageAsync(id, request);
-                return CreatedAtAction(nameof(GetItem), new { id }, new { imageId });
+                await EnsureCanManageItem(id); 
+
+                var env = HttpContext.RequestServices.GetRequiredService<IWebHostEnvironment>();
+                var webroot = env.WebRootPath ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
+                var uploads = Path.Combine(webroot, "uploads", "items"); 
+                if (!Directory.Exists(uploads)) Directory.CreateDirectory(uploads);
+
+                var fileName = $"{Guid.NewGuid()}{ext}";
+                filePath = Path.Combine(uploads, fileName);
+
+                using (var stream = System.IO.File.Create(filePath))
+                {
+                    await file.CopyToAsync(stream);
+                }
+
+                var relativePath = $"/uploads/items/{fileName}"; 
+
+                var imageId = await _itemService.AddImageFromFileAsync(id, relativePath);
+
+                return Ok(new { imageId, path = relativePath }); 
             }
             catch (UnauthorizedAccessException ex)
             {
+                if (filePath != null && System.IO.File.Exists(filePath))
+                    System.IO.File.Delete(filePath); 
+
                 return Forbid(ex.Message);
             }
             catch (KeyNotFoundException ex)
             {
+                if (filePath != null && System.IO.File.Exists(filePath))
+                    System.IO.File.Delete(filePath);
+
                 return NotFound(ex.Message);
             }
             catch (Exception ex)
             {
+                if (filePath != null && System.IO.File.Exists(filePath))
+                    System.IO.File.Delete(filePath);
+
                 return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
         }
@@ -264,7 +352,7 @@ namespace DanceSchoolApp.Server.Controllers.Inventory
         {
             try
             {
-                await EnsureCanManageItem(id);
+                await EnsureCanDeactivateItem(id);
                 await _itemService.RemoveImageAsync(id, imageId);
                 return NoContent();
             }
@@ -376,7 +464,7 @@ namespace DanceSchoolApp.Server.Controllers.Inventory
         {
             try
             {
-                await EnsureCanManageItem(id);
+                await EnsureCanDeactivateItem(id);
                 await _itemService.DeleteVariantAsync(id, variantId);
                 return NoContent();
             }

@@ -35,16 +35,18 @@ namespace DanceSchoolApp.Server.Controllers
         // Query: search? (string), page (default 1), pageSize (default 20)
         [HttpGet("users")]
         public async Task<IActionResult> GetUsers(
-            [FromQuery] string? search   = null,
-            [FromQuery] int     page     = 1,
-            [FromQuery] int     pageSize = 20)
+            [FromQuery] string? search = null,
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 20,
+            [FromQuery] string? sortBy = null,
+            [FromQuery] string? sortDir = "asc")
         {
-            if (page < 1)     page     = 1;
+            if (page < 1) page = 1;
             if (pageSize < 1) pageSize = 1;
 
             try
             {
-                var result = await _adminService.GetStaffUsersAsync(search, page, pageSize);
+                var result = await _adminService.GetStaffUsersAsync(search, page, pageSize, sortBy, sortDir);
 
                 if (result.TotalCount == 0)
                     return NoContent();

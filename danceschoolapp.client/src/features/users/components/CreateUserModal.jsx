@@ -27,58 +27,79 @@ function CreateUserModal({
         <Modal open={open} title={title} onClose={onClose}>
             <p>{description}</p>
 
-            <label htmlFor="newEmail">Email *</label>
-            <Input
-                id="newEmail"
-                type="email"
-                value={email}
-                placeholder="carlos@entartes.pt"
-                onChange={onEmailChange}
-            />
+            {/* Email + Data */}
+            <div className="form-row">
+                <div>
+                    <label htmlFor="newEmail">Email *</label>
+                    <Input
+                        id="newEmail"
+                        type="email"
+                        value={email}
+                        placeholder="user@entartes.pt"
+                        onChange={onEmailChange}
+                    />
+                </div>
 
-            <label htmlFor="firstName">Nome *</label>
-            <Input
-                id="firstName"
-                type="text"
-                value={firstName}
-                placeholder="Primeiro nome"
-                onChange={onFirstNameChange}
-            />
+                <div>
+                    <label htmlFor="birthDate">Data de Nascimento *</label>
+                    <Input
+                        id="birthDate"
+                        type="date"
+                        value={birthDate}
+                        onChange={onBirthDateChange}
+                    />
+                </div>
+            </div>
 
-            <label htmlFor="lastName">Apelido *</label>
-            <Input
-                id="lastName"
-                type="text"
-                value={lastName}
-                placeholder="Apelido"
-                onChange={onLastNameChange}
-            />
+            {/* Nome + Apelido */}
+            <div className="form-row">
+                <div>
+                    <label htmlFor="firstName">Nome *</label>
+                    <Input
+                        id="firstName"
+                        type="text"
+                        value={firstName}
+                        placeholder="Primeiro nome"
+                        onChange={onFirstNameChange}
+                    />
+                </div>
 
-            <label htmlFor="birthDate">Data de Nascimento *</label>
-            <Input
-                id="birthDate"
-                type="date"
-                value={birthDate}
-                onChange={onBirthDateChange}
-            />
+                <div>
+                    <label htmlFor="lastName">Apelido *</label>
+                    <Input
+                        id="lastName"
+                        type="text"
+                        value={lastName}
+                        placeholder="Apelido"
+                        onChange={onLastNameChange}
+                    />
+                </div>
+            </div>
 
-            <label htmlFor="nif">NIF *</label>
-            <Input
-                id="nif"
-                type="text"
-                value={nif}
-                placeholder="123456789"
-                onChange={onNifChange}
-            />
+            {/* NIF + Username */}
+            <div className="form-row">
+                <div>
+                    <label htmlFor="nif">NIF *</label>
+                    <Input
+                        id="nif"
+                        type="text"
+                        value={nif}
+                        placeholder="123456789"
+                        onChange={onNifChange}
+                    />
+                </div>
 
-            <label htmlFor="username">Username (opcional)</label>
-            <Input
-                id="username"
-                type="text"
-                value={username}
-                placeholder="deixe em branco para usar a parte antes do @"
-                onChange={onUsernameChange}
-            />
+                <div>
+                    <label htmlFor="username">Username (opcional)</label>
+                    <Input
+                        id="username"
+                        type="text"
+                        value={username}
+                        placeholder="user"
+                        onChange={onUsernameChange}
+                    />
+                </div>
+            </div>
 
             {error && <p className="admin-modal-error">{error}</p>}
 

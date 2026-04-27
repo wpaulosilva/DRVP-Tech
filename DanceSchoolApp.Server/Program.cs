@@ -105,6 +105,7 @@ if (email == null) Console.WriteLine($"{YELLOW}Warning{NORMAL} - DanceSchoolApp_
 var app = builder.Build();
 
 app.UseDefaultFiles();
+app.UseStaticFiles();
 app.MapStaticAssets();
 
 // Configure the HTTP request pipeline.

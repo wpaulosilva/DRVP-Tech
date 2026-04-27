@@ -1,8 +1,18 @@
 import { get, post, patch } from '@/api/client'
 
-export function getAdminUsers({ page = 1, pageSize = 20, search = '' }) {
+export function getAdminUsers({
+    page = 1,
+    pageSize = 7,
+    search = '',
+    sortBy = '',
+    sortDir = 'asc',
+}) {
     const params = new URLSearchParams({ page, pageSize })
+
     if (search) params.set('search', search)
+    if (sortBy) params.set('sortBy', sortBy)
+    if (sortDir) params.set('sortDir', sortDir)
+
     return get(`/api/admin/users?${params}`)
 }
 

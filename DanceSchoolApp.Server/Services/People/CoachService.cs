@@ -162,6 +162,43 @@ namespace DanceSchoolApp.Server.Services.People
             return true;
         }
 
+        public async Task SetPhotoAsync(int coachId, string? photoUrl)
+        {
+            var coach = await _context.Coaches.FirstOrDefaultAsync(c => c.CoachId == coachId);
+
+            if (coach is null)
+                throw new KeyNotFoundException($"Coach with id {coachId} was not found.");
+
+            coach.PhotoUrl = photoUrl?.Trim();
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task ReplacePhotoFileAsync(int coachId, string? newPhotoUrl, string webRootPath)
+        {
+            var coach = await _context.Coaches.FirstOrDefaultAsync(c => c.CoachId == coachId);
+
+            if (coach is null)
+                throw new KeyNotFoundException($"Coach with id {coachId} was not found.");
+
+            // if existing photo exists, attempt to delete physical file
+            if (!string.IsNullOrEmpty(coach.PhotoUrl))
+            {
+                var existing = coach.PhotoUrl.TrimStart('/').Replace('/', Path.DirectorySeparatorChar);
+                var existingFull = Path.Combine(webRootPath, existing);
+                try
+                {
+                    if (File.Exists(existingFull)) File.Delete(existingFull);
+                }
+                catch
+                {
+                    // swallow exceptions for file delete to avoid failing the request
+                }
+            }
+
+            coach.PhotoUrl = newPhotoUrl?.Trim();
+            await _context.SaveChangesAsync();
+        }
+
 
     }
 }

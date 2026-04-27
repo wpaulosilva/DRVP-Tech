@@ -284,8 +284,7 @@ namespace DanceSchoolApp.Server.Services.People
                 CoachName         = ResolveCoachName(p.IdCoachClassNavigation.IdCoachNavigation),
                 JoinedAt          = p.JoinedAt,
                 ValidationStatus  = (ParticipantValidationStatus)p.ValidationStatus,
-                ParentValidatedAt = p.ParentValidatedAt,
-                ClassPrice        = p.ClassPrice
+                ParentValidatedAt = p.ParentValidatedAt
             }).ToList();
         }
 

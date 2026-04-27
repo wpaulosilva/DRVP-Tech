@@ -7,15 +7,32 @@ function UsersTable({
     onEdit,
     onActivate,
     onDeactivate,
+    onSort,
+    sortBy,
+    sortDir,
 }) {
+    const renderSortIcon = (field) => {
+        if (sortBy !== field) return ''
+        return sortDir === 'asc' ? ' ▲' : ' ▼'
+    }
+
     return (
         <div className="table-wrap">
             <table className="app-table">
                 <thead>
                     <tr>
-                        <th>Nome</th>
-                        <th>Email</th>
-                        <th>Estado</th>
+                        <th onClick={() => onSort?.('name')} style={{ cursor: 'pointer' }}>
+                            Nome{renderSortIcon('name')}
+                        </th>
+
+                        <th onClick={() => onSort?.('email')} style={{ cursor: 'pointer' }}>
+                            Email{renderSortIcon('email')}
+                        </th>
+
+                        <th onClick={() => onSort?.('status')} style={{ cursor: 'pointer' }}>
+                            Estado{renderSortIcon('status')}
+                        </th>
+
                         <th>Ações</th>
                     </tr>
                 </thead>

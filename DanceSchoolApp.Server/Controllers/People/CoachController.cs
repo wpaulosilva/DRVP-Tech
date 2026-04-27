@@ -3,7 +3,12 @@ using DanceSchoolApp.Server.Services.People;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Hosting;
+using System.IO;
+using System;
+using System.Linq;
 using System.Security.Claims;
+using System.Threading.Tasks;
 
 namespace DanceSchoolApp.Server.Controllers.People
 {
@@ -61,6 +66,51 @@ namespace DanceSchoolApp.Server.Controllers.People
 
         private int GetUserId() =>
             int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
+        [HttpPost("{id}/photo")]
+        [Authorize(Roles = "coach,staff")]
+        public async Task<IActionResult> UploadPhoto(int id, [FromForm] IFormFile file)
+        {
+            // A coach may only update their own photo; staff may update any.
+            if (User.IsInRole("coach") && GetUserId() != id)
+                return Forbid();
+
+            if (file == null || file.Length == 0)
+                return BadRequest("No file provided.");
+
+            var permitted = new[] { ".jpg", ".jpeg", ".png", ".gif" };
+            var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
+            if (string.IsNullOrEmpty(ext) || !permitted.Contains(ext))
+                return BadRequest("Invalid file type.");
+
+            var env = HttpContext.RequestServices.GetRequiredService<IWebHostEnvironment>();
+            var webroot = env.WebRootPath ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
+            var coachFolder = Path.Combine(webroot, "uploads", "coach");
+            if (!Directory.Exists(coachFolder)) Directory.CreateDirectory(coachFolder);
+
+            var fileName = $"{Guid.NewGuid()}{ext}";
+            var filePath = Path.Combine(coachFolder, fileName);
+
+            using (var stream = System.IO.File.Create(filePath))
+            {
+                await file.CopyToAsync(stream);
+            }
+
+            var relativePath = $"/uploads/coach/{fileName}";
+
+            try
+            {
+                await _CoachService.ReplacePhotoFileAsync(id, relativePath, webroot);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                if (System.IO.File.Exists(filePath))
+                    System.IO.File.Delete(filePath);
+                return NotFound(ex.Message);
+            }
+
+            return Ok(new { path = relativePath });
+        }
 
         // ─── GET /api/coaches ──────────────────────────────────────────────────
         [Authorize(Roles = "staff")]

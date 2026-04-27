@@ -12,7 +12,7 @@ import {
 } from '../../services/usersService'
 import '../../styles/AdminPage.css'
 
-const PAGE_SIZE = 20
+const PAGE_SIZE = 7
 
 function AdminUsersPage() {
     const [users, setUsers] = useState([])
@@ -22,6 +22,8 @@ function AdminUsersPage() {
     const [debouncedSearch, setDebouncedSearch] = useState('')
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
+    const [sortBy, setSortBy] = useState('')
+    const [sortDir, setSortDir] = useState('asc')
 
     const [showModal, setShowModal] = useState(false)
     const [newEmail, setNewEmail] = useState('')
@@ -42,6 +44,8 @@ function AdminUsersPage() {
                 page: currentPage,
                 pageSize: PAGE_SIZE,
                 search: currentSearch,
+                sortBy,
+                sortDir,
             })
 
             setUsers(data.items ?? [])
@@ -51,7 +55,7 @@ function AdminUsersPage() {
         } finally {
             setLoading(false)
         }
-    }, [])
+    }, [sortBy, sortDir])
 
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -147,6 +151,17 @@ function AdminUsersPage() {
     const from = total === 0 ? 0 : (page - 1) * PAGE_SIZE + 1
     const to = Math.min(page * PAGE_SIZE, total)
 
+    const handleSort = (field) => {
+        setPage(1)
+
+        if (sortBy === field) {
+            setSortDir((current) => current === 'asc' ? 'desc' : 'asc')
+        } else {
+            setSortBy(field)
+            setSortDir('asc')
+        }
+    }
+
     return (
         <PageCard>
             <div className="admin-page-header">
@@ -177,6 +192,9 @@ function AdminUsersPage() {
                 onEdit={(user) => console.log('editar', user.userId)}
                 onActivate={handleActivate}
                 onDeactivate={handleDeactivate}
+                onSort={handleSort}
+                sortBy={sortBy}
+                sortDir={sortDir}
             />
 
             <div className="pagination">
@@ -208,8 +226,10 @@ function AdminUsersPage() {
                 title="Nova Conta de Direção"
                 description="Criar uma nova conta com acesso de Direção."
                 email={newEmail}
-                onEmailChange={setNewEmail}
-                firstName={newFirstName}
+                onEmailChange={(value) => {
+                    setNewEmail(value)
+                    setNewUsername(value.split('@')[0])
+                }}                firstName={newFirstName}
                 lastName={newLastName}
                 birthDate={newBirthDate}
                 nif={newNif}

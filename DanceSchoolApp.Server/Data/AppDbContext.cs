@@ -36,8 +36,6 @@ public partial class AppDbContext : DbContext
 
     public virtual DbSet<Modality> Modalities { get; set; }
 
-    public virtual DbSet<NewsPost> NewsPosts { get; set; }
-
     public virtual DbSet<Notification> Notifications { get; set; }
 
     public virtual DbSet<Participant> Participants { get; set; }
@@ -385,33 +383,6 @@ public partial class AppDbContext : DbContext
                 .HasColumnName("name");
         });
 
-        modelBuilder.Entity<NewsPost>(entity =>
-        {
-            entity.HasKey(e => e.PostId).HasName("PK__News_Pos__3ED7876628320502");
-
-            entity.ToTable("News_Post");
-
-            entity.Property(e => e.PostId).HasColumnName("post_id");
-            entity.Property(e => e.CreatedAt).HasColumnName("created_at");
-            entity.Property(e => e.CreatedBy).HasColumnName("created_by");
-            entity.Property(e => e.Description)
-                .HasMaxLength(256)
-                .HasColumnName("description");
-            entity.Property(e => e.ImageUrl)
-                .HasMaxLength(256)
-                .HasColumnName("image_url");
-            entity.Property(e => e.Subtitle)
-                .HasMaxLength(128)
-                .HasColumnName("subtitle");
-            entity.Property(e => e.Title)
-                .HasMaxLength(64)
-                .HasColumnName("title");
-
-            entity.HasOne(d => d.CreatedByNavigation).WithMany(p => p.NewsPosts)
-                .HasForeignKey(d => d.CreatedBy)
-                .HasConstraintName("FK_NewsPost_User");
-        });
-
         modelBuilder.Entity<Notification>(entity =>
         {
             entity.HasKey(e => e.NotificationId).HasName("PK__Notifica__E059842F52BA75C9");
@@ -456,9 +427,6 @@ public partial class AppDbContext : DbContext
             entity.HasIndex(e => new { e.IdCoachClass, e.IdStudent }, "UQ_ClassStudent").IsUnique();
 
             entity.Property(e => e.ParticipantId).HasColumnName("participant_id");
-            entity.Property(e => e.ClassPrice)
-                .HasColumnType("decimal(10, 2)")
-                .HasColumnName("class_price");
             entity.Property(e => e.IdCoachClass).HasColumnName("id_coach_class");
             entity.Property(e => e.IdStudent).HasColumnName("id_student");
             entity.Property(e => e.JoinedAt).HasColumnName("joined_at");
