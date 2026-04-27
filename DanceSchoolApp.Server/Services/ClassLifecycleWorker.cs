@@ -90,12 +90,20 @@ namespace DanceSchoolApp.Server.Services
                     c.EndDatetime <= now)
                 .ToListAsync(ct);
 
+            if (classes.Count == 0) return;
+
             foreach (var cls in classes)
             {
                 cls.Status = (byte)CoachClassStatus.Finished;
                 cls.FinishedAt = now;
+            }
 
-                // Notify coach
+            // Persist status changes before sending notifications so a notification
+            // failure never leaves classes stuck in Approved indefinitely.
+            await db.SaveChangesAsync(ct);
+
+            foreach (var cls in classes)
+            {
                 await notifications.SendAsync(
                     userId: cls.IdCoach,
                     title: "Class Validation Required",
@@ -104,7 +112,6 @@ namespace DanceSchoolApp.Server.Services
                     entityType: "CoachClass",
                     entityId: cls.ClassId);
 
-                // Notify each distinct parent
                 var parentIds = cls.Participants
                     .Select(p => p.IdStudentNavigation.ParentUserId)
                     .Distinct();
@@ -120,9 +127,6 @@ namespace DanceSchoolApp.Server.Services
                         entityId: cls.ClassId);
                 }
             }
-
-            if (classes.Count > 0)
-                await db.SaveChangesAsync(ct);
         }
 
         //  Rule 2: Finished → Pending (window expired) 
