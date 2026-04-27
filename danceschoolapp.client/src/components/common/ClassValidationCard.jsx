@@ -95,7 +95,8 @@ function ClassValidationCard({
     const maxParticipants = aula?.MaxParticipants ?? aula?.maxParticipants ?? aula?.max_participants ?? aula?.MaxStudents ?? aula?.maxStudents ?? '?'
     const participants = aula?.Participants ?? aula?.participants ?? []
     const studentNames = aula?.StudentNames ?? aula?.studentNames ?? aula?.students ?? []
-    const enrolled = participants.length || studentNames.length || 0
+    const totalParticipants = aula?.TotalParticipants ?? aula?.totalParticipants ?? null
+    const enrolled = totalParticipants ?? (participants.length || studentNames.length || 0)
     const coachValidationStatus = aula?.CoachValidationStatus ?? aula?.coachValidationStatus ?? null
     const coachValidatedAt = aula?.CoachValidatedAt ?? aula?.coachValidatedAt ?? null
 
@@ -220,7 +221,7 @@ function ClassValidationCard({
                                             {parentName && <p className="participant-parent">EE: {parentName}</p>}
                                         </div>
                                         <div className="participant-right">
-                                            {tipo === 'professor' ? (
+                                            {tipo === 'professor' && !showCoachValidation ? (
                                                 vs === 0 ? (
                                                     <div className="participant-actions">
                                                         <button
@@ -293,8 +294,8 @@ function ClassValidationCard({
                         </div>
                     )}
 
-                    {/* Actions — hidden for parent view (per-participant buttons handle it) */}
-                    {!(tipo === 'professor' && participants.length > 0) && (
+                    {/* Actions — hidden for parent view (per-participant buttons handle it), always shown for coach */}
+                    {!(tipo === 'professor' && !showCoachValidation && participants.length > 0) && (
                         <div className="class-card-actions">
                             <button
                                 className="btn btn-accept"

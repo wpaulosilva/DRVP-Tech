@@ -194,15 +194,16 @@ namespace DanceSchoolApp.Server.Services
 
                 return new ParentValidateItem
                 {
-                    ClassId       = c.ClassId,
-                    ModalityName  = c.IdModalityNavigation.Name,
-                    StartDatetime = c.StartDatetime,
-                    EndDatetime   = c.EndDatetime,
-                    CoachName     = ResolveCoachName(c.IdCoachNavigation),
-                    ExpiresAt     = c.StartDatetime.AddHours(48),
-                    MaxParticipants = c.MaxParticipants,
-                    CreatedByName = ResolveUserName(c.CreatedByNavigation),
-                    Participants  = myParticipants.Select(p => new ParticipantSummaryItem
+                    ClassId           = c.ClassId,
+                    ModalityName      = c.IdModalityNavigation.Name,
+                    StartDatetime     = c.StartDatetime,
+                    EndDatetime       = c.EndDatetime,
+                    CoachName         = ResolveCoachName(c.IdCoachNavigation),
+                    ExpiresAt         = c.StartDatetime.AddHours(48),
+                    MaxParticipants   = c.MaxParticipants,
+                    TotalParticipants = c.Participants.Count,
+                    CreatedByName     = ResolveUserName(c.CreatedByNavigation),
+                    Participants      = myParticipants.Select(p => new ParticipantSummaryItem
                     {
                         ParticipantId    = p.ParticipantId,
                         StudentName      = ResolveStudentName(p.IdStudentNavigation),
