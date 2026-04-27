@@ -26,7 +26,7 @@ public class AuthorizationBoundaryTests : IClassFixture<CustomWebApplicationFact
         });
     }
 
-    // ── helpers ───────────────────────────────────────────────────────────────
+    //  helpers 
 
     private async Task<string> LoginAndGetCookie(string username, string password = "Test1234!")
     {
@@ -62,7 +62,7 @@ public class AuthorizationBoundaryTests : IClassFixture<CustomWebApplicationFact
         return req;
     }
 
-    // ── tests ─────────────────────────────────────────────────────────────────
+    //  tests 
 
     [Fact]
     public async Task StaffOnlyEndpoint_CalledByParent_Returns403()

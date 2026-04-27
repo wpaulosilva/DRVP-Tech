@@ -23,12 +23,12 @@ namespace DanceSchoolApp.Server.Services.Scheduling
             int? coachId,
             int? modalityId)
         {
-            // ── 1. Determine which weekday bytes are present in the range ─────────
+            //  1. Determine which weekday bytes are present in the range 
             var weekdaysInRange = new HashSet<byte>();
             for (var d = from; d <= to; d = d.AddDays(1))
                 weekdaysInRange.Add((byte)d.DayOfWeek);
 
-            // ── 2. Load CoachAvailability rows for those weekdays ─────────────────
+            //  2. Load CoachAvailability rows for those weekdays 
             // Include the coach's user info (for name) and their modalities.
             var availQuery = _context.CoachAvailabilities
                 .Include(a => a.IdCoachNavigation)
@@ -51,7 +51,7 @@ namespace DanceSchoolApp.Server.Services.Scheduling
             if (!availabilities.Any())
                 return new List<DaySlotResponse>();
 
-            // ── 3. Load existing bookings for the relevant coaches in this range ──
+            //  3. Load existing bookings for the relevant coaches in this range 
             var involvedCoachIds = availabilities.Select(a => a.IdCoach).Distinct().ToList();
 
             // Use an exclusive upper bound so we catch classes that start right at 00:00
@@ -69,7 +69,7 @@ namespace DanceSchoolApp.Server.Services.Scheduling
                 .Select(c => new { c.IdCoach, c.StartDatetime, c.EndDatetime })
                 .ToListAsync();
 
-            // ── 4. Load BlockedPeriods that overlap the range ─────────────────────
+            //  4. Load BlockedPeriods that overlap the range 
             // Scope 0,1,4,5 = global  |  Scope 3 = coach-specific
             // Scope 2 (studio-specific) intentionally excluded — studio is chosen
             // at booking time, not during slot discovery.
@@ -85,7 +85,7 @@ namespace DanceSchoolApp.Server.Services.Scheduling
             var globalBlocks     = blockedPeriods.Where(b => b.Scope != 3).ToList();
             var coachSpecBlocks  = blockedPeriods.Where(b => b.Scope == 3).ToList();
 
-            // ── 5. Expand availability to actual dates and subtract busy windows ──
+            //  5. Expand availability to actual dates and subtract busy windows 
             var resultByDate = new SortedDictionary<DateOnly, List<CoachSlot>>();
 
             for (var date = from; date <= to; date = date.AddDays(1))
@@ -156,7 +156,7 @@ namespace DanceSchoolApp.Server.Services.Scheduling
                 .ToList();
         }
 
-        // ── Interval subtraction ─────────────────────────────────────────────────
+        //  Interval subtraction 
         // Removes the window [busyStart, busyEnd) from every free interval in the
         // list. Returns the remaining free windows (may be empty, the same, or
         // split into up to two new intervals per input interval).

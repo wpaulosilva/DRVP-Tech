@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace DanceSchoolApp.Server.DTOs.School
 {
-    // ─── Responses ────────────────────────────────────────────────────────────
+    //  Responses 
 
     public class ModalityListResponse
     {
@@ -22,7 +22,7 @@ namespace DanceSchoolApp.Server.DTOs.School
         public int CoachCount { get; set; }
     }
 
-    // ─── Requests ─────────────────────────────────────────────────────────────
+    //  Requests 
 
     public class ModalityCreateRequest
     {

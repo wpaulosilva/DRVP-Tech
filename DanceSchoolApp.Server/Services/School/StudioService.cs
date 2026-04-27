@@ -15,7 +15,7 @@ namespace DanceSchoolApp.Server.Services.School
             _context = context;
         }
 
-        // ─── Queries ──────────────────────────────────────────────────────────
+        //  Queries 
 
         public async Task<List<StudioListResponse>> GetStudiosAsync()
         {
@@ -57,7 +57,7 @@ namespace DanceSchoolApp.Server.Services.School
             };
         }
 
-        // ─── Commands ─────────────────────────────────────────────────────────
+        //  Commands 
 
         public async Task<int> CreateStudioAsync(StudioCreateRequest request)
         {
@@ -147,7 +147,7 @@ namespace DanceSchoolApp.Server.Services.School
                 throw new KeyNotFoundException($"Studio with id {id} was not found.");
         }
 
-        // ─── Studio–Modality compatibility ────────────────────────────────────
+        //  Studio–Modality compatibility 
 
         public async Task AddModalityAsync(int studioId, int modalityId)
         {

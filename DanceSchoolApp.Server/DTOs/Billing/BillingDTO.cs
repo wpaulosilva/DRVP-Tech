@@ -1,6 +1,6 @@
 namespace DanceSchoolApp.Server.DTOs.Billing
 {
-    // ─── Student billing ──────────────────────────────────────────────────────
+    //  Student billing 
 
     public class BillingStudentSummary
     {
@@ -33,7 +33,7 @@ namespace DanceSchoolApp.Server.DTOs.Billing
         public int PageSize { get; set; }
     }
 
-    // ─── Coach billing ────────────────────────────────────────────────────────
+    //  Coach billing 
 
     public class BillingCoachSummary
     {

@@ -9,7 +9,7 @@ namespace DanceSchoolApp.Tests.Unit;
 [Trait("Category", "Unit")]
 public class BillingServiceTests
 {
-    // ─── Factory helpers ──────────────────────────────────────────────────────
+    //  Factory helpers 
 
     private static BillingService CreateService(DanceSchoolApp.Server.Data.AppDbContext db)
     {
@@ -17,7 +17,7 @@ public class BillingServiceTests
         return new BillingService(db, appSettings);
     }
 
-    // ─── Student billing ──────────────────────────────────────────────────────
+    //  Student billing 
 
     [Fact]
     public async Task GetStudentBilling_WeekdayClass_AppliesWeekdayRate()
@@ -243,7 +243,7 @@ public class BillingServiceTests
         result.Summary.TotalStudents.Should().Be(2);
     }
 
-    // ─── Coach billing ────────────────────────────────────────────────────────
+    //  Coach billing 
 
     [Fact]
     public async Task GetCoachBilling_WeekdayClass_AppliesWeekdayRate()

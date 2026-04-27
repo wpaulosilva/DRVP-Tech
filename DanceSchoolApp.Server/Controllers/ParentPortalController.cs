@@ -26,7 +26,7 @@ namespace DanceSchoolApp.Server.Controllers
             _coachService   = coachService;
         }
 
-        // ─── GET /api/ee/dashboard ────────────────────────────────────────────
+        //  GET /api/ee/dashboard 
         [HttpGet("dashboard")]
         public async Task<IActionResult> GetDashboard()
         {
@@ -41,7 +41,7 @@ namespace DanceSchoolApp.Server.Controllers
             }
         }
 
-        // ─── GET /api/ee/classes/my ───────────────────────────────────────────
+        //  GET /api/ee/classes/my 
         // Query: from (DateOnly, required), to (DateOnly, required)
         [HttpGet("classes/my")]
         public async Task<IActionResult> GetMyClasses(
@@ -66,7 +66,7 @@ namespace DanceSchoolApp.Server.Controllers
             }
         }
 
-        // ─── GET /api/ee/classes/available-slots ──────────────────────────────
+        //  GET /api/ee/classes/available-slots 
         // Query: from (DateOnly), to (DateOnly), coachId? (int), modalityId? (int)
         // Validate: to >= from, max 31 days.
         [HttpGet("classes/available-slots")]
@@ -98,7 +98,7 @@ namespace DanceSchoolApp.Server.Controllers
             }
         }
 
-        // ─── GET /api/ee/classes/open ─────────────────────────────────────────
+        //  GET /api/ee/classes/open 
         // Query: modalityId? (int), page (default 1), pageSize (default 10, max 50)
         [HttpGet("classes/open")]
         public async Task<IActionResult> GetOpenClasses(
@@ -125,7 +125,7 @@ namespace DanceSchoolApp.Server.Controllers
             }
         }
 
-        // ─── GET /api/ee/classes/validate ─────────────────────────────────────
+        //  GET /api/ee/classes/validate 
         // Query: page (default 1), pageSize (default 10, max 50)
         [HttpGet("classes/validate")]
         public async Task<IActionResult> GetValidate(
@@ -152,7 +152,7 @@ namespace DanceSchoolApp.Server.Controllers
             }
         }
 
-        // ─── GET /api/ee/students ─────────────────────────────────────────────
+        //  GET /api/ee/students 
         [HttpGet("students")]
         public async Task<IActionResult> GetStudents()
         {
@@ -171,7 +171,7 @@ namespace DanceSchoolApp.Server.Controllers
             }
         }
 
-        // ─── GET /api/ee/inventory/school ─────────────────────────────────────
+        //  GET /api/ee/inventory/school 
         // Query: categoryId? (int), search? (string), page (default 1), pageSize (default 12)
         [HttpGet("inventory/school")]
         public async Task<IActionResult> GetSchoolInventory(
@@ -199,7 +199,7 @@ namespace DanceSchoolApp.Server.Controllers
             }
         }
 
-        // ─── GET /api/ee/inventory/community ─────────────────────────────────
+        //  GET /api/ee/inventory/community 
         // Query: categoryId? (int), maxPrice? (decimal), search? (string),
         //        page (default 1), pageSize (default 12)
         [HttpGet("inventory/community")]
@@ -229,7 +229,7 @@ namespace DanceSchoolApp.Server.Controllers
             }
         }
 
-        // ─── GET /api/ee/coaches ──────────────────────────────────────────────
+        //  GET /api/ee/coaches 
         // Slim coach list for booking dropdowns (active coaches + modalities only).
         [HttpGet("coaches")]
         public async Task<IActionResult> GetCoaches()
@@ -249,7 +249,7 @@ namespace DanceSchoolApp.Server.Controllers
             }
         }
 
-        // ─── Private helpers ──────────────────────────────────────────────────
+        //  Private helpers 
 
         private int GetUserId() =>
             int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);

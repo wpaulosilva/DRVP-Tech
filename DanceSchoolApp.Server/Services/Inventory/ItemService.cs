@@ -15,7 +15,7 @@ namespace DanceSchoolApp.Server.Services.Inventory
             _context = context;
         }
 
-        // ─── Item Queries ─────────────────────────────────────────────────────────
+        //  Item Queries 
 
         public async Task<PagedResult<ItemListResponse>> GetItemsAsync(bool? fromSchool, PagedQuery query)
         {
@@ -134,7 +134,7 @@ namespace DanceSchoolApp.Server.Services.Inventory
             };
         }
 
-        // ─── Item Commands ────────────────────────────────────────────────────────
+        //  Item Commands 
 
         public async Task<int> CreateItemAsync(ItemCreateRequest request, int ownerUserId, bool fromSchool)
         {
@@ -185,7 +185,7 @@ namespace DanceSchoolApp.Server.Services.Inventory
                 throw new KeyNotFoundException($"Item with id {id} was not found.");
         }
 
-        // ─── Images ───────────────────────────────────────────────────────────────
+        //  Images 
 
         public async Task<int> AddImageAsync(int itemId, ItemImageAddRequest request)
         {
@@ -242,7 +242,7 @@ namespace DanceSchoolApp.Server.Services.Inventory
             await _context.SaveChangesAsync();
         }
 
-        // ─── Variants ─────────────────────────────────────────────────────────────
+        //  Variants 
 
         public async Task<List<ItemVariantDetailResponse>> GetVariantsAsync(int itemId)
         {
@@ -326,7 +326,7 @@ namespace DanceSchoolApp.Server.Services.Inventory
             await _context.SaveChangesAsync();
         }
 
-        // ─── Ownership ────────────────────────────────────────────────────────────
+        //  Ownership 
 
         /// <summary>
         /// Returns true when the given user owns the item (community item with
@@ -344,7 +344,7 @@ namespace DanceSchoolApp.Server.Services.Inventory
             return !item.FromSchool && item.IdOwner == userId;
         }
 
-        // ─── Helpers ──────────────────────────────────────────────────────────────
+        //  Helpers 
 
         private static ItemDetailResponse MapToDetail(Item item) => new()
         {

@@ -2,7 +2,7 @@
 
 namespace DanceSchoolApp.Server.DTOs.Social
 {
-    // ─── Responses ────────────────────────────────────────────────────────────
+    //  Responses 
 
     public class EventListResponse
     {
@@ -29,7 +29,7 @@ namespace DanceSchoolApp.Server.DTOs.Social
         public string? CreatedByName { get; set; }
     }
 
-    // ─── Requests ─────────────────────────────────────────────────────────────
+    //  Requests 
 
     public class EventCreateRequest : IValidatableObject
     {

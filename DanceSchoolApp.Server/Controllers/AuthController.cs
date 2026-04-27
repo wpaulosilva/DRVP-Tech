@@ -20,7 +20,7 @@ namespace DanceSchoolApp.Server.Controllers
             _env = env;
         }
 
-        // ─── POST /api/auth/login ──────────────────────────────────────────────
+        //  POST /api/auth/login 
         // Public — no [Authorize].
         // On success sets a jwt HttpOnly Secure SameSite=Strict cookie.
         // The token never touches JavaScript — only the browser and server see it.
@@ -60,7 +60,7 @@ namespace DanceSchoolApp.Server.Controllers
             }
         }
 
-        // ─── POST /api/auth/logout ─────────────────────────────────────────────
+        //  POST /api/auth/logout 
         // Clears the jwt cookie by overwriting it with an expired empty cookie.
         // No server-side token invalidation needed for stateless JWT —
         // the cookie deletion is sufficient since the browser stops sending it.
@@ -80,7 +80,7 @@ namespace DanceSchoolApp.Server.Controllers
             return NoContent();
         }
 
-        // ─── POST /api/auth/forgot-password ───────────────────────────────────
+        //  POST /api/auth/forgot-password 
         // Public. Always returns 200 regardless of whether email exists.
         // Sends a 24h reset link to the address if it belongs to a user.
         [HttpPost("forgot-password")]
@@ -101,7 +101,7 @@ namespace DanceSchoolApp.Server.Controllers
             }
         }
 
-        // ─── POST /api/auth/reset-password ────────────────────────────────────
+        //  POST /api/auth/reset-password 
         // Public. Validates the reset token and updates the password.
         [HttpPost("reset-password")]
         public async Task<IActionResult> ResetPassword(
@@ -129,7 +129,7 @@ namespace DanceSchoolApp.Server.Controllers
             }
         }
 
-        // ─── GET /api/auth/me ──────────────────────────────────────────────────
+        //  GET /api/auth/me 
         // Returns the current authenticated user's context from JWT claims.
         // Useful for React to restore session state on page refresh without
         // a full user fetch. No DB call needed — reads directly from the token.

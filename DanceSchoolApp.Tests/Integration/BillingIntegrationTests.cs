@@ -27,7 +27,7 @@ public class BillingIntegrationTests : IClassFixture<CustomWebApplicationFactory
         });
     }
 
-    // ── helpers ───────────────────────────────────────────────────────────────
+    //  helpers 
 
     private async Task<string> LoginAndGetCookie(string username, string password = "Test1234!")
     {
@@ -103,7 +103,7 @@ public class BillingIntegrationTests : IClassFixture<CustomWebApplicationFactory
         db.SaveChanges();
     }
 
-    // ── tests ─────────────────────────────────────────────────────────────────
+    //  tests 
 
     [Fact]
     public async Task GetStudentBilling_ValidatedClasses_ReturnsCorrectAmounts()

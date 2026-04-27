@@ -14,7 +14,7 @@ namespace DanceSchoolApp.Server.Services.Scheduling
             _context = context;
         }
 
-        // ─── Queries ──────────────────────────────────────────────────────────
+        //  Queries 
 
         public async Task<List<CoachAvailabilityListResponse>> GetAllAsync()
         {
@@ -86,7 +86,7 @@ namespace DanceSchoolApp.Server.Services.Scheduling
                 .ToListAsync();
         }
 
-        // ─── Commands ─────────────────────────────────────────────────────────
+        //  Commands 
 
         public async Task<int> CreateAsync(CoachAvailabilityCreateRequest request)
         {
@@ -167,7 +167,7 @@ namespace DanceSchoolApp.Server.Services.Scheduling
                 throw new KeyNotFoundException($"Availability slot with id {id} was not found.");
         }
 
-        // ─── Private helpers ──────────────────────────────────────────────────
+        //  Private helpers 
 
         private static void ValidateTimeRange(TimeOnly start, TimeOnly end)
         {

@@ -2,7 +2,7 @@
 
 namespace DanceSchoolApp.Server.DTOs.Classes
 {
-    // ─── Validation status enum ───────────────────────────────────────────────
+    //  Validation status enum 
     // Per-participant attendance confirmation, separate from CoachClassStatus.
     public enum ParticipantValidationStatus : byte
     {
@@ -11,7 +11,7 @@ namespace DanceSchoolApp.Server.DTOs.Classes
         Disputed = 2   // parent said student did not attend
     }
 
-    // ─── Responses ────────────────────────────────────────────────────────────
+    //  Responses 
 
     public class ParticipantListResponse
     {
@@ -25,7 +25,7 @@ namespace DanceSchoolApp.Server.DTOs.Classes
         public DateTime? ParentValidatedAt { get; set; }
     }
 
-    // ─── Requests ─────────────────────────────────────────────────────────────
+    //  Requests 
 
     public class ParticipantJoinRequest
     {

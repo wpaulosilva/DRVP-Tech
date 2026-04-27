@@ -14,7 +14,7 @@ namespace DanceSchoolApp.Server.Services.Scheduling
             _context = context;
         }
 
-        // ─── Queries ──────────────────────────────────────────────────────────
+        //  Queries 
 
         public async Task<List<BlockedPeriodListResponse>> GetAllAsync()
         {
@@ -120,7 +120,7 @@ namespace DanceSchoolApp.Server.Services.Scheduling
                 .ToListAsync();
         }
 
-        // ─── Commands ─────────────────────────────────────────────────────────
+        //  Commands 
 
         public async Task<int> CreateAsync(BlockedPeriodCreateRequest request)
         {
@@ -178,7 +178,7 @@ namespace DanceSchoolApp.Server.Services.Scheduling
                 throw new KeyNotFoundException($"Blocked period with id {id} was not found.");
         }
 
-        // ─── Private helpers ──────────────────────────────────────────────────
+        //  Private helpers 
 
         private static void ValidateFutureDateRange(DateTime start, DateTime end)
         {

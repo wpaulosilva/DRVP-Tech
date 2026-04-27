@@ -17,7 +17,7 @@ namespace DanceSchoolApp.Server.Services
             _context = context;
         }
 
-        // ─── Resolve coach ────────────────────────────────────────────────────
+        //  Resolve coach 
 
         /// <summary>
         /// Returns the Coach for the given userId, or throws
@@ -37,7 +37,7 @@ namespace DanceSchoolApp.Server.Services
             return coach;
         }
 
-        // ─── Dashboard ────────────────────────────────────────────────────────
+        //  Dashboard 
 
         public async Task<CoachDashboardResponse> GetDashboardAsync(int coachId)
         {
@@ -108,7 +108,7 @@ namespace DanceSchoolApp.Server.Services
             };
         }
 
-        // ─── Agenda ───────────────────────────────────────────────────────────
+        //  Agenda 
 
         public async Task<List<AgendaClassItem>> GetAgendaAsync(
             int coachId, DateOnly from, DateOnly to)
@@ -149,7 +149,7 @@ namespace DanceSchoolApp.Server.Services
             }).ToList();
         }
 
-        // ─── Validate — requests tab ──────────────────────────────────────────
+        //  Validate — requests tab 
 
         public async Task<PagedResult<CoachPendingRequestItem>> GetPendingRequestsAsync(
             int coachId, int page, int pageSize)
@@ -199,7 +199,7 @@ namespace DanceSchoolApp.Server.Services
             };
         }
 
-        // ─── Validate — validations tab ───────────────────────────────────────
+        //  Validate — validations tab 
 
         public async Task<PagedResult<CoachValidationItem>> GetPendingValidationsAsync(
             int coachId, int page, int pageSize)
@@ -250,7 +250,7 @@ namespace DanceSchoolApp.Server.Services
             };
         }
 
-        // ─── Private helpers ──────────────────────────────────────────────────
+        //  Private helpers 
 
         private static string ResolveCoachName(Coach coach)
         {

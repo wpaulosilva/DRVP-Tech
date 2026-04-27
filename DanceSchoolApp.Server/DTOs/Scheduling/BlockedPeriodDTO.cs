@@ -2,7 +2,7 @@
 
 namespace DanceSchoolApp.Server.DTOs.Scheduling
 {
-    // ─── Scope enum ───────────────────────────────────────────────────────────
+    //  Scope enum 
     // Matches the byte values stored in BlockedPeriod.Scope.
     public enum BlockedPeriodScope : byte
     {
@@ -14,7 +14,7 @@ namespace DanceSchoolApp.Server.DTOs.Scheduling
         Holiday = 5   // School break / public holiday
     }
 
-    // ─── Responses ────────────────────────────────────────────────────────────
+    //  Responses 
 
     public class BlockedPeriodListResponse
     {
@@ -46,7 +46,7 @@ namespace DanceSchoolApp.Server.DTOs.Scheduling
         public string? CoachName { get; set; }
     }
 
-    // ─── Requests ─────────────────────────────────────────────────────────────
+    //  Requests 
 
     public class BlockedPeriodCreateRequest : IValidatableObject
     {

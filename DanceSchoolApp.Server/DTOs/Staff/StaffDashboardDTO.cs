@@ -3,7 +3,7 @@ using DanceSchoolApp.Server.DTOs.Classes;
 
 namespace DanceSchoolApp.Server.DTOs.Staff
 {
-    // ─── Dashboard ────────────────────────────────────────────────────────────
+    //  Dashboard 
 
     public class StaffDashboardResponse
     {
@@ -25,7 +25,7 @@ namespace DanceSchoolApp.Server.DTOs.Staff
         public DateTime? EndDatetime { get; set; }
     }
 
-    // ─── Agenda ───────────────────────────────────────────────────────────────
+    //  Agenda 
 
     public class AgendaClassItem
     {
@@ -41,7 +41,7 @@ namespace DanceSchoolApp.Server.DTOs.Staff
         public int MaxParticipants { get; set; }
     }
 
-    // ─── Validate classes ─────────────────────────────────────────────────────
+    //  Validate classes 
 
     public class ValidateClassItem
     {
@@ -67,7 +67,7 @@ namespace DanceSchoolApp.Server.DTOs.Staff
         public int Pending { get; set; }
     }
 
-    // ─── Validate students ────────────────────────────────────────────────────
+    //  Validate students 
 
     public class ValidateStudentItem
     {

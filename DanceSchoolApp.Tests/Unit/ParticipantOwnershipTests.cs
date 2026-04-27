@@ -29,7 +29,7 @@ public class ParticipantOwnershipTests
         return new ParticipantService(db, notifications);
     }
 
-    // ─── 1. Happy path ────────────────────────────────────────────────────────
+    //  1. Happy path 
 
     [Fact]
     public async Task EnrollStudent_StudentBelongsToCallingParent_Succeeds()
@@ -66,7 +66,7 @@ public class ParticipantOwnershipTests
         enrolled.Should().BeTrue();
     }
 
-    // ─── 2. Ownership guard (not yet implemented) ─────────────────────────────
+    //  2. Ownership guard (not yet implemented) 
 
     [Fact]
     public async Task EnrollStudent_StudentBelongsToDifferentParent_ThrowsUnauthorizedAccess()
@@ -100,7 +100,7 @@ public class ParticipantOwnershipTests
         await act.Should().ThrowAsync<UnauthorizedAccessException>();
     }
 
-    // ─── 3. Class capacity ────────────────────────────────────────────────────
+    //  3. Class capacity 
 
     [Fact]
     public async Task EnrollStudent_ClassFull_ThrowsInvalidOperation()
@@ -149,7 +149,7 @@ public class ParticipantOwnershipTests
             .WithMessage("*full*");
     }
 
-    // ─── 4. Class status guard ────────────────────────────────────────────────
+    //  4. Class status guard 
 
     [Fact]
     public async Task EnrollStudent_ClassNotApproved_ThrowsInvalidOperation()
@@ -182,7 +182,7 @@ public class ParticipantOwnershipTests
             .WithMessage("*Approved*");
     }
 
-    // ─── 5. Student acceptance guard ─────────────────────────────────────────
+    //  5. Student acceptance guard 
 
     [Fact]
     public async Task EnrollStudent_StudentNotAccepted_ThrowsInvalidOperation()

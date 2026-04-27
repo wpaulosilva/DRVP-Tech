@@ -12,7 +12,7 @@ var builder = WebApplication.CreateBuilder(args);
 string YELLOW = Console.IsOutputRedirected ? "" : "\x1b[93m";
 string NORMAL = Console.IsOutputRedirected ? "" : "\x1b[39m";
 
-// ── Auto-register all services via reflection ──────────────────────────────
+//  Auto-register all services via reflection 
 var serviceTypes = Assembly.GetExecutingAssembly()
     .GetTypes()
     .Where(t => t.IsClass && t.Name.EndsWith("Service"));
@@ -24,25 +24,25 @@ foreach (var service in serviceTypes)
 
 builder.Services.AddHostedService<ClassLifecycleWorker>();
 
-// ── Controllers ───────────────────────────────────────────────────────────
+//  Controllers 
 builder.Services.AddControllers();
 
 
-// ── OpenAPI ───────────────────────────────────────────────────────────────
+//  OpenAPI 
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 builder.Services.AddEndpointsApiExplorer();
 
 
 
-// ── Database ──────────────────────────────────────────────────────────────
+//  Database 
 var conn = Environment.GetEnvironmentVariable("DanceSchoolApp_DB");
 if (conn == null) Console.WriteLine($"{YELLOW}Warning{NORMAL} - DanceSchoolApp_DB environment variable is not set.!");
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(conn));
 
-// ── CORS ─────────────────────────────────────────────────────────────────
+//  CORS 
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend",
@@ -55,7 +55,7 @@ builder.Services.AddCors(options =>
         });
 });
 
-// ── JWT Authentication (cookie-based) ─────────────────────────────────────
+//  JWT Authentication (cookie-based) 
 var jwtSecret = Environment.GetEnvironmentVariable("DanceSchoolApp_JWT_Secret");
 if (string.IsNullOrWhiteSpace(jwtSecret))
     Console.WriteLine($"{YELLOW}Warning{NORMAL} — DanceSchoolApp_JWT_Secret environment variable is not set.");
@@ -93,14 +93,14 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 builder.Services.AddAuthorization();
 
-// ── Email Service ─────────────────────────────────────────────────────────
+//  Email Service 
 var email = Environment.GetEnvironmentVariable("DanceSchoolApp_Email_Password");
 if (email == null) Console.WriteLine($"{YELLOW}Warning{NORMAL} - DanceSchoolApp_Email_Password environment variable is not set!");
 
 
 
 
-// ─────────────────────────────────────────────────────────────────────────
+// 
 
 var app = builder.Build();
 

@@ -2,7 +2,7 @@
 
 namespace DanceSchoolApp.Server.DTOs.Inventory
 {
-    // ─── Shared sub-responses ────────────────────────────────────────────────────
+    //  Shared sub-responses 
 
     public class ItemImageResponse
     {
@@ -26,7 +26,7 @@ namespace DanceSchoolApp.Server.DTOs.Inventory
         public string? CatgName { get; set; }
     }
 
-    // ─── Item Responses ──────────────────────────────────────────────────────────
+    //  Item Responses 
 
     public class ItemListResponse
     {
@@ -58,7 +58,7 @@ namespace DanceSchoolApp.Server.DTOs.Inventory
         public List<ItemVariantSummaryResponse> Variants { get; set; } = new();
     }
 
-    // ─── Item Requests ───────────────────────────────────────────────────────────
+    //  Item Requests 
 
     public class ItemCreateRequest
     {
@@ -103,7 +103,7 @@ namespace DanceSchoolApp.Server.DTOs.Inventory
         public string? ContactAddress { get; set; }
     }
 
-    // ─── ItemVariant Responses ───────────────────────────────────────────────────
+    //  ItemVariant Responses 
 
     public class ItemVariantDetailResponse
     {
@@ -116,7 +116,7 @@ namespace DanceSchoolApp.Server.DTOs.Inventory
         public bool? IsActive { get; set; }
     }
 
-    // ─── ItemVariant Requests ────────────────────────────────────────────────────
+    //  ItemVariant Requests 
 
     public class ItemVariantCreateRequest
     {
@@ -151,7 +151,7 @@ namespace DanceSchoolApp.Server.DTOs.Inventory
         public bool? IsActive { get; set; }
     }
 
-    // ─── ItemContact Requests ────────────────────────────────────────────────────
+    //  ItemContact Requests 
 
     public class ItemContactUpsertRequest
     {
@@ -166,7 +166,7 @@ namespace DanceSchoolApp.Server.DTOs.Inventory
         public string? Address { get; set; }
     }
 
-    // ─── ItemImage Requests ──────────────────────────────────────────────────────
+    //  ItemImage Requests 
 
     public class ItemImageAddRequest
     {
@@ -181,7 +181,7 @@ namespace DanceSchoolApp.Server.DTOs.Inventory
         public string Path { get; set; } = null!; // relative path to saved file (e.g. /uploads/abc.jpg)
     }
 
-    // ─── ItemRequisition Responses ───────────────────────────────────────────────
+    //  ItemRequisition Responses 
 
     public class ItemRequisitionListResponse
     {
@@ -206,7 +206,7 @@ namespace DanceSchoolApp.Server.DTOs.Inventory
         public int? ReturnQuantity { get; set; }
     }
 
-    // ─── ItemRequisition Requests ────────────────────────────────────────────────
+    //  ItemRequisition Requests 
 
     public class ItemRequisitionCreateRequest
     {
@@ -249,7 +249,7 @@ namespace DanceSchoolApp.Server.DTOs.Inventory
         public string? ReturnNote { get; set; }  // describes condition/defects on return
     }
 
-    // ─── ItemCategory Requests ───────────────────────────────────────────────────
+    //  ItemCategory Requests 
 
     public class ItemCategoryCreateRequest
     {

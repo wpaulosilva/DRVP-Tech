@@ -1,6 +1,6 @@
 namespace DanceSchoolApp.Server.DTOs.Admin
 {
-    // ─── Dashboard ────────────────────────────────────────────────────────────
+    //  Dashboard 
 
     public class AdminDashboardResponse
     {
@@ -8,7 +8,7 @@ namespace DanceSchoolApp.Server.DTOs.Admin
         public int ActiveStaffAccounts { get; set; }
     }
 
-    // ─── Users list ───────────────────────────────────────────────────────────
+    //  Users list 
 
     public class AdminUserRow
     {

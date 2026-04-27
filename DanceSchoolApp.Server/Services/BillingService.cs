@@ -17,7 +17,7 @@ namespace DanceSchoolApp.Server.Services
             _appSettings = appSettings;
         }
 
-        // ─── Student billing ──────────────────────────────────────────────────
+        //  Student billing 
         // Sums hours and revenue per student across all Validated classes in the
         // requested month. Summary reflects the full month; search + paging apply
         // only to the Items list.
@@ -133,7 +133,7 @@ namespace DanceSchoolApp.Server.Services
             };
         }
 
-        // ─── Coach billing ────────────────────────────────────────────────────
+        //  Coach billing 
         // Sums hours taught and school expense per coach across all Validated
         // classes in the requested month.
 
@@ -246,7 +246,7 @@ namespace DanceSchoolApp.Server.Services
             };
         }
 
-        // ─── Private helpers ──────────────────────────────────────────────────
+        //  Private helpers 
 
         private static decimal DurationHours(CoachClass cls) =>
             (decimal)(cls.EndDatetime - cls.StartDatetime).TotalMinutes / 60.0m;

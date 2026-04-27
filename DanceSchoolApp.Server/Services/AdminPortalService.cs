@@ -15,7 +15,7 @@ namespace DanceSchoolApp.Server.Services
             _context = context;
         }
 
-        // ─── Dashboard ────────────────────────────────────────────────────────
+        //  Dashboard 
 
         public async Task<AdminDashboardResponse> GetDashboardAsync()
         {
@@ -32,7 +32,7 @@ namespace DanceSchoolApp.Server.Services
             };
         }
 
-        // ─── Staff users list ─────────────────────────────────────────────────
+        //  Staff users list 
 
         public async Task<PagedResult<AdminUserRow>> GetStaffUsersAsync(
      string? search,

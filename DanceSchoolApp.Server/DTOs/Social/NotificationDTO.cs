@@ -3,7 +3,7 @@ using DanceSchoolApp.Server.DTOs;
 
 namespace DanceSchoolApp.Server.DTOs.Social
 {
-    // ─── Type enum ────────────────────────────────────────────────────────────
+    //  Type enum 
     public enum NotificationType : byte
     {
         Info = 0,
@@ -14,7 +14,7 @@ namespace DanceSchoolApp.Server.DTOs.Social
         System = 5
     }
 
-    // ─── Responses ────────────────────────────────────────────────────────────
+    //  Responses 
 
     public class NotificationResponse
     {
@@ -42,7 +42,7 @@ namespace DanceSchoolApp.Server.DTOs.Social
         public int TotalUnread { get; set; }
     }
 
-    // ─── Requests ─────────────────────────────────────────────────────────────
+    //  Requests 
 
     // Used for manual staff creation and by internal services (e.g.
     // CoachClassService.RejectAsync) when wiring up the notification hook.

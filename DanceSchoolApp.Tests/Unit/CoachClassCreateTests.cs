@@ -42,7 +42,7 @@ public class CoachClassCreateTests
         return (db, coach.CoachId, modality.ModalityId, parentUser.UserId, student.StudentId, coach);
     }
 
-    // ─── availability missing ─────────────────────────────────────────────────
+    //  availability missing 
 
     [Fact]
     public async Task CreateAsync_CoachHasNoAvailability_ThrowsInvalidOperation()
@@ -67,7 +67,7 @@ public class CoachClassCreateTests
             .WithMessage("*availability*");
     }
 
-    // ─── availability present but expired ────────────────────────────────────
+    //  availability present but expired 
 
     [Fact]
     public async Task CreateAsync_CoachAvailabilityExpired_ThrowsInvalidOperation()
@@ -98,7 +98,7 @@ public class CoachClassCreateTests
             .WithMessage("*availability*");
     }
 
-    // ─── availability on wrong weekday ────────────────────────────────────────
+    //  availability on wrong weekday 
 
     [Fact]
     public async Task CreateAsync_AvailabilityOnWrongWeekday_ThrowsInvalidOperation()
@@ -129,7 +129,7 @@ public class CoachClassCreateTests
             .WithMessage("*availability*");
     }
 
-    // ─── matching availability ────────────────────────────────────────────────
+    //  matching availability 
 
     [Fact]
     public async Task CreateAsync_CoachHasMatchingAvailability_ReturnsPositiveClassId()

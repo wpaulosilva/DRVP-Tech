@@ -16,7 +16,7 @@ namespace DanceSchoolApp.Server.Controllers
             _adminService = adminService;
         }
 
-        // ─── GET /api/admin/dashboard ─────────────────────────────────────────
+        //  GET /api/admin/dashboard 
         [HttpGet("dashboard")]
         public async Task<IActionResult> GetDashboard()
         {
@@ -31,7 +31,7 @@ namespace DanceSchoolApp.Server.Controllers
             }
         }
 
-        // ─── GET /api/admin/users ─────────────────────────────────────────────
+        //  GET /api/admin/users 
         // Query: search? (string), page (default 1), pageSize (default 20)
         [HttpGet("users")]
         public async Task<IActionResult> GetUsers(

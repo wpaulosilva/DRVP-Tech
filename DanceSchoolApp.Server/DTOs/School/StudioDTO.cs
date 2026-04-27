@@ -2,7 +2,7 @@
 
 namespace DanceSchoolApp.Server.DTOs.School
 {
-    // ─── Responses ────────────────────────────────────────────────────────────
+    //  Responses 
 
     public class StudioListResponse
     {
@@ -30,7 +30,7 @@ namespace DanceSchoolApp.Server.DTOs.School
         public string Name { get; set; } = null!;
     }
 
-    // ─── Requests ─────────────────────────────────────────────────────────────
+    //  Requests 
 
     public class StudioCreateRequest
     {

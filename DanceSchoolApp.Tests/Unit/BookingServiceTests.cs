@@ -16,7 +16,7 @@ public class BookingServiceTests
 
     private static BookingService CreateService(AppDbContext db) => new BookingService(db);
 
-    // ─── No availability ──────────────────────────────────────────────────────
+    //  No availability 
 
     [Fact]
     public async Task GetAvailableSlotsAsync_NoAvailability_ReturnsEmptyList()
@@ -33,7 +33,7 @@ public class BookingServiceTests
         result.Should().BeEmpty();
     }
 
-    // ─── Full slot with no bookings or blocks ─────────────────────────────────
+    //  Full slot with no bookings or blocks 
 
     [Fact]
     public async Task GetAvailableSlotsAsync_AvailabilityNoBookings_ReturnsFullSlot()
@@ -67,7 +67,7 @@ public class BookingServiceTests
         result[0].Slots[0].EndTime.Should().Be(new TimeOnly(17, 0));
     }
 
-    // ─── Approved booking punches a hole in the slot ──────────────────────────
+    //  Approved booking punches a hole in the slot 
 
     [Fact]
     public async Task GetAvailableSlotsAsync_BookingSubtractsFromSlot()
@@ -111,7 +111,7 @@ public class BookingServiceTests
             s.StartTime == new TimeOnly(13, 0) && s.EndTime == new TimeOnly(17, 0));
     }
 
-    // ─── Global blocked period subtracts ─────────────────────────────────────
+    //  Global blocked period subtracts 
 
     [Fact]
     public async Task GetAvailableSlotsAsync_BlockedPeriodSubtractsFromSlot()
@@ -155,7 +155,7 @@ public class BookingServiceTests
             s.StartTime == new TimeOnly(12, 0) && s.EndTime == new TimeOnly(17, 0));
     }
 
-    // ─── Cancelled booking is ignored ────────────────────────────────────────
+    //  Cancelled booking is ignored 
 
     [Fact]
     public async Task GetAvailableSlotsAsync_CancelledBooking_DoesNotSubtract()
@@ -196,7 +196,7 @@ public class BookingServiceTests
         result[0].Slots[0].EndTime.Should().Be(new TimeOnly(17, 0));
     }
 
-    // ─── Modality filter excludes wrong coach ─────────────────────────────────
+    //  Modality filter excludes wrong coach 
 
     [Fact]
     public async Task GetAvailableSlotsAsync_ModalityFilter_ExcludesCoachWithoutModality()

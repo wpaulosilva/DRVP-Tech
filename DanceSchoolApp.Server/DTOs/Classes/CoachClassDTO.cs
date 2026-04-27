@@ -2,7 +2,7 @@
 
 namespace DanceSchoolApp.Server.DTOs.Classes
 {
-    // ─── Coach validation status enum ────────────────────────────────────────
+    //  Coach validation status enum 
     public enum CoachValidationStatus : byte
     {
         Pending   = 0,
@@ -10,7 +10,7 @@ namespace DanceSchoolApp.Server.DTOs.Classes
         Denied    = 2
     }
 
-    // ─── Status enum ──────────────────────────────────────────────────────────
+    //  Status enum 
     public enum CoachClassStatus : byte
     {
         Requested     = 0,
@@ -23,7 +23,7 @@ namespace DanceSchoolApp.Server.DTOs.Classes
         StaffApproved = 7   // staff approved, awaiting coach acceptance
     }
 
-    // ─── Responses ────────────────────────────────────────────────────────────
+    //  Responses 
 
     public class CoachClassListResponse
     {
@@ -103,7 +103,7 @@ namespace DanceSchoolApp.Server.DTOs.Classes
         public int SpotsAvailable { get; set; }
     }
 
-    // ─── Requests ─────────────────────────────────────────────────────────────
+    //  Requests 
 
     public class CoachClassCreateRequest : IValidatableObject
     {

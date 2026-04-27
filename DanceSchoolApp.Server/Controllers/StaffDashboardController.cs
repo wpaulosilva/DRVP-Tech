@@ -26,7 +26,7 @@ namespace DanceSchoolApp.Server.Controllers
             _appSettingService = appSettingService;
         }
 
-        // ─── GET /api/staff/dashboard ─────────────────────────────────────────
+        //  GET /api/staff/dashboard 
         [HttpGet("dashboard")]
         public async Task<IActionResult> GetDashboard()
         {
@@ -41,7 +41,7 @@ namespace DanceSchoolApp.Server.Controllers
             }
         }
 
-        // ─── GET /api/staff/agenda ────────────────────────────────────────────
+        //  GET /api/staff/agenda 
         // Query: from, to (DateOnly, required), studioId?, status?
         // Range capped at 60 days.
         [HttpGet("agenda")]
@@ -72,7 +72,7 @@ namespace DanceSchoolApp.Server.Controllers
             }
         }
 
-        // ─── GET /api/staff/validate-classes ──────────────────────────────────
+        //  GET /api/staff/validate-classes 
         // Query: tab ("requested"|"finished"|"pending", default "requested"),
         //        page (default 1), pageSize (default 15, max 50)
         [HttpGet("validate-classes")]
@@ -100,7 +100,7 @@ namespace DanceSchoolApp.Server.Controllers
             }
         }
 
-        // ─── GET /api/staff/validate-students ─────────────────────────────────
+        //  GET /api/staff/validate-students 
         // Query: status ("pending"|"approved"|"all", default "pending"),
         //        page (default 1), pageSize (default 10, max 50)
         [HttpGet("validate-students")]
@@ -128,7 +128,7 @@ namespace DanceSchoolApp.Server.Controllers
             }
         }
 
-        // ─── GET /api/staff/billing/students ──────────────────────────────────
+        //  GET /api/staff/billing/students 
         // Query: month (YYYY-MM, required), search?, page, pageSize (default 25)
         [HttpGet("billing/students")]
         public async Task<IActionResult> GetBillingStudents(
@@ -156,7 +156,7 @@ namespace DanceSchoolApp.Server.Controllers
             }
         }
 
-        // ─── GET /api/staff/billing/coaches ───────────────────────────────────
+        //  GET /api/staff/billing/coaches 
         // Query: month (YYYY-MM, required), search?, page, pageSize (default 25)
         [HttpGet("billing/coaches")]
         public async Task<IActionResult> GetBillingCoaches(
@@ -184,7 +184,7 @@ namespace DanceSchoolApp.Server.Controllers
             }
         }
 
-        // ─── GET /api/staff/appsettings ───────────────────────────────────────
+        //  GET /api/staff/appsettings 
         [HttpGet("appsettings")]
         public async Task<IActionResult> GetAppSettings()
         {
@@ -199,7 +199,7 @@ namespace DanceSchoolApp.Server.Controllers
             }
         }
 
-        // ─── PATCH /api/staff/appsettings/{key} ───────────────────────────────
+        //  PATCH /api/staff/appsettings/{key} 
         [HttpPatch("appsettings/{key}")]
         public async Task<IActionResult> UpdateAppSetting(
             string key, [FromBody] AppSettingUpdateRequest request)
@@ -222,7 +222,7 @@ namespace DanceSchoolApp.Server.Controllers
             }
         }
 
-        // ─── Private helpers ──────────────────────────────────────────────────
+        //  Private helpers 
 
         private static bool TryParseYearMonth(string? input, out int year, out int month)
         {

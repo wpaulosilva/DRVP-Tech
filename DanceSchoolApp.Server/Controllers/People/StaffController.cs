@@ -16,7 +16,7 @@ namespace DanceSchoolApp.Server.Controllers.People
             _StaffService = StaffService;
         }
 
-        // ─── GET /api/staff/me ─────────────────────────────────────────────────
+        //  GET /api/staff/me 
         [Authorize(Roles = "staff")]
         [HttpGet("me")]
         public async Task<IActionResult> GetMe()
@@ -39,7 +39,7 @@ namespace DanceSchoolApp.Server.Controllers.People
         private int GetUserId() =>
             int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
-        // ─── GET /api/staff ───────────────────────────────────────────────────
+        //  GET /api/staff 
         [Authorize(Roles = "staff")]
         [HttpGet]
         public async Task<IActionResult> GetStaffs()
@@ -58,7 +58,7 @@ namespace DanceSchoolApp.Server.Controllers.People
                 return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
         }
-        // ─── GET /api/staff/{id} ──────────────────────────────────────────────
+        //  GET /api/staff/{id} 
         [Authorize(Roles = "staff")]
         [HttpGet("{id}")]
         public async Task<IActionResult> GetStaff(int id)

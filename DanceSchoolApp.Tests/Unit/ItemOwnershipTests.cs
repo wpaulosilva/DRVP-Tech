@@ -8,7 +8,7 @@ namespace DanceSchoolApp.Tests.Unit;
 [Trait("Category", "Unit")]
 public class ItemOwnershipTests
 {
-    // ─── Helper ───────────────────────────────────────────────────────────────
+    //  Helper 
 
     private static (ItemService service, int itemId) SeedItem(
         DanceSchoolApp.Server.Data.AppDbContext db,
@@ -29,7 +29,7 @@ public class ItemOwnershipTests
         return (new ItemService(db), item.ItemId);
     }
 
-    // ─── IsItemOwnerAsync ─────────────────────────────────────────────────────
+    //  IsItemOwnerAsync 
 
     [Fact]
     public async Task IsItemOwner_CommunityItem_OwnerReturnsTrue()
@@ -76,7 +76,7 @@ public class ItemOwnershipTests
         await act.Should().ThrowAsync<KeyNotFoundException>();
     }
 
-    // ─── Owner can manage own community item ──────────────────────────────────
+    //  Owner can manage own community item 
 
     [Fact]
     public async Task Owner_CanUpdateOwnCommunityItem()

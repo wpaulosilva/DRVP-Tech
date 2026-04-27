@@ -2,7 +2,7 @@
 
 namespace DanceSchoolApp.Server.DTOs.People
 {
-    // ─── Responses ────────────────────────────────────────────────────────────
+    //  Responses 
 
     public class UserListResponse
     {
@@ -32,7 +32,7 @@ namespace DanceSchoolApp.Server.DTOs.People
     }
 
 
-    // ─── Requests ─────────────────────────────────────────────────────────────
+    //  Requests 
 
     public class UpdatePersonInfoRequest
     {
