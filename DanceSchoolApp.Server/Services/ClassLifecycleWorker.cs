@@ -67,7 +67,9 @@ namespace DanceSchoolApp.Server.Services
             var notifications = scope.ServiceProvider.GetRequiredService<NotificationService>();
             var appSettings = scope.ServiceProvider.GetRequiredService<AppSettingService>();
 
-            var now = DateTime.UtcNow;
+            // StartDatetime/EndDatetime are stored in server local time (as sent by the client).
+            // Use DateTime.Now so the comparison matches the stored timezone.
+            var now = DateTime.Now;
 
             await AutoFinishApprovedClassesAsync(db, notifications, now, ct);
             await AutoAdvanceExpiredFinishedClassesAsync(db, notifications, appSettings, now, ct);

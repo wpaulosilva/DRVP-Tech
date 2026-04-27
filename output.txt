@@ -1,0 +1,33 @@
+"<
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (24ms) [Parameters=[@now='?' (DbType = DateTime2)], CommandType='Text', CommandTimeout='30']
+      SELECT [c].[class_id], [c].[coach_validated_at], [c].[coach_validation_status], [c].[created_at], [c].[created_by], [c].[end_datetime], [c].[finished_at], [c].[id_coach], [c].[id_modality], [c].[id_studio], [c].[max_participants], [c].[staff_validated_at], [c].[start_datetime], [c].[status], [s0].[participant_id], [s0].[id_coach_class], [s0].[id_student], [s0].[joined_at], [s0].[parent_validated_at], [s0].[validation_status], [s0].[student_id], [s0].[acceptance_status], [s0].[is_active], [s0].[parent_user_id], [s0].[person_info_id]
+      FROM [Coach_Class] AS [c]
+      LEFT JOIN (
+          SELECT [p].[participant_id], [p].[id_coach_class], [p].[id_student], [p].[joined_at], [p].[parent_validated_at], [p].[validation_status], [s].[student_id], [s].[acceptance_status], [s].[is_active], [s].[parent_user_id], [s].[person_info_id]
+          FROM [Participant] AS [p]
+          INNER JOIN [Student] AS [s] ON [p].[id_student] = [s].[student_id]
+      ) AS [s0] ON [c].[class_id] = [s0].[id_coach_class]
+      WHERE [c].[status] = CAST(1 AS tinyint) AND [c].[end_datetime] <= @now
+      ORDER BY [c].[class_id], [s0].[participant_id]
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (24ms) [Parameters=[@key='?' (Size = 64)], CommandType='Text', CommandTimeout='30']
+      SELECT TOP(1) [a].[setting_id], [a].[setting_key], [a].[setting_value], [a].[updated_at]
+      FROM [App_Setting] AS [a]
+      WHERE [a].[setting_key] = @key
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (30ms) [Parameters=[@cutoff='?' (DbType = DateTime2)], CommandType='Text', CommandTimeout='30']
+      SELECT [c].[class_id], [c].[coach_validated_at], [c].[coach_validation_status], [c].[created_at], [c].[created_by], [c].[end_datetime], [c].[finished_at], [c].[id_coach], [c].[id_modality], [c].[id_studio], [c].[max_participants], [c].[staff_validated_at], [c].[start_datetime], [c].[status], [c0].[coach_id], [c0].[biography], [c0].[photo_url], [u].[user_id], [u].[created_at], [u].[email], [u].[is_active], [u].[password_hash], [u].[person_info_id], [u].[username], [p].[person_id], [p].[address], [p].[birth_date], [p].[first_name], [p].[last_name], [p].[nif], [p].[phone], [s0].[participant_id], [s0].[id_coach_class], [s0].[id_student], [s0].[joined_at], [s0].[parent_validated_at], [s0].[validation_status], [s0].[student_id], [s0].[acceptance_status], [s0].[is_active], [s0].[parent_user_id], [s0].[person_info_id], [s0].[user_id], [s0].[created_at], [s0].[email], [s0].[is_active0], [s0].[password_hash], [s0].[person_info_id0], [s0].[username], [s0].[person_id], [s0].[address], [s0].[birth_date], [s0].[first_name], [s0].[last_name], [s0].[nif], [s0].[phone]
+      FROM [Coach_Class] AS [c]
+      INNER JOIN [Coach] AS [c0] ON [c].[id_coach] = [c0].[coach_id]
+      INNER JOIN [User] AS [u] ON [c0].[coach_id] = [u].[user_id]
+      LEFT JOIN [Person_Info] AS [p] ON [u].[person_info_id] = [p].[person_id]
+      LEFT JOIN (
+          SELECT [p0].[participant_id], [p0].[id_coach_class], [p0].[id_student], [p0].[joined_at], [p0].[parent_validated_at], [p0].[validation_status], [s].[student_id], [s].[acceptance_status], [s].[is_active], [s].[parent_user_id], [s].[person_info_id], [u0].[user_id], [u0].[created_at], [u0].[email], [u0].[is_active] AS [is_active0], [u0].[password_hash], [u0].[person_info_id] AS [person_info_id0], [u0].[username], [p1].[person_id], [p1].[address], [p1].[birth_date], [p1].[first_name], [p1].[last_name], [p1].[nif], [p1].[phone]
+          FROM [Participant] AS [p0]
+          INNER JOIN [Student] AS [s] ON [p0].[id_student] = [s].[student_id]
+          INNER JOIN [User] AS [u0] ON [s].[parent_user_id] = [u0].[user_id]
+          LEFT JOIN [Person_Info] AS [p1] ON [u0].[person_info_id] = [p1].[person_id]
+      ) AS [s0] ON [c].[class_id] = [s0].[id_coach_class]
+      WHERE [c].[status] = CAST(4 AS tinyint) AND [c].[finished_at] IS NOT NULL AND [c].[finished_at] <= @cutoff
+      ORDER BY [c].[class_id], [c0].[coach_id], [u].[user_id], [p].[person_id], [s0].[participant_id], [s0].[student_id], [s0].[user_id]"

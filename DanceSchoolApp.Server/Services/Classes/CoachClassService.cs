@@ -565,7 +565,7 @@ namespace DanceSchoolApp.Server.Services.Classes
 
             if (coachClass is null) return;
 
-            coachClass.FinishedAt = DateTime.UtcNow;
+            coachClass.FinishedAt = DateTime.Now;
             await _context.SaveChangesAsync();
 
             var distinctParentIds = coachClass.Participants
