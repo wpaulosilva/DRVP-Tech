@@ -2,7 +2,7 @@
   "info": {
     "_postman_id": "fc1ddb28-56ba-4612-81b7-ba7870c633f6",
     "name": "DanceSchoolApp v2",
-    "description": "FlowArtes / Ent'Artes Dance School API\n\n## Setup\n\n1. Select the **DanceSchoolApp** environment\n    \n2. Set `base_url` if needed (default: [https://localhost:7003](https://localhost:7003))\n    \n3. Run **POST Login** — the test script auto-saves `userId`, `roles`, and `expiresAt`\n    \n4. All requests use the shared cookie jar automatically (JWT is HttpOnly cookie)\n    \n\n## Debug Users (seeded on dev DB)\n\n| ID | Role | Email | Password |\n|---|---|---|---|\n| 9 | admin | admin@admin.com | 12345678 |\n| 8 | staff | staff@staff.com | 12345678 |\n| 10 | parent | parent@parent.com | 12345678 |\n| 11 | coach | coach@coach.com | 12345678 |\n\n## Variables\n\n- `base_url` — server base (change to switch between local/staging)\n    \n- `userId` — auto-set by Login\n    \n- `roles` — auto-set by Login\n    \n- `user_id`, `student_id`, `coach_id`, `class_id`, `participant_id`, `studio_id`, `modality_id`, `item_id` — set manually or auto-captured by POST scripts\n    \n\n## Enum Reference\n\n### CoachClass status\n0=Requested, 1=Approved, 2=Rejected, 3=Cancelled, 4=Finished, 5=Validated, 6=Pending, 7=StaffApproved\n\n**Lifecycle:** Requested → StaffApproved → Approved → Finished → Pending → Validated\n\n### StudentAcceptance\n0=Pending, 1=Accepted, 2=Rejected\n\n### ParticipantValidation\n0=Pending, 1=ParentConfirmed, 2=Disputed\n\n### CoachValidationStatus\n0=Pending, 1=Confirmed, 2=Disputed\n\n### BlockedPeriod scope\n0=Undefined (global), 1=NormalClass (global, blocks all classes), 2=Studio (requires studioId), 3=Coach (requires coachId), 4=Event (global), 5=Holiday (global)\n\nNote: scope 0 (Undefined) is a fallback value — do not use when creating via UI. Use scope 1–5.\n\n### ItemRequisition status\n0=Pending, 1=Approved, 2=Rejected, 3=Returned\n\n### Roles\n0=Admin, 1=Staff, 2=Coach, 3=Parent\n\n### Weekday (CoachAvailability)\n0=Sunday, 1=Monday, 2=Tuesday, 3=Wednesday, 4=Thursday, 5=Friday, 6=Saturday",
+    "description": "FlowArtes / Ent'Artes Dance School API\n\n## Setup\n\n1. Select the **DanceSchoolApp** environment\n    \n2. Set `base_url` if needed (default: [https://localhost:7003](https://localhost:7003))\n    \n3. Run **POST Login** — the test script auto-saves `userId`, `roles`, and `expiresAt`\n    \n4. All requests use the shared cookie jar automatically (JWT is HttpOnly cookie)\n    \n\n## Variables\n\n- `base_url` — server base (change to switch between local/staging)\n    \n- `userId` — auto-set by Login\n    \n- `roles` — auto-set by Login\n    \n- `user_id`, `student_id`, `coach_id`, `class_id`, `participant_id`, `studio_id`, `modality_id`, `item_id` — set manually or auto-captured by POST scripts\n    \n\n## Status values\n\n- CoachClass: 0=Requested, 1=Approved, 2=Rejected, 3=Cancelled, 4=Finished, 5=Validated, 6=Pending, 7=StaffApproved\n    \n- StudentAcceptance: 0=Pending, 1=Accepted, 2=Rejected\n    \n- Roles: 0=Admin, 1=Staff, 2=Coach, 3=Parent",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
     "_exporter_id": "53613999",
     "_collection_link": "https://go.postman.co/collection/53613999-fc1ddb28-56ba-4612-81b7-ba7870c633f6?source=collection_link"
@@ -955,48 +955,33 @@
                   "response": []
                 },
                 {
-                  "name": "GET EE Coaches (parent coach list)",
-                  "request": {
-                    "method": "GET",
-                    "header": [],
-                    "url": {
-                      "raw": "{{base_url}}/api/ee/coaches",
-                      "host": ["{{base_url}}"],
-                      "path": ["api", "ee", "coaches"]
-                    },
-                    "description": "[parent] Parent-facing active coach list with modalities. Use this to populate the coach dropdown in the 'Criar Aula' tab — resolves the gap where GET /api/coaches was staff-only."
-                  },
-                  "response": []
-                },
-                {
-                  "name": "GET Coach Me",
-                  "request": {
-                    "method": "GET",
-                    "header": [],
-                    "url": {
-                      "raw": "{{base_url}}/api/coaches/me",
-                      "host": ["{{base_url}}"],
-                      "path": ["api", "coaches", "me"]
-                    },
-                    "description": "[coach] Returns own coach profile including modalities."
-                  },
-                  "response": []
-                },
-                {
-                  "name": "POST Coach Upload Photo",
+                  "name": "POST Profile Photo",
                   "request": {
                     "method": "POST",
                     "header": [],
                     "body": {
                       "mode": "formdata",
-                      "formdata": [{"key": "file", "type": "file", "src": ""}]
+                      "formdata": [
+                        {
+                          "key": "File\n",
+                          "type": "file",
+                          "uuid": "d6ca268b-be5e-4f10-bf62-b18f1186dd50",
+                          "value": null
+                        }
+                      ]
                     },
                     "url": {
-                      "raw": "{{base_url}}/api/coaches/{{coach_id}}/photo",
-                      "host": ["{{base_url}}"],
-                      "path": ["api", "coaches", "{{coach_id}}", "photo"]
-                    },
-                    "description": "[coach,staff] Uploads a coach profile photo (jpg/jpeg/png/gif). Coach can only update own photo. Returns photoPath."
+                      "raw": "{{base_url}}/api/coach/26/photo",
+                      "host": [
+                        "{{base_url}}"
+                      ],
+                      "path": [
+                        "api",
+                        "coach",
+                        "26",
+                        "photo"
+                      ]
+                    }
                   },
                   "response": []
                 }
@@ -1430,7 +1415,7 @@
                       }
                     },
                     "url": {
-                      "raw": "{{base_url}}/api/coachclasses/{{class_id}}/staff-reject",
+                      "raw": "{{base_url}}/api/coachclasses/{{class_id}}/reject",
                       "host": [
                         "{{base_url}}"
                       ],
@@ -1438,7 +1423,7 @@
                         "api",
                         "coachclasses",
                         "{{class_id}}",
-                        "staff-reject"
+                        "reject"
                       ]
                     },
                     "description": "[staff] Transitions Requested(0) or StaffApproved(7) → Rejected(2). Parent notified."
@@ -1467,16 +1452,35 @@
                   "response": []
                 },
                 {
-                  "name": "⚠ Finish (AUTOMATED — no endpoint)",
+                  "name": "PATCH Finish → Finished",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "exec": [
+                          "pm.test(\"Class finished\", () => pm.response.to.have.status(204));",
+                          "console.log(\"Class\", pm.collectionVariables.get(\"class_id\"), \"→ Finished(4). 48h validation window open for coach and parents.\");"
+                        ],
+                        "type": "text/javascript"
+                      }
+                    }
+                  ],
                   "request": {
-                    "method": "GET",
+                    "method": "PATCH",
                     "header": [],
                     "url": {
-                      "raw": "{{base_url}}/api/coachclasses/{{class_id}}",
-                      "host": ["{{base_url}}"],
-                      "path": ["api", "coachclasses", "{{class_id}}"]
+                      "raw": "{{base_url}}/api/coachclasses/{{class_id}}/finish",
+                      "host": [
+                        "{{base_url}}"
+                      ],
+                      "path": [
+                        "api",
+                        "coachclasses",
+                        "{{class_id}}",
+                        "finish"
+                      ]
                     },
-                    "description": "⚠ Approved → Finished is automated by ClassLifecycleWorker (runs every 5 min). There is NO manual /finish endpoint. To trigger in dev/test: wait for the class end datetime to pass, or set startDatetime/endDatetime in the past. Use GET by ID to check status."
+                    "description": "[staff] Transitions Approved(1) → Finished(4). Notifies coach and all parent participants to validate within 48h."
                   },
                   "response": []
                 },
@@ -1650,7 +1654,7 @@
                       }
                     },
                     "url": {
-                      "raw": "{{base_url}}/api/participants/{{participant_id}}/parent-validate",
+                      "raw": "{{base_url}}/api/participants/{{participant_id}}/validate",
                       "host": [
                         "{{base_url}}"
                       ],
@@ -1658,7 +1662,7 @@
                         "api",
                         "participants",
                         "{{participant_id}}",
-                        "parent-validate"
+                        "validate"
                       ]
                     },
                     "description": "[parent] Confirms student attended. Use attended=false to dispute. Only available on Finished(4) classes. When all participants respond, class auto-moves to Pending(6)."
@@ -1685,7 +1689,7 @@
                       }
                     },
                     "url": {
-                      "raw": "{{base_url}}/api/participants/{{participant_id}}/parent-validate",
+                      "raw": "{{base_url}}/api/participants/{{participant_id}}/validate",
                       "host": [
                         "{{base_url}}"
                       ],
@@ -1693,7 +1697,7 @@
                         "api",
                         "participants",
                         "{{participant_id}}",
-                        "parent-validate"
+                        "validate"
                       ]
                     },
                     "description": "[parent] Disputes attendance — student did not attend."
@@ -2150,19 +2154,17 @@
                     "method": "POST",
                     "header": [],
                     "url": {
-                      "raw": "{{base_url}}/api/studios/{{studio_id}}/modalities/{{modality_id}}",
+                      "raw": "{{base_url}}/api/studios/modality",
                       "host": [
                         "{{base_url}}"
                       ],
                       "path": [
                         "api",
                         "studios",
-                        "{{studio_id}}",
-                        "modalities",
-                        "{{modality_id}}"
+                        "modality"
                       ]
                     },
-                    "description": "[staff] Links a single modality to a studio. No body — both IDs are path params. Required for the auto studio-selection to work when a class is requested."
+                    "description": "[staff] Links a single modality to a studio (individual toggle). No body — both IDs are path params. Required for the auto studio-selection to work when a class is requested."
                   },
                   "response": []
                 },
@@ -2172,16 +2174,14 @@
                     "method": "DELETE",
                     "header": [],
                     "url": {
-                      "raw": "{{base_url}}/api/studios/{{studio_id}}/modalities/{{modality_id}}",
+                      "raw": "{{base_url}}/api/studios/modality",
                       "host": [
                         "{{base_url}}"
                       ],
                       "path": [
                         "api",
                         "studios",
-                        "{{studio_id}}",
-                        "modalities",
-                        "{{modality_id}}"
+                        "modality"
                       ]
                     },
                     "description": "[staff] Unlinks a single modality from a studio."
@@ -2663,20 +2663,6 @@
                   "response": []
                 },
                 {
-                  "name": "PATCH Mark All Notifications Read",
-                  "request": {
-                    "method": "PATCH",
-                    "header": [],
-                    "url": {
-                      "raw": "{{base_url}}/api/notifications/user/{{userId}}/read-all",
-                      "host": ["{{base_url}}"],
-                      "path": ["api", "notifications", "user", "{{userId}}", "read-all"]
-                    },
-                    "description": "[authenticated] Marks all unread notifications for the user as read. Call when user opens the notification panel. Staff can call for any userId; others only for their own."
-                  },
-                  "response": []
-                },
-                {
                   "name": "PATCH Mark Notification Read",
                   "request": {
                     "method": "PATCH",
@@ -3028,60 +3014,23 @@
                   "name": "GET Item Categories",
                   "request": {
                     "method": "GET",
-                    "header": [],
-                    "url": {
-                      "raw": "{{base_url}}/api/item-categories",
-                      "host": ["{{base_url}}"],
-                      "path": ["api", "item-categories"]
-                    },
-                    "description": "[authenticated] Returns all active item categories."
+                    "header": []
                   },
                   "response": []
                 },
                 {
-                  "name": "GET Item Category by Id",
+                  "name": "GET Item Categories by Id",
                   "request": {
                     "method": "GET",
-                    "header": [],
-                    "url": {
-                      "raw": "{{base_url}}/api/item-categories/{{category_id}}",
-                      "host": ["{{base_url}}"],
-                      "path": ["api", "item-categories", "{{category_id}}"]
-                    },
-                    "description": "[authenticated] Returns a single item category."
+                    "header": []
                   },
                   "response": []
                 },
                 {
-                  "name": "POST Item Category",
+                  "name": "POST Item Categories",
                   "request": {
-                    "method": "POST",
-                    "header": [{"key": "Content-Type", "value": "application/json"}],
-                    "body": {
-                      "mode": "raw",
-                      "raw": "{\n    \"name\": \"Calçado\"\n}",
-                      "options": {"raw": {"language": "json"}}
-                    },
-                    "url": {
-                      "raw": "{{base_url}}/api/item-categories",
-                      "host": ["{{base_url}}"],
-                      "path": ["api", "item-categories"]
-                    },
-                    "description": "[staff] Creates a new item category."
-                  },
-                  "response": []
-                },
-                {
-                  "name": "DELETE Item Category",
-                  "request": {
-                    "method": "DELETE",
-                    "header": [],
-                    "url": {
-                      "raw": "{{base_url}}/api/item-categories/{{category_id}}",
-                      "host": ["{{base_url}}"],
-                      "path": ["api", "item-categories", "{{category_id}}"]
-                    },
-                    "description": "[staff] Deactivates (soft-delete) an item category."
+                    "method": "GET",
+                    "header": []
                   },
                   "response": []
                 }
@@ -3138,32 +3087,18 @@
                   "response": []
                 },
                 {
-                  "name": "GET Items School",
+                  "name": "GET Item School",
                   "request": {
                     "method": "GET",
-                    "header": [],
-                    "url": {
-                      "raw": "{{base_url}}/api/items/school?page=1&pageSize=12",
-                      "host": ["{{base_url}}"],
-                      "path": ["api", "items", "school"],
-                      "query": [{"key": "page", "value": "1"}, {"key": "pageSize", "value": "12"}]
-                    },
-                    "description": "[authenticated] Returns all active school-owned items (fromSchool=true). Supports page, pageSize."
+                    "header": []
                   },
                   "response": []
                 },
                 {
-                  "name": "GET Items Community",
+                  "name": "GET Item Community",
                   "request": {
                     "method": "GET",
-                    "header": [],
-                    "url": {
-                      "raw": "{{base_url}}/api/items/community?page=1&pageSize=12",
-                      "host": ["{{base_url}}"],
-                      "path": ["api", "items", "community"],
-                      "query": [{"key": "page", "value": "1"}, {"key": "pageSize", "value": "12"}]
-                    },
-                    "description": "[authenticated] Returns all active parent-owned community items (fromSchool=false). Supports page, pageSize."
+                    "header": []
                   },
                   "response": []
                 },
@@ -3195,7 +3130,6 @@
                       "listen": "test",
                       "script": {
                         "exec": [
-                          "pm.test(\"Item created\", () => pm.response.to.have.status(201));",
                           "if (pm.response.code === 201) {",
                           "    pm.collectionVariables.set(\"item_id\", pm.response.json().itemId);",
                           "}"
@@ -3214,7 +3148,7 @@
                     ],
                     "body": {
                       "mode": "raw",
-                      "raw": "{\n    \"name\": \"Ballet Shoes\",\n    \"description\": \"Pink satin ballet shoes\",\n    \"idCategory\": 1,\n    \"contactPhone\": \"253000001\"\n}",
+                      "raw": "{\n    \"name\": \"Ballet Shoes\",\n    \"description\": \"Pink satin ballet shoes\",\n    \"idCategory\": 1,\n    \"fromSchool\": true\n}",
                       "options": {
                         "raw": {
                           "language": "json"
@@ -3222,17 +3156,16 @@
                       }
                     },
                     "url": {
-                      "raw": "{{base_url}}/api/items/school",
+                      "raw": "{{base_url}}/api/items",
                       "host": [
                         "{{base_url}}"
                       ],
                       "path": [
                         "api",
-                        "items",
-                        "school"
+                        "items"
                       ]
                     },
-                    "description": "[staff] Creates a school-owned item. fromSchool is set to true automatically by the route. Fields: name (required), description?, idCategory?, contactPhone?, contactEmail?, contactAddress?"
+                    "description": "[staff]"
                   },
                   "response": []
                 },
@@ -3243,7 +3176,6 @@
                       "listen": "test",
                       "script": {
                         "exec": [
-                          "pm.test(\"Item created\", () => pm.response.to.have.status(201));",
                           "if (pm.response.code === 201) {",
                           "    pm.collectionVariables.set(\"item_id\", pm.response.json().itemId);",
                           "}"
@@ -3262,7 +3194,7 @@
                     ],
                     "body": {
                       "mode": "raw",
-                      "raw": "{\n    \"name\": \"Sapatilhas Ballet\",\n    \"description\": \"Tamanho 36, usadas 2 vezes\",\n    \"idCategory\": 1,\n    \"contactPhone\": \"912000001\",\n    \"contactEmail\": \"mae@email.pt\"\n}",
+                      "raw": "{\n    \"name\": \"Ballet Shoes\",\n    \"description\": \"Pink satin ballet shoes\",\n    \"idCategory\": 1,\n    \"fromSchool\": true\n}",
                       "options": {
                         "raw": {
                           "language": "json"
@@ -3270,50 +3202,32 @@
                       }
                     },
                     "url": {
-                      "raw": "{{base_url}}/api/items/personal",
+                      "raw": "{{base_url}}/api/items",
                       "host": [
                         "{{base_url}}"
                       ],
                       "path": [
                         "api",
-                        "items",
-                        "personal"
+                        "items"
                       ]
                     },
-                    "description": "[parent] Creates a community item for the parent to share/sell. fromSchool is set to false automatically. Fields: name (required), description?, idCategory?, contactPhone?, contactEmail?, contactAddress?"
+                    "description": "[staff]"
                   },
                   "response": []
                 },
                 {
                   "name": "PATCH Edit Item",
                   "request": {
-                    "method": "PATCH",
-                    "header": [{"key": "Content-Type", "value": "application/json"}],
-                    "body": {
-                      "mode": "raw",
-                      "raw": "{\n    \"name\": \"Updated Name\",\n    \"description\": \"Updated description\",\n    \"contactPhone\": \"912345678\"\n}",
-                      "options": {"raw": {"language": "json"}}
-                    },
-                    "url": {
-                      "raw": "{{base_url}}/api/items/{{item_id}}",
-                      "host": ["{{base_url}}"],
-                      "path": ["api", "items", "{{item_id}}"]
-                    },
-                    "description": "[staff,parent] Updates item metadata. Staff can only update school items; parent can only update own community items. All fields optional."
+                    "method": "GET",
+                    "header": []
                   },
                   "response": []
                 },
                 {
                   "name": "DELETE Deactivate Item",
                   "request": {
-                    "method": "DELETE",
-                    "header": [],
-                    "url": {
-                      "raw": "{{base_url}}/api/items/{{item_id}}",
-                      "host": ["{{base_url}}"],
-                      "path": ["api", "items", "{{item_id}}"]
-                    },
-                    "description": "[staff,parent] Soft-deactivates an item (sets IsActive=false). Staff can deactivate any item; parent can only deactivate own community items."
+                    "method": "GET",
+                    "header": []
                   },
                   "response": []
                 }
@@ -3323,16 +3237,10 @@
               "name": "Item Variant",
               "item": [
                 {
-                  "name": "GET Item Variants",
+                  "name": "GET Item Variant",
                   "request": {
                     "method": "GET",
-                    "header": [],
-                    "url": {
-                      "raw": "{{base_url}}/api/items/{{item_id}}/variants",
-                      "host": ["{{base_url}}"],
-                      "path": ["api", "items", "{{item_id}}", "variants"]
-                    },
-                    "description": "[authenticated] Returns all variants for an item."
+                    "header": []
                   },
                   "response": []
                 },
@@ -3363,7 +3271,7 @@
                     ],
                     "body": {
                       "mode": "raw",
-                      "raw": "{\n  \"color\": \"Rosa\",\n  \"size\": \"M\",\n  \"quantity\": 10,\n  \"price\": 15.99\n}",
+                      "raw": "{\n  \"color\": \"Amarelo\",\n  \"size\": \"XL\",\n  \"quantity\": 1,\n  \"price\": 15.00\n}",
                       "options": {
                         "raw": {
                           "language": "json"
@@ -3371,18 +3279,18 @@
                       }
                     },
                     "url": {
-                      "raw": "{{base_url}}/api/items/{{item_id}}/variants",
+                      "raw": "{{base_url}}/api/items/4/variants",
                       "host": [
                         "{{base_url}}"
                       ],
                       "path": [
                         "api",
                         "items",
-                        "{{item_id}}",
+                        "4",
                         "variants"
                       ]
                     },
-                    "description": "[staff,parent] Creates a variant on an item. Staff can create on school items; parent can create on own community items. Fields: color?, size?, quantity (required), price?. At least 1 variant required per item."
+                    "description": "[staff]"
                   },
                   "response": []
                 },
@@ -3393,18 +3301,21 @@
                       "listen": "test",
                       "script": {
                         "exec": [
-                          "pm.test(\"Variant updated\", () => pm.response.to.have.status(204));"
+                          "pm.test(\"Coach accepted\", () => pm.response.to.have.status(204));",
+                          "console.log(\"Class\", pm.collectionVariables.get(\"class_id\"), \"→ Approved(1). Parent + staff notified.\");"
                         ],
-                        "type": "text/javascript"
+                        "type": "text/javascript",
+                        "packages": {},
+                        "requests": {}
                       }
                     }
                   ],
                   "request": {
                     "method": "PATCH",
-                    "header": [{"key": "Content-Type", "value": "application/json"}],
+                    "header": [],
                     "body": {
                       "mode": "raw",
-                      "raw": "{\n  \"color\": \"Azul\",\n  \"size\": \"L\",\n  \"quantity\": 5,\n  \"price\": 12.50,\n  \"isActive\": true\n}",
+                      "raw": "{\r\n  \"color\": \"Rosa\",\r\n  \"size\": \"M\",\r\n  \"quantity\": 5,\r\n  \"price\": 16.50\r\n}",
                       "options": {
                         "raw": {
                           "language": "json"
@@ -3412,65 +3323,27 @@
                       }
                     },
                     "url": {
-                      "raw": "{{base_url}}/api/items/{{item_id}}/variants/{{item_variant_id}}",
+                      "raw": "{{base_url}}/api/items/2/variants/1",
                       "host": [
                         "{{base_url}}"
                       ],
                       "path": [
                         "api",
                         "items",
-                        "{{item_id}}",
+                        "2",
                         "variants",
-                        "{{item_variant_id}}"
+                        "1"
                       ]
                     },
-                    "description": "[staff,parent] Updates a variant. All fields optional. Set isActive=false to deactivate, isActive=true to reactivate."
+                    "description": "[coach] Transitions StaffApproved(7) → Approved(1). Must be the assigned coach. Parent + all staff notified."
                   },
                   "response": []
                 },
                 {
-                  "name": "DELETE Item Variant",
+                  "name": "DELETE Deactivate Item Variant",
                   "request": {
-                    "method": "DELETE",
-                    "header": [],
-                    "url": {
-                      "raw": "{{base_url}}/api/items/{{item_id}}/variants/{{item_variant_id}}",
-                      "host": ["{{base_url}}"],
-                      "path": ["api", "items", "{{item_id}}", "variants", "{{item_variant_id}}"]
-                    },
-                    "description": "[staff,parent] Hard-deletes a variant. Returns 409 Conflict if there are active requisitions for this variant. At least 1 variant must remain on the item — returns 409 if this is the last one."
-                  },
-                  "response": []
-                },
-                {
-                  "name": "POST Item Upload Image",
-                  "request": {
-                    "method": "POST",
-                    "header": [],
-                    "body": {
-                      "mode": "formdata",
-                      "formdata": [{"key": "file", "type": "file", "src": ""}]
-                    },
-                    "url": {
-                      "raw": "{{base_url}}/api/items/{{item_id}}/images",
-                      "host": ["{{base_url}}"],
-                      "path": ["api", "items", "{{item_id}}", "images"]
-                    },
-                    "description": "[staff,parent] Uploads an image file (jpg/jpeg/png/gif) for an item. Returns imageId and path. At least 1 image must remain — RemoveImage returns 409 if only 1 exists."
-                  },
-                  "response": []
-                },
-                {
-                  "name": "DELETE Item Image",
-                  "request": {
-                    "method": "DELETE",
-                    "header": [],
-                    "url": {
-                      "raw": "{{base_url}}/api/items/{{item_id}}/images/{{image_id}}",
-                      "host": ["{{base_url}}"],
-                      "path": ["api", "items", "{{item_id}}", "images", "{{image_id}}"]
-                    },
-                    "description": "[staff,parent] Removes an image from an item. Returns 409 if this is the last image (item must always have at least 1)."
+                    "method": "GET",
+                    "header": []
                   },
                   "response": []
                 }
@@ -3485,30 +3358,15 @@
                     "method": "GET",
                     "header": [],
                     "url": {
-                      "raw": "{{base_url}}/api/requisitions",
+                      "raw": "{{base_url}}/api/itemrequisitions",
                       "host": [
                         "{{base_url}}"
                       ],
                       "path": [
                         "api",
-                        "requisitions"
+                        "itemrequisitions"
                       ]
-                    },
-                    "description": "[authenticated] Staff sees all requisitions; parent sees only their own. Status values: 0=Pending, 1=Approved, 2=Rejected, 3=Returned."
-                  },
-                  "response": []
-                },
-                {
-                  "name": "GET Requisition by Id",
-                  "request": {
-                    "method": "GET",
-                    "header": [],
-                    "url": {
-                      "raw": "{{base_url}}/api/requisitions/{{requisition_id}}",
-                      "host": ["{{base_url}}"],
-                      "path": ["api", "requisitions", "{{requisition_id}}"]
-                    },
-                    "description": "[staff,parent] Returns a single requisition. Parent can only read own requisitions."
+                    }
                   },
                   "response": []
                 },
@@ -3518,7 +3376,7 @@
                     "method": "GET",
                     "header": [],
                     "url": {
-                      "raw": "{{base_url}}/api/requisitions/parent/{{parent_id}}",
+                      "raw": "{{base_url}}/api/requisitions/parent/20",
                       "host": [
                         "{{base_url}}"
                       ],
@@ -3526,7 +3384,7 @@
                         "api",
                         "requisitions",
                         "parent",
-                        "{{parent_id}}"
+                        "20"
                       ]
                     },
                     "description": "[staff,parent] Parent can only see own requisitions."
@@ -3544,7 +3402,9 @@
                           "    pm.collectionVariables.set(\"requisition_id\", pm.response.json().requisitionId);",
                           "}"
                         ],
-                        "type": "text/javascript"
+                        "type": "text/javascript",
+                        "packages": {},
+                        "requests": {}
                       }
                     }
                   ],
@@ -3558,7 +3418,7 @@
                     ],
                     "body": {
                       "mode": "raw",
-                      "raw": "{\n    \"itemVariantId\": {{item_variant_id}},\n    \"quantity\": 1,\n    \"needFrom\": \"2026-05-10\",\n    \"needUntil\": \"2026-05-20\"\n}",
+                      "raw": "{\n    \"itemVariantId\": 4,\n    \"quantity\": 1,\n    \"needFrom\": \"2026-04-26\",\n    \"needUntil\": \"2026-04-30\"\n}",
                       "options": {
                         "raw": {
                           "language": "json"
@@ -3591,7 +3451,7 @@
                     ],
                     "body": {
                       "mode": "raw",
-                      "raw": "{\n    \"Approve\": false,\n    \"expectedReturnDate\": \"2026-05-21\"\n}",
+                      "raw": "{\n    \"Approve\": true,\n    \"expectedReturnDate\": \"2026-05-21\"\n}",
                       "options": {
                         "raw": {
                           "language": "json"
@@ -3599,18 +3459,18 @@
                       }
                     },
                     "url": {
-                      "raw": "{{base_url}}/api/requisitions/{{requisition_id}}/review",
+                      "raw": "{{base_url}}/api/requisitions/11/review",
                       "host": [
                         "{{base_url}}"
                       ],
                       "path": [
                         "api",
                         "requisitions",
-                        "{{requisition_id}}",
+                        "11",
                         "review"
                       ]
                     },
-                    "description": "[staff] Approve or reject a requisition. approve=true sets status to Approved; approve=false rejects it. expectedReturnDate required when approving."
+                    "description": "[staff] Staff sets expectedReturnDate when approving."
                   },
                   "response": []
                 },
@@ -3634,32 +3494,54 @@
                       }
                     },
                     "url": {
-                      "raw": "{{base_url}}/api/requisitions/{{requisition_id}}/return",
+                      "raw": "{{base_url}}/api/requisitions/11/return",
                       "host": [
                         "{{base_url}}"
                       ],
                       "path": [
                         "api",
                         "requisitions",
-                        "{{requisition_id}}",
+                        "11",
                         "return"
                       ]
                     },
-                    "description": "[parent,staff] Records item return. returnQuantity is the number of items returned. note? can describe damage."
+                    "description": "[staff] note field stores defect description if item returned damaged."
                   },
                   "response": []
-                },
+                }
+              ]
+            },
+            {
+              "name": "Item Images",
+              "item": [
                 {
-                  "name": "DELETE Cancel Requisition",
+                  "name": "POST Item Image",
                   "request": {
-                    "method": "DELETE",
+                    "method": "POST",
                     "header": [],
-                    "url": {
-                      "raw": "{{base_url}}/api/requisitions/{{requisition_id}}",
-                      "host": ["{{base_url}}"],
-                      "path": ["api", "requisitions", "{{requisition_id}}"]
+                    "body": {
+                      "mode": "formdata",
+                      "formdata": [
+                        {
+                          "key": "File",
+                          "type": "file",
+                          "uuid": "f1ea9588-113f-4169-a088-fb94e007443f",
+                          "value": null
+                        }
+                      ]
                     },
-                    "description": "[authenticated] Cancels a requisition. Parent can cancel own Pending requisitions; staff can cancel any. Returns 409 if requisition is already Approved or returned."
+                    "url": {
+                      "raw": "{{base_url}}/api/items/3/image",
+                      "host": [
+                        "{{base_url}}"
+                      ],
+                      "path": [
+                        "api",
+                        "items",
+                        "3",
+                        "image"
+                      ]
+                    }
                   },
                   "response": []
                 }
@@ -6069,7 +5951,7 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{base_url}}/api/admin/users?page=1&pageSize=20",
+              "raw": "{{base_url}}/api/admin/users",
               "host": [
                 "{{base_url}}"
               ],
@@ -6077,16 +5959,9 @@
                 "api",
                 "admin",
                 "users"
-              ],
-              "query": [
-                {"key": "page", "value": "1"},
-                {"key": "pageSize", "value": "20"},
-                {"key": "search", "value": "", "disabled": true},
-                {"key": "sortBy", "value": "username", "disabled": true},
-                {"key": "sortDir", "value": "asc", "disabled": true}
               ]
             },
-            "description": "[admin] Staff user list. Params: search?, page, pageSize, sortBy? (username|email|createdAt), sortDir? (asc|desc)"
+            "description": "[admin] Staff user list. Params: search?, page, pageSize"
           },
           "response": []
         }
@@ -6931,34 +6806,6 @@
     {
       "key": "reset_token",
       "value": ""
-    },
-    {
-      "key": "category_id",
-      "value": "1"
-    },
-    {
-      "key": "image_id",
-      "value": "1"
-    },
-    {
-      "key": "debug_admin_id",
-      "value": "9",
-      "description": "Debug admin user — admin@admin.com / 12345678"
-    },
-    {
-      "key": "debug_staff_id",
-      "value": "8",
-      "description": "Debug staff user — staff@staff.com / 12345678"
-    },
-    {
-      "key": "debug_parent_id",
-      "value": "10",
-      "description": "Debug parent user — parent@parent.com / 12345678"
-    },
-    {
-      "key": "debug_coach_id",
-      "value": "11",
-      "description": "Debug coach user — coach@coach.com / 12345678"
     }
   ]
 }
