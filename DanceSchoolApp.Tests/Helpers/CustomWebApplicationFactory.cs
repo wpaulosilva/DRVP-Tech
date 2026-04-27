@@ -6,12 +6,12 @@ using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace DanceSchoolApp.Tests.Integration;
+namespace DanceSchoolApp.Tests.Helpers;
 
 public class CustomWebApplicationFactory : WebApplicationFactory<Program>
 {
     private readonly SqliteConnection _connection;
-
+    
     // Set env vars exactly once per process, avoiding repeated writes
     // from multiple factory instances (one per IClassFixture test class).
     private static readonly object _envLock = new();
