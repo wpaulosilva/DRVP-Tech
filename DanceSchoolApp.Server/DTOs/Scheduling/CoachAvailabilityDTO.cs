@@ -13,7 +13,7 @@ namespace DanceSchoolApp.Server.DTOs.Scheduling
         Saturday = 6
     }
 
-    // ─── Responses ────────────────────────────────────────────────────────────
+    //  Responses 
 
     public class CoachAvailabilityListResponse
     {
@@ -40,7 +40,7 @@ namespace DanceSchoolApp.Server.DTOs.Scheduling
         public DateOnly? ValidUntil { get; set; }
     }
 
-    // ─── Requests ─────────────────────────────────────────────────────────────
+    //  Requests 
 
     public class CoachAvailabilityCreateRequest
     {

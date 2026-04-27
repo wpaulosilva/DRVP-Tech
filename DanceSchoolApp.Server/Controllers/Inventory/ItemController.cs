@@ -22,7 +22,7 @@ namespace DanceSchoolApp.Server.Controllers.Inventory
             _itemService = itemService;
         }
 
-        // ─── Helpers ──────────────────────────────────────────────────────────────
+        //  Helpers 
 
         private int GetUserId() =>
             int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
@@ -66,7 +66,7 @@ namespace DanceSchoolApp.Server.Controllers.Inventory
         // ITEMS
         // ═══════════════════════════════════════════════════════════════════════
 
-        // ─── GET /api/items ───────────────────────────────────────────────────
+        //  GET /api/items 
         [HttpGet]
         [Authorize]
         public async Task<IActionResult> GetItems(
@@ -88,7 +88,7 @@ namespace DanceSchoolApp.Server.Controllers.Inventory
             }
         }
 
-        // ─── GET /api/items/{id} ──────────────────────────────────────────────
+        //  GET /api/items/{id} 
         [HttpGet("{id:int}")]
         [Authorize]
         public async Task<IActionResult> GetItem(int id)
@@ -108,7 +108,7 @@ namespace DanceSchoolApp.Server.Controllers.Inventory
             }
         }
 
-        // ─── GET /api/items/school ────────────────────────────────────────────
+        //  GET /api/items/school 
         /// <summary>Returns all active school-owned items.</summary>
         [HttpGet("school")]
         [Authorize]
@@ -129,7 +129,7 @@ namespace DanceSchoolApp.Server.Controllers.Inventory
             }
         }
 
-        // ─── GET /api/items/community ─────────────────────────────────────────
+        //  GET /api/items/community 
         /// <summary>Returns all active community (parent-owned) items.</summary>
         [HttpGet("community")]
         [Authorize]
@@ -150,7 +150,7 @@ namespace DanceSchoolApp.Server.Controllers.Inventory
             }
         }
 
-        // ─── POST /api/items/school ───────────────────────────────────────────
+        //  POST /api/items/school 
         /// <summary>Staff creates a school-owned item.</summary>
         [HttpPost("school")]
         [Authorize(Roles = "staff")]
@@ -170,7 +170,7 @@ namespace DanceSchoolApp.Server.Controllers.Inventory
             }
         }
 
-        // ─── GET /api/items/{source}/category/{categoryId} ────────────────────
+        //  GET /api/items/{source}/category/{categoryId} 
         [HttpGet("{source}/category/{categoryId:int}")]
         [Authorize]
         public async Task<IActionResult> GetItemsBySourceAndCategory(
@@ -203,7 +203,7 @@ namespace DanceSchoolApp.Server.Controllers.Inventory
             }
         }
 
-        // ─── POST /api/items/personal ─────────────────────────────────────────
+        //  POST /api/items/personal 
         /// <summary>Parent creates a personal item to share/sell.</summary>
         [HttpPost("personal")]
         [Authorize(Roles = "parent")]
@@ -223,7 +223,7 @@ namespace DanceSchoolApp.Server.Controllers.Inventory
             }
         }
 
-        // ─── PATCH /api/items/{id} ────────────────────────────────────────────
+        //  PATCH /api/items/{id} 
         /// <summary>Staff or item owner updates item metadata.</summary>
         [HttpPatch("{id:int}")]
         [Authorize(Roles = "staff,parent")]
@@ -252,7 +252,7 @@ namespace DanceSchoolApp.Server.Controllers.Inventory
             }
         }
 
-        // ─── DELETE /api/items/{id} ───────────────────────────────────────────
+        //  DELETE /api/items/{id} 
         /// <summary>Staff or item owner deactivates an item (soft-delete).</summary>
         [HttpDelete("{id:int}")]
         [Authorize(Roles = "staff,parent")]
@@ -282,7 +282,7 @@ namespace DanceSchoolApp.Server.Controllers.Inventory
         // IMAGES  –  /api/items/{id}/images
         // ═══════════════════════════════════════════════════════════════════════
 
-        // ─── POST /api/items/{id}/images ──────────────────────────────────────
+        //  POST /api/items/{id}/images 
         /// <summary>Staff or item owner uploads an image file to an item.</summary>
         [HttpPost("{id:int}/images")]
         [Authorize(Roles = "staff,parent")]
@@ -344,7 +344,7 @@ namespace DanceSchoolApp.Server.Controllers.Inventory
             }
         }
 
-        // ─── DELETE /api/items/{id}/images/{imageId} ──────────────────────────
+        //  DELETE /api/items/{id}/images/{imageId} 
         /// <summary>Staff or item owner removes an image from an item.</summary>
         [HttpDelete("{id:int}/images/{imageId:int}")]
         [Authorize(Roles = "staff,parent")]
@@ -374,7 +374,7 @@ namespace DanceSchoolApp.Server.Controllers.Inventory
         // VARIANTS  –  /api/items/{id}/variants
         // ═══════════════════════════════════════════════════════════════════════
 
-        // ─── GET /api/items/{id}/variants ─────────────────────────────────────
+        //  GET /api/items/{id}/variants 
         [HttpGet("{id:int}/variants")]
         [Authorize]
         public async Task<IActionResult> GetVariants(int id)
@@ -398,7 +398,7 @@ namespace DanceSchoolApp.Server.Controllers.Inventory
             }
         }
 
-        // ─── POST /api/items/{id}/variants ────────────────────────────────────
+        //  POST /api/items/{id}/variants 
         /// <summary>Staff or item owner creates a variant.</summary>
         [HttpPost("{id:int}/variants")]
         [Authorize(Roles = "staff,parent")]
@@ -427,7 +427,7 @@ namespace DanceSchoolApp.Server.Controllers.Inventory
             }
         }
 
-        // ─── PATCH /api/items/{id}/variants/{variantId} ───────────────────────
+        //  PATCH /api/items/{id}/variants/{variantId} 
         /// <summary>Staff or item owner updates a variant (including activate/deactivate).</summary>
         [HttpPatch("{id:int}/variants/{variantId:int}")]
         [Authorize(Roles = "staff,parent")]
@@ -456,7 +456,7 @@ namespace DanceSchoolApp.Server.Controllers.Inventory
             }
         }
 
-        // ─── DELETE /api/items/{id}/variants/{variantId} ──────────────────────
+        //  DELETE /api/items/{id}/variants/{variantId} 
         /// <summary>Staff or item owner hard-deletes a variant (if no active requisitions).</summary>
         [HttpDelete("{id:int}/variants/{variantId:int}")]
         [Authorize(Roles = "staff,parent")]

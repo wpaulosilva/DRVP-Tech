@@ -20,7 +20,7 @@ namespace DanceSchoolApp.Server.Services.Classes
             _notificationService = notificationService;
         }
 
-        // ─── Queries ──────────────────────────────────────────────────────────
+        //  Queries 
 
         public async Task<PagedResult<CoachClassListResponse>> GetAllAsync(PagedQuery query)
         {
@@ -186,11 +186,11 @@ namespace DanceSchoolApp.Server.Services.Classes
             return classes.Select(MapToListResponse).ToList();
         }
 
-        // ─── Commands ─────────────────────────────────────────────────────────
+        //  Commands 
 
         public async Task<int> CreateAsync(CoachClassCreateRequest request, int createdByUserId)
         {
-            // ── 1. Validate all referenced entities exist ──────────────────────
+            //  1. Validate all referenced entities exist 
             bool modalityActive = await _context.Modalities
                 .AnyAsync(m => m.ModalityId == request.ModalityId && m.IsActive);
 
@@ -225,7 +225,7 @@ namespace DanceSchoolApp.Server.Services.Classes
                 throw new InvalidOperationException(
                     "Classes must have a duration between 30 and 120 minutes.");
 
-            // ── 2. Auto-select studio ──────────────────────────────────────────
+            //  2. Auto-select studio 
             var candidateStudios = await _context.Studios
                 .Include(s => s.IdModalities)
                 .Include(s => s.CoachClasses)
@@ -268,14 +268,14 @@ namespace DanceSchoolApp.Server.Services.Classes
 
             int assignedStudioId = selectedStudio.StudioId;
 
-            // ── 3. Blocked period check ────────────────────────────────────────
+            //  3. Blocked period check 
             await CheckBlockedPeriodsAsync(
                 request.StartDatetime, request.EndDatetime,
                 request.CoachId, assignedStudioId);
 
-            // ── 4. (Studio availability already handled above) ─────────────────
+            //  4. (Studio availability already handled above) 
 
-            // ── 5. Coach not double-booked ─────────────────────────────────────
+            //  5. Coach not double-booked 
             bool coachConflict = await _context.CoachClasses
                 .AnyAsync(c =>
                     c.IdCoach == request.CoachId &&
@@ -288,7 +288,7 @@ namespace DanceSchoolApp.Server.Services.Classes
                 throw new InvalidOperationException(
                     "The coach is already booked during this time window.");
 
-            // ── 5b. Coach availability covers the requested slot ───────────────
+            //  5b. Coach availability covers the requested slot 
             var classDate    = DateOnly.FromDateTime(request.StartDatetime);
             var classWeekday = (byte)request.StartDatetime.DayOfWeek;
             var classStart   = TimeOnly.FromTimeSpan(request.StartDatetime.TimeOfDay);
@@ -307,7 +307,7 @@ namespace DanceSchoolApp.Server.Services.Classes
                 throw new InvalidOperationException(
                     "The coach does not have an availability slot covering the requested time window.");
 
-            // ── 6. Validate all student ids belong to this parent ──────────────
+            //  6. Validate all student ids belong to this parent 
             var parentStudents = await _context.Students
                 .Where(s => s.ParentUserId == createdByUserId && s.IsActive)
                 .ToListAsync();
@@ -331,7 +331,7 @@ namespace DanceSchoolApp.Server.Services.Classes
                     $"Student id(s) {string.Join(", ", notAccepted)} have not been " +
                     $"accepted by staff yet and cannot be enrolled in classes.");
 
-            // ── 7. Create class + participants atomically ──────────────────────
+            //  7. Create class + participants atomically 
             var coachClass = new CoachClass
             {
                 IdModality = request.ModalityId,
@@ -368,7 +368,7 @@ namespace DanceSchoolApp.Server.Services.Classes
             return coachClass.ClassId;
         }
 
-        // ─── Status transitions ───────────────────────────────────────────────
+        //  Status transitions 
 
         public async Task StaffApproveAsync(int classId)
         {
@@ -592,7 +592,7 @@ namespace DanceSchoolApp.Server.Services.Classes
                 entityId: classId);
         }
 
-        // ─── Validation workflow ──────────────────────────────────────────────
+        //  Validation workflow 
 
         public async Task CoachValidateAsync(int classId, int coachUserId, bool didTeach)
         {
@@ -741,7 +741,7 @@ namespace DanceSchoolApp.Server.Services.Classes
                 entityId: classId);
         }
 
-        // ─── Private helpers ──────────────────────────────────────────────────
+        //  Private helpers 
 
         private async Task CheckBlockedPeriodsAsync(
             DateTime start, DateTime end, int coachId, int studioId)

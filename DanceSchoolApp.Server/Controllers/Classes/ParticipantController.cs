@@ -18,7 +18,7 @@ namespace DanceSchoolApp.Server.Controllers.Classes
             _participantService = participantService;
         }
 
-        // ─── GET /api/participants/class/{classId} ─────────────────────────────
+        //  GET /api/participants/class/{classId} 
         // Staff use — full enrollment list for a class with validation statuses.
         [Authorize(Roles = "staff,coach")]
         [HttpGet("class/{classId}")]
@@ -39,7 +39,7 @@ namespace DanceSchoolApp.Server.Controllers.Classes
             }
         }
 
-        // ─── POST /api/participants ────────────────────────────────────────────
+        //  POST /api/participants 
         // Parent use — enroll a student in an open class.
         // Checks: class is Approved + has space, student is active,
         // no duplicate enrollment, no time conflict with other classes.
@@ -78,7 +78,7 @@ namespace DanceSchoolApp.Server.Controllers.Classes
             }
         }
 
-        // ─── PATCH /api/participants/{id}/parent-validate ──────────────────────
+        //  PATCH /api/participants/{id}/parent-validate 
         // Parent use — confirm whether their student attended the class.
         // Only available when class status is Finished.
         // Sets ValidationStatus to ParentConfirmed (1) or Disputed (2).
@@ -111,7 +111,7 @@ namespace DanceSchoolApp.Server.Controllers.Classes
             }
         }
 
-        // ─── DELETE /api/participants/{id} ─────────────────────────────────────
+        //  DELETE /api/participants/{id} 
         // Parent or staff use — remove a student from a class.
         // Only allowed when class is Requested or Approved.
         // Blocked if this would leave the class with zero participants —

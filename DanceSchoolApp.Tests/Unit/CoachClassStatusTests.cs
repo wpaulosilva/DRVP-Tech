@@ -11,7 +11,7 @@ namespace DanceSchoolApp.Tests.Unit;
 [Trait("Category", "Unit")]
 public class CoachClassStatusTests
 {
-    // ─── Factory helper ───────────────────────────────────────────────────────
+    //  Factory helper 
 
     private static CoachClassService CreateService(AppDbContext db)
     {
@@ -19,7 +19,7 @@ public class CoachClassStatusTests
         return new CoachClassService(db, notifications);
     }
 
-    // ─── StaffApproveAsync ────────────────────────────────────────────────────
+    //  StaffApproveAsync 
 
     [Fact]
     public async Task StaffApproveAsync_FromRequested_TransitionsToStaffApproved()
@@ -89,7 +89,7 @@ public class CoachClassStatusTests
         await act.Should().ThrowAsync<InvalidOperationException>();
     }
 
-    // ─── CoachAcceptAsync ─────────────────────────────────────────────────────
+    //  CoachAcceptAsync 
 
     [Fact]
     public async Task CoachAcceptAsync_FromStaffApproved_TransitionsToApproved()
@@ -160,7 +160,7 @@ public class CoachClassStatusTests
         await act.Should().ThrowAsync<InvalidOperationException>();
     }
 
-    // ─── StaffValidateAsync ───────────────────────────────────────────────────
+    //  StaffValidateAsync 
 
     [Fact]
     public async Task StaffValidateAsync_FromPending_TransitionsToValidated()
@@ -208,7 +208,7 @@ public class CoachClassStatusTests
         await act.Should().ThrowAsync<InvalidOperationException>();
     }
 
-    // ─── CancelAsync ──────────────────────────────────────────────────────────
+    //  CancelAsync 
 
     [Fact]
     public async Task CancelAsync_FromApproved_TransitionsToCancelled()

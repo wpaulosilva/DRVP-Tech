@@ -1,7 +1,7 @@
 ﻿namespace DanceSchoolApp.Server.DTOs.People
 {
 
-    // ─── Responses ────────────────────────────────────────────────────────────
+    //  Responses 
 
     public class ChildSummary
     {

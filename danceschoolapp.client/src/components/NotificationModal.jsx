@@ -50,7 +50,7 @@ export default function NotificationModal({ userId, onClose, onUnreadChange }) {
   const onCloseRef = useRef(onClose)
   onCloseRef.current = onClose
 
-  // ── Data fetching ─────────────────────────────────────────────────────────
+  //  Data fetching 
 
   const fetchPage = useCallback(async (pageNum) => {
     if (!userId) return
@@ -97,7 +97,7 @@ export default function NotificationModal({ userId, onClose, onUnreadChange }) {
     return () => window.removeEventListener('keydown', onKey)
   }, [])
 
-  // ── Actions ───────────────────────────────────────────────────────────────
+  //  Actions 
 
   const loadMore = () => {
     const next = page + 1
@@ -159,7 +159,7 @@ export default function NotificationModal({ userId, onClose, onUnreadChange }) {
     navigate(path)
   }
 
-  // ── Derived tabs (dynamic — only show tabs for entity types that exist) ───
+  //  Derived tabs (dynamic — only show tabs for entity types that exist) 
 
   const entityTypesPresent = [...new Set(
     items.map(n => n.entityType?.toLowerCase()).filter(Boolean)
@@ -175,7 +175,7 @@ export default function NotificationModal({ userId, onClose, onUnreadChange }) {
 
   const unreadVisible = items.filter(n => !n.isRead).length
 
-  // ── Render ────────────────────────────────────────────────────────────────
+  //  Render 
 
   const content = (
     <div

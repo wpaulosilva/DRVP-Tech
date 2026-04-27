@@ -23,7 +23,7 @@ namespace DanceSchoolApp.Server.Controllers.People
             _CoachService = CoachService;
         }
 
-        // ─── GET /api/coaches/available ───────────────────────────────────────
+        //  GET /api/coaches/available 
         // Active coaches with their modalities — slim read for booking dropdowns.
         [Authorize(Roles = "parent,staff")]
         [HttpGet("available")]
@@ -44,7 +44,7 @@ namespace DanceSchoolApp.Server.Controllers.People
             }
         }
 
-        // ─── GET /api/coaches/me ───────────────────────────────────────────────
+        //  GET /api/coaches/me 
         [Authorize(Roles = "coach")]
         [HttpGet("me")]
         public async Task<IActionResult> GetMe()
@@ -112,7 +112,7 @@ namespace DanceSchoolApp.Server.Controllers.People
             return Ok(new { path = relativePath });
         }
 
-        // ─── GET /api/coaches ──────────────────────────────────────────────────
+        //  GET /api/coaches 
         [Authorize(Roles = "staff")]
         [HttpGet]
         public async Task<IActionResult> GetCoachs()
@@ -132,7 +132,7 @@ namespace DanceSchoolApp.Server.Controllers.People
             }
         }
 
-        // ─── GET /api/coaches/{id} ─────────────────────────────────────────────
+        //  GET /api/coaches/{id} 
         [Authorize(Roles = "staff")]
         [HttpGet("{id}")]
         public async Task<IActionResult> GetCoach(int id)

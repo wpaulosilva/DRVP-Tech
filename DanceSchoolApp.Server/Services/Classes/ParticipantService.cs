@@ -20,7 +20,7 @@ namespace DanceSchoolApp.Server.Services.Classes
             _notificationService = notificationService;
         }
 
-        // ─── Queries ──────────────────────────────────────────────────────────
+        //  Queries 
 
         public async Task<PagedResult<ParticipantListResponse>> GetByClassAsync(int classId, PagedQuery query)
         {
@@ -66,11 +66,11 @@ namespace DanceSchoolApp.Server.Services.Classes
             };
         }
 
-        // ─── Commands ─────────────────────────────────────────────────────────
+        //  Commands 
 
         public async Task<int> JoinClassAsync(ParticipantJoinRequest request, int callingUserId)
         {
-            // ── 1. Class must exist and be open (Approved + has space) ─────────
+            //  1. Class must exist and be open (Approved + has space) 
             var coachClass = await _context.CoachClasses
                 .Include(c => c.Participants)
                 .FirstOrDefaultAsync(c => c.ClassId == request.ClassId);
@@ -87,7 +87,7 @@ namespace DanceSchoolApp.Server.Services.Classes
                 throw new InvalidOperationException(
                     "This class is full. No spots available.");
 
-            // ── 2. Student must exist and be active ───────────────────────────
+            //  2. Student must exist and be active 
             var student = await _context.Students
                 .FirstOrDefaultAsync(s => s.StudentId == request.StudentId
                                        && s.IsActive);
@@ -103,9 +103,9 @@ namespace DanceSchoolApp.Server.Services.Classes
                 throw new InvalidOperationException(
                     "This student has not been accepted by staff yet and cannot join classes.");
 
-            // ── 3. Student must belong to the requesting parent ───────────────
+            //  3. Student must belong to the requesting parent 
 
-            // ── 4. Student not already enrolled in this class ─────────────────
+            //  4. Student not already enrolled in this class 
             // The DB has a unique constraint UQ_ClassStudent, but we catch it
             // here for a clean error message rather than a constraint exception.
             bool alreadyEnrolled = coachClass.Participants
@@ -115,7 +115,7 @@ namespace DanceSchoolApp.Server.Services.Classes
                 throw new InvalidOperationException(
                     $"Student {request.StudentId} is already enrolled in this class.");
 
-            // ── 5. Student not already in another class at the same time ──────
+            //  5. Student not already in another class at the same time 
             bool timeConflict = await _context.Participants
                 .Include(p => p.IdCoachClassNavigation)
                 .AnyAsync(p =>
@@ -129,7 +129,7 @@ namespace DanceSchoolApp.Server.Services.Classes
                 throw new InvalidOperationException(
                     "This student is already enrolled in another class at this time.");
 
-            // ── 6. Enroll ─────────────────────────────────────────────────────
+            //  6. Enroll 
             var participant = new Participant
             {
                 IdCoachClass = request.ClassId,
@@ -260,7 +260,7 @@ namespace DanceSchoolApp.Server.Services.Classes
             await _context.SaveChangesAsync();
         }
 
-        // ─── Private helpers ──────────────────────────────────────────────────
+        //  Private helpers 
 
         // Once all participants have validated, move the class to Pending
         // so staff know it is ready for final sign-off.

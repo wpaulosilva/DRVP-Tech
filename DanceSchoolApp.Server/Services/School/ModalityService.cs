@@ -15,7 +15,7 @@ namespace DanceSchoolApp.Server.Services.School
             _context = context;
         }
 
-        // ─── Queries ──────────────────────────────────────────────────────────
+        //  Queries 
 
         public async Task<List<ModalityListResponse>> GetModalitiesAsync()
         {
@@ -51,7 +51,7 @@ namespace DanceSchoolApp.Server.Services.School
             };
         }
 
-        // ─── Commands ─────────────────────────────────────────────────────────
+        //  Commands 
 
         public async Task<int> CreateModalityAsync(ModalityCreateRequest request)
         {

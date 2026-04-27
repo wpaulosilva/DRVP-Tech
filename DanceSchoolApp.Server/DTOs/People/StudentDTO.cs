@@ -10,7 +10,7 @@ namespace DanceSchoolApp.Server.DTOs.People
         Rejected = 2
     }
 
-    // ─── Responses ────────────────────────────────────────────────────────────
+    //  Responses 
 
     public class StudentListResponse
     {
@@ -31,7 +31,7 @@ namespace DanceSchoolApp.Server.DTOs.People
     }
 
 
-    // ─── Requests ─────────────────────────────────────────────────────────────
+    //  Requests 
 
     public class StudentCreateRequest
     {

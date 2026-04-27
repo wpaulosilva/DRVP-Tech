@@ -17,7 +17,7 @@ namespace DanceSchoolApp.Server.Services.People
             _context = context;
         }
 
-        // ─── Queries ──────────────────────────────────────────────────────────
+        //  Queries 
 
         public async Task<List<CoachAvailableResponse>> GetAvailableCoachesAsync()
         {

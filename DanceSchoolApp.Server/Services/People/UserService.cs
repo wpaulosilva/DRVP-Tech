@@ -26,7 +26,7 @@ namespace DanceSchoolApp.Server.Services.People
         }
 
    
-        // ─── Queries ──────────────────────────────────────────────────────────
+        //  Queries 
 
         public async Task<List<UserListResponse>> GetUsersAsync()
         {
@@ -105,7 +105,7 @@ namespace DanceSchoolApp.Server.Services.People
             };
         }
 
-        // ─── Commands ─────────────────────────────────────────────────────────
+        //  Commands 
 
         public async Task<int> CreateUserAsync(UserCreateRequest request)
         {
@@ -220,7 +220,7 @@ namespace DanceSchoolApp.Server.Services.People
             await _context.SaveChangesAsync();
         }
 
-        // ─── Private helpers ──────────────────────────────────────────────────
+        //  Private helpers 
 
         private static void ValidateBirthDate(DateOnly birthDate)
         {

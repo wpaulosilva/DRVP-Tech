@@ -63,7 +63,7 @@ public class ParentValidationTests
         return (participant.ParticipantId, coachClass.ClassId);
     }
 
-    // ─── Coach must validate first ───────────────────────────────────────────
+    //  Coach must validate first 
 
     [Fact]
     public async Task ParentValidate_CoachNotYetValidated_ThrowsInvalidOperation()
@@ -104,7 +104,7 @@ public class ParentValidationTests
         participant.ParentValidatedAt.Should().NotBeNull();
     }
 
-    // ─── Parent can validate during Pending (past-due) ───────────────────────
+    //  Parent can validate during Pending (past-due) 
 
     [Fact]
     public async Task ParentValidate_PendingClass_CoachValidated_Succeeds()
@@ -146,7 +146,7 @@ public class ParentValidationTests
         staffNotifications.Should().NotBeEmpty();
     }
 
-    // ─── Status guard ────────────────────────────────────────────────────────
+    //  Status guard 
 
     [Fact]
     public async Task ParentValidate_ApprovedClass_ThrowsInvalidOperation()
@@ -165,7 +165,7 @@ public class ParentValidationTests
             .WithMessage("*Finished or Pending*");
     }
 
-    // ─── Dispute path ────────────────────────────────────────────────────────
+    //  Dispute path 
 
     [Fact]
     public async Task ParentValidate_Disputed_SetsCorrectStatus()
@@ -186,7 +186,7 @@ public class ParentValidationTests
             (byte)ParticipantValidationStatus.Disputed);
     }
 
-    // ─── Re-validation guard ─────────────────────────────────────────────────
+    //  Re-validation guard 
 
     [Fact]
     public async Task ParentValidate_AlreadyValidated_ThrowsInvalidOperation()

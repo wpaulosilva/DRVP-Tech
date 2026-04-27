@@ -14,7 +14,7 @@ namespace DanceSchoolApp.Server.Services.People
             _context = context;
         }
 
-        // ─── Queries ──────────────────────────────────────────────────────────
+        //  Queries 
 
         public async Task<List<RoleListResponse>> GetRolesAsync()
         {
@@ -52,7 +52,7 @@ namespace DanceSchoolApp.Server.Services.People
             };
         }
 
-        // ─── Commands ─────────────────────────────────────────────────────────
+        //  Commands 
 
         // Disabled at controller level — roles are seeded, not freely created.
         // Kept here for potential future admin tooling.

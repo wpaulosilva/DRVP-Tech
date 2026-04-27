@@ -2,7 +2,7 @@ using DanceSchoolApp.Server.DTOs.Classes;
 
 namespace DanceSchoolApp.Server.DTOs.Coach
 {
-    // ─── Dashboard ────────────────────────────────────────────────────────────
+    //  Dashboard 
 
     public class CoachDashboardResponse
     {
@@ -24,7 +24,7 @@ namespace DanceSchoolApp.Server.DTOs.Coach
         public CoachClassStatus Status { get; set; }
     }
 
-    // ─── Validate / requests tab ──────────────────────────────────────────────
+    //  Validate / requests tab 
 
     public class CoachPendingRequestItem
     {
@@ -40,7 +40,7 @@ namespace DanceSchoolApp.Server.DTOs.Coach
         public string ModalityName { get; set; } = null!;
     }
 
-    // ─── Validate / validations tab ───────────────────────────────────────────
+    //  Validate / validations tab 
 
     public class CoachValidationItem
     {

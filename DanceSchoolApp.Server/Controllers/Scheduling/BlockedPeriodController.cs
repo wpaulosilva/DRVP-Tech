@@ -16,7 +16,7 @@ namespace DanceSchoolApp.Server.Controllers.Scheduling
             _blockedPeriodService = blockedPeriodService;
         }
 
-        // ─── GET /api/blockedperiods ───────────────────────────────────────────
+        //  GET /api/blockedperiods 
         [Authorize(Roles = "staff")]
         [HttpGet]
         public async Task<IActionResult> GetAll()
@@ -36,7 +36,7 @@ namespace DanceSchoolApp.Server.Controllers.Scheduling
             }
         }
 
-        // ─── GET /api/blockedperiods/{id} ──────────────────────────────────────
+        //  GET /api/blockedperiods/{id} 
         [Authorize(Roles = "staff")]
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
@@ -56,7 +56,7 @@ namespace DanceSchoolApp.Server.Controllers.Scheduling
             }
         }
 
-        // ─── GET /api/blockedperiods/active ────────────────────────────────────
+        //  GET /api/blockedperiods/active 
         // Returns all blocks where StartDatetime <= now <= EndDatetime.
         // The booking controller will call this to know what's currently blocked.
         [Authorize]
@@ -78,7 +78,7 @@ namespace DanceSchoolApp.Server.Controllers.Scheduling
             }
         }
 
-        // ─── GET /api/blockedperiods/range?from=&to= ───────────────────────────
+        //  GET /api/blockedperiods/range?from=&to= 
         // Returns any block overlapping the given datetime window.
         // Postman: add 'from' and 'to' as query params in the Params tab.
         // Example: ?from=2025-03-01T00:00:00&to=2025-03-31T23:59:59
@@ -108,7 +108,7 @@ namespace DanceSchoolApp.Server.Controllers.Scheduling
             }
         }
 
-        // ─── GET /api/blockedperiods/coach/{coachId} ───────────────────────────
+        //  GET /api/blockedperiods/coach/{coachId} 
         [Authorize(Roles = "staff,coach")]
         [HttpGet("coach/{coachId}")]
         public async Task<IActionResult> GetByCoach(int coachId)
@@ -132,7 +132,7 @@ namespace DanceSchoolApp.Server.Controllers.Scheduling
             }
         }
 
-        // ─── GET /api/blockedperiods/studio/{studioId} ─────────────────────────
+        //  GET /api/blockedperiods/studio/{studioId} 
         [Authorize(Roles = "staff")]
         [HttpGet("studio/{studioId}")]
         public async Task<IActionResult> GetByStudio(int studioId)
@@ -156,7 +156,7 @@ namespace DanceSchoolApp.Server.Controllers.Scheduling
             }
         }
 
-        // ─── POST /api/blockedperiods ──────────────────────────────────────────
+        //  POST /api/blockedperiods 
         [Authorize(Roles = "staff")]
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] BlockedPeriodCreateRequest request)
@@ -179,7 +179,7 @@ namespace DanceSchoolApp.Server.Controllers.Scheduling
             }
         }
 
-        // ─── PUT /api/blockedperiods/{id} ──────────────────────────────────────
+        //  PUT /api/blockedperiods/{id} 
         [Authorize(Roles = "staff")]
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(int id, [FromBody] BlockedPeriodUpdateRequest request)
@@ -202,7 +202,7 @@ namespace DanceSchoolApp.Server.Controllers.Scheduling
             }
         }
 
-        // ─── DELETE /api/blockedperiods/{id} ───────────────────────────────────
+        //  DELETE /api/blockedperiods/{id} 
         // Hard delete — blocked periods are time-bounded administrative records.
         [Authorize(Roles = "staff")]
         [HttpDelete("{id}")]

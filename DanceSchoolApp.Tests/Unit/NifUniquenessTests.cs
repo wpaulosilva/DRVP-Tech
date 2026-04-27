@@ -11,7 +11,7 @@ namespace DanceSchoolApp.Tests.Unit;
 [Trait("Category", "Unit")]
 public class NifUniquenessTests
 {
-    // ─── UserService helpers ──────────────────────────────────────────────────
+    //  UserService helpers 
 
     private static UserService CreateUserService(
         DanceSchoolApp.Server.Data.AppDbContext db)
@@ -32,7 +32,7 @@ public class NifUniquenessTests
         return new StudentService(db, notifications);
     }
 
-    // ─── Seed a PersonInfo row with a known NIF ───────────────────────────────
+    //  Seed a PersonInfo row with a known NIF 
 
     private static void SeedPersonWithNif(
         DanceSchoolApp.Server.Data.AppDbContext db, string nif)

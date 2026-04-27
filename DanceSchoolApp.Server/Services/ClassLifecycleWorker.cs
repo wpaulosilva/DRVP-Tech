@@ -73,7 +73,7 @@ namespace DanceSchoolApp.Server.Services
             await AutoAdvanceExpiredFinishedClassesAsync(db, notifications, appSettings, now, ct);
         }
 
-        // ── Rule 1: Approved → Finished ──────────────────────────────────────
+        //  Rule 1: Approved → Finished 
         // Picks up any Approved class whose EndDatetime <= now.
         // Cancelled classes are excluded by the status filter.
         private static async Task AutoFinishApprovedClassesAsync(
@@ -125,7 +125,7 @@ namespace DanceSchoolApp.Server.Services
                 await db.SaveChangesAsync(ct);
         }
 
-        // ── Rule 2: Finished → Pending (window expired) ───────────────────────
+        //  Rule 2: Finished → Pending (window expired) 
         // Any Finished class where FinishedAt + validation_window_hours <= now
         // is forced to Pending so staff can still do final sign-off.
         // Staff notifications include the names of everyone who failed to respond.

@@ -16,7 +16,7 @@ namespace DanceSchoolApp.Server.Controllers
             _appSettingService = appSettingService;
         }
 
-        // ─── GET /api/appsettings ──────────────────────────────────────────────
+        //  GET /api/appsettings 
         [Authorize(Roles = "staff")]
         [HttpGet]
         public async Task<IActionResult> GetAll()
@@ -32,7 +32,7 @@ namespace DanceSchoolApp.Server.Controllers
             }
         }
 
-        // ─── PATCH /api/appsettings/{key} ─────────────────────────────────────
+        //  PATCH /api/appsettings/{key} 
         [Authorize(Roles = "staff")]
         [HttpPatch("{key}")]
         public async Task<IActionResult> Update(string key,

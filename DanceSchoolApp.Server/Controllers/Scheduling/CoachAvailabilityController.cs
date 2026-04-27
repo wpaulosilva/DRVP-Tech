@@ -16,7 +16,7 @@ namespace DanceSchoolApp.Server.Controllers.Scheduling
             _availabilityService = availabilityService;
         }
 
-        // ─── GET /api/coachavailability ────────────────────────────────────────
+        //  GET /api/coachavailability 
         [Authorize(Roles = "staff")]
         [HttpGet]
         public async Task<IActionResult> GetAll()
@@ -36,7 +36,7 @@ namespace DanceSchoolApp.Server.Controllers.Scheduling
             }
         }
 
-        // ─── GET /api/coachavailability/{id} ───────────────────────────────────
+        //  GET /api/coachavailability/{id} 
         [Authorize(Roles = "staff,coach")]
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
@@ -56,7 +56,7 @@ namespace DanceSchoolApp.Server.Controllers.Scheduling
             }
         }
 
-        // ─── GET /api/coachavailability/coach/{coachId} ────────────────────────
+        //  GET /api/coachavailability/coach/{coachId} 
         // Returns all weekly availability slots defined for a specific coach.
         // The complex "what slots are free on date X" query belongs in
         // BookingController once CoachClass is built.
@@ -83,7 +83,7 @@ namespace DanceSchoolApp.Server.Controllers.Scheduling
             }
         }
 
-        // ─── POST /api/coachavailability ───────────────────────────────────────
+        //  POST /api/coachavailability 
         [Authorize(Roles = "staff,coach")]
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] CoachAvailabilityCreateRequest request)
@@ -114,7 +114,7 @@ namespace DanceSchoolApp.Server.Controllers.Scheduling
             }
         }
 
-        // ─── PUT /api/coachavailability/{id} ───────────────────────────────────
+        //  PUT /api/coachavailability/{id} 
         [Authorize(Roles = "staff,coach")]
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(int id, [FromBody] CoachAvailabilityUpdateRequest request)
@@ -145,7 +145,7 @@ namespace DanceSchoolApp.Server.Controllers.Scheduling
             }
         }
 
-        // ─── DELETE /api/coachavailability/{id} ────────────────────────────────
+        //  DELETE /api/coachavailability/{id} 
         // Hard delete — availability slots are configuration data, not
         // transactional records, so soft delete is not needed here.
         [Authorize(Roles = "staff,coach")]

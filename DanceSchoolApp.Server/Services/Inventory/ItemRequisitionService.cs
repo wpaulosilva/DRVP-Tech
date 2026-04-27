@@ -27,7 +27,7 @@ namespace DanceSchoolApp.Server.Services.Inventory
             _notificationService = notificationService;
         }
 
-        // ─── Queries ──────────────────────────────────────────────────────────────
+        //  Queries 
 
         /// <summary>Returns all requisitions (staff view).</summary>
         public async Task<List<ItemRequisitionListResponse>> GetAllAsync()
@@ -56,7 +56,7 @@ namespace DanceSchoolApp.Server.Services.Inventory
             return MapToDetail(req);
         }
 
-        // ─── Commands ─────────────────────────────────────────────────────────────
+        //  Commands 
 
         public async Task<int> CreateAsync(ItemRequisitionCreateRequest request, int parentUserId)
         {
@@ -67,11 +67,11 @@ namespace DanceSchoolApp.Server.Services.Inventory
             if (variant is null)
                 throw new KeyNotFoundException($"Variant with id {request.ItemVariantId} was not found or is inactive.");
 
-            // ── Só itens da escola podem ser requisitados ──────────────────────
+            //  Só itens da escola podem ser requisitados 
             if (!variant.IdItemNavigation.FromSchool)
                 throw new InvalidOperationException(
                     "Only school items can be requisitioned. Community items cannot be requisitioned.");
-            // ── Validação de datas ─────────────────────────────────────────────
+            //  Validação de datas 
             var today = DateTime.UtcNow.Date;
 
             if (request.NeedFrom.HasValue && request.NeedFrom.Value.Date < today)
@@ -214,7 +214,7 @@ namespace DanceSchoolApp.Server.Services.Inventory
             await _context.SaveChangesAsync();
         }
 
-        // ─── Helpers ──────────────────────────────────────────────────────────────
+        //  Helpers 
 
         private IQueryable<ItemRequisitionListResponse> BuildQuery()
         {

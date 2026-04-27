@@ -30,7 +30,7 @@ namespace DanceSchoolApp.Server.DTOs.People
     }
     */
 
-    // ─── Responses ────────────────────────────────────────────────────────────
+    //  Responses 
 
     public class RoleListResponse
     {
@@ -59,7 +59,7 @@ namespace DanceSchoolApp.Server.DTOs.People
         public string RoleName { get; set; }
     }
 
-    // ─── Requests ─────────────────────────────────────────────────────────────
+    //  Requests 
 
     // NOTE: CreateRole is intentionally disabled in the controller.
     // Roles are seeded at DB level (admin, staff, coach, parent).

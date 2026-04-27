@@ -18,7 +18,7 @@ namespace DanceSchoolApp.Server.Controllers.Classes
             _coachClassService = coachClassService;
         }
 
-        // ─── GET /api/coachclasses ─────────────────────────────────────────────
+        //  GET /api/coachclasses 
         // Staff use — returns all classes regardless of status.
         [Authorize(Roles = "staff")]
         [HttpGet]
@@ -39,7 +39,7 @@ namespace DanceSchoolApp.Server.Controllers.Classes
             }
         }
 
-        // ─── GET /api/coachclasses/{id} ────────────────────────────────────────
+        //  GET /api/coachclasses/{id} 
         [Authorize]
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
@@ -59,7 +59,7 @@ namespace DanceSchoolApp.Server.Controllers.Classes
             }
         }
 
-        // ─── GET /api/coachclasses/open ────────────────────────────────────────
+        //  GET /api/coachclasses/open 
         // Parent use — returns Approved classes with available spots.
         [Authorize(Roles = "staff,parent")]
         [HttpGet("open")]
@@ -80,7 +80,7 @@ namespace DanceSchoolApp.Server.Controllers.Classes
             }
         }
 
-        // ─── GET /api/coachclasses/status/{status} ─────────────────────────────
+        //  GET /api/coachclasses/status/{status} 
         // Staff use — filter classes by status.
         // Status values: 0=Requested, 1=Approved, 2=Rejected,
         //                3=Cancelled, 4=Finished, 5=Validated, 6=Pending, 7=StaffApproved
@@ -109,7 +109,7 @@ namespace DanceSchoolApp.Server.Controllers.Classes
             }
         }
 
-        // ─── GET /api/coachclasses/parent/{parentUserId} ───────────────────────
+        //  GET /api/coachclasses/parent/{parentUserId} 
         // Parent use — returns all classes where this parent's students are enrolled.
         [Authorize(Roles = "staff,parent")]
         [HttpGet("parent/{parentUserId}")]
@@ -137,7 +137,7 @@ namespace DanceSchoolApp.Server.Controllers.Classes
             }
         }
 
-        // ─── GET /api/coachclasses/coach/{coachId} ─────────────────────────────
+        //  GET /api/coachclasses/coach/{coachId} 
         // Coach use — view own schedule. Staff can view any coach's schedule.
         [Authorize(Roles = "staff,coach")]
         [HttpGet("coach/{coachId}")]
@@ -165,7 +165,7 @@ namespace DanceSchoolApp.Server.Controllers.Classes
             }
         }
 
-        // ─── POST /api/coachclasses ────────────────────────────────────────────
+        //  POST /api/coachclasses 
         // Parent use — creates a class request with at least one student.
         // Runs all conflict checks before inserting.
         [Authorize(Roles = "parent")]
@@ -195,13 +195,13 @@ namespace DanceSchoolApp.Server.Controllers.Classes
             }
         }
 
-        // ─── Helpers ──────────────────────────────────────────────────────────
+        //  Helpers 
         private int GetUserId() =>
             int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
         private bool IsStaff() => User.IsInRole("staff");
 
-        // ─── PATCH /api/coachclasses/{id}/staff-approve ───────────────────────
+        //  PATCH /api/coachclasses/{id}/staff-approve 
         // Staff use — transitions Requested → StaffApproved. Notifies coach.
         [Authorize(Roles = "staff")]
         [HttpPatch("{id}/staff-approve")]
@@ -226,7 +226,7 @@ namespace DanceSchoolApp.Server.Controllers.Classes
             }
         }
 
-        // ─── PATCH /api/coachclasses/{id}/coach-accept ────────────────────────
+        //  PATCH /api/coachclasses/{id}/coach-accept 
         // Coach use — transitions StaffApproved → Approved. Notifies parent + staff.
         [Authorize(Roles = "coach")]
         [HttpPatch("{id}/coach-accept")]
@@ -243,7 +243,7 @@ namespace DanceSchoolApp.Server.Controllers.Classes
             catch (Exception ex) { return StatusCode(500, ex.Message); }
         }
 
-        // ─── PATCH /api/coachclasses/{id}/coach-reject ────────────────────────
+        //  PATCH /api/coachclasses/{id}/coach-reject 
         // Coach use — transitions StaffApproved → Rejected. Notifies parent + staff.
         [Authorize(Roles = "coach")]
         [HttpPatch("{id}/coach-reject")]
@@ -261,7 +261,7 @@ namespace DanceSchoolApp.Server.Controllers.Classes
             catch (Exception ex) { return StatusCode(500, ex.Message); }
         }
 
-        // ─── PATCH /api/coachclasses/{id}/reject ──────────────────────────────
+        //  PATCH /api/coachclasses/{id}/reject 
         // Staff use — transitions Requested → Rejected.
         // Optional reason body is forwarded to notification (TODO).
         [Authorize(Roles = "staff")]
@@ -288,7 +288,7 @@ namespace DanceSchoolApp.Server.Controllers.Classes
             }
         }
 
-        // ─── PATCH /api/coachclasses/{id}/cancel ──────────────────────────────
+        //  PATCH /api/coachclasses/{id}/cancel 
         // Parent or staff use — transitions Requested or Approved → Cancelled.
         [Authorize(Roles = "staff")]
         [HttpPatch("{id}/cancel")]
@@ -313,7 +313,7 @@ namespace DanceSchoolApp.Server.Controllers.Classes
             }
         }
 
-        // ─── PATCH /api/coachclasses/{id}/coach-validate ──────────────────────
+        //  PATCH /api/coachclasses/{id}/coach-validate 
         // Coach use — confirms or denies they taught the class.
         // Only available on Finished classes.
         [Authorize(Roles = "coach")]
@@ -335,7 +335,7 @@ namespace DanceSchoolApp.Server.Controllers.Classes
             catch (Exception ex) { return StatusCode(500, ex.Message); }
         }
 
-        // ─── PATCH /api/coachclasses/{id}/staff-validate ──────────────────────
+        //  PATCH /api/coachclasses/{id}/staff-validate 
         // Staff use — final sign-off. Transitions Pending → Validated.
         [Authorize(Roles = "staff")]
         [HttpPatch("{id}/staff-validate")]

@@ -27,7 +27,7 @@ public class AuthIntegrationTests : IClassFixture<CustomWebApplicationFactory>
         });
     }
 
-    // ── helpers ──────────────────────────────────────────────────────────────
+    //  helpers 
 
     /// <summary>
     /// Logs in and returns the raw JWT value from the Set-Cookie header.
@@ -57,7 +57,7 @@ public class AuthIntegrationTests : IClassFixture<CustomWebApplicationFactory>
         return setCookie!.Split(';')[0].Substring("jwt=".Length);
     }
 
-    // ── tests ─────────────────────────────────────────────────────────────────
+    //  tests 
 
     [Fact]
     public async Task Login_ValidCredentials_Returns200AndSetsCookie()

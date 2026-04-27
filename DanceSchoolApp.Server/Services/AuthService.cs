@@ -25,7 +25,7 @@ namespace DanceSchoolApp.Server.Services
         public async Task<(string Token, LoginResponse Response)> LoginAsync(
             LoginRequest request)
         {
-            // ── 1. At least one identifier must be provided ────────────────────
+            //  1. At least one identifier must be provided 
             if (string.IsNullOrWhiteSpace(request.Username) &&
                 string.IsNullOrWhiteSpace(request.Email))
             {
@@ -33,7 +33,7 @@ namespace DanceSchoolApp.Server.Services
                     "Either username or email is required.");
             }
 
-            // ── 2. Find user by username or email ─────────────────────────────
+            //  2. Find user by username or email 
             var user = await _context.Users
                 .Include(u => u.IdRoles)
                 .FirstOrDefaultAsync(u =>
@@ -46,18 +46,18 @@ namespace DanceSchoolApp.Server.Services
             if (user is null)
                 throw new UnauthorizedAccessException("Invalid credentials.");
 
-            // ── 3. Check account is active ────────────────────────────────────
+            //  3. Check account is active 
             if (!user.IsActive)
                 throw new UnauthorizedAccessException("This account is inactive.");
 
-            // ── 4. Verify password ────────────────────────────────────────────
+            //  4. Verify password 
             bool passwordValid = BCrypt.Net.BCrypt.Verify(
                 request.Password, user.PasswordHash);
 
             if (!passwordValid)
                 throw new UnauthorizedAccessException("Invalid credentials.");
 
-            // ── 5. Build JWT ───────────────────────────────────────────────────
+            //  5. Build JWT 
             var roles = user.IdRoles.Select(r => r.RoleName).ToList();
             var expiresAt = DateTime.UtcNow.AddDays(7);
             var token = GenerateToken(user.UserId, user.Username, roles, expiresAt);

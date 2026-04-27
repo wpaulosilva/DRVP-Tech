@@ -23,7 +23,7 @@ namespace DanceSchoolApp.Server.Services
             _context = context;
         }
 
-        // ─── Queries ──────────────────────────────────────────────────────────
+        //  Queries 
 
         public async Task<string?> GetValueAsync(string key)
         {
@@ -63,7 +63,7 @@ namespace DanceSchoolApp.Server.Services
                 .ToListAsync();
         }
 
-        // ─── Commands ─────────────────────────────────────────────────────────
+        //  Commands 
 
         public async Task UpdateAsync(string key, string value)
         {
@@ -79,7 +79,7 @@ namespace DanceSchoolApp.Server.Services
             await _context.SaveChangesAsync();
         }
 
-        // ─── Private helpers ──────────────────────────────────────────────────
+        //  Private helpers 
 
         // Returns the existing row or inserts the default and returns the new row.
         private async Task<AppSetting?> GetOrCreateAsync(string key)

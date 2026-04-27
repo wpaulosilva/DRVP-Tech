@@ -1,11 +1,11 @@
 {
   "info": {
-    "_postman_id": "fc1ddb28-56ba-4612-81b7-ba7870c633f6",
+    "_postman_id": "afd31198-acfa-4c31-8d43-b34eac77948d",
     "name": "DanceSchoolApp v2",
     "description": "FlowArtes / Ent'Artes Dance School API\n\n## Setup\n\n1. Select the **DanceSchoolApp** environment\n    \n2. Set `base_url` if needed (default: [https://localhost:7003](https://localhost:7003))\n    \n3. Run **POST Login** — the test script auto-saves `userId`, `roles`, and `expiresAt`\n    \n4. All requests use the shared cookie jar automatically (JWT is HttpOnly cookie)\n    \n\n## Variables\n\n- `base_url` — server base (change to switch between local/staging)\n    \n- `userId` — auto-set by Login\n    \n- `roles` — auto-set by Login\n    \n- `user_id`, `student_id`, `coach_id`, `class_id`, `participant_id`, `studio_id`, `modality_id`, `item_id` — set manually or auto-captured by POST scripts\n    \n\n## Status values\n\n- CoachClass: 0=Requested, 1=Approved, 2=Rejected, 3=Cancelled, 4=Finished, 5=Validated, 6=Pending, 7=StaffApproved\n    \n- StudentAcceptance: 0=Pending, 1=Accepted, 2=Rejected\n    \n- Roles: 0=Admin, 1=Staff, 2=Coach, 3=Parent",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "_exporter_id": "53613999",
-    "_collection_link": "https://go.postman.co/collection/53613999-fc1ddb28-56ba-4612-81b7-ba7870c633f6?source=collection_link"
+    "_exporter_id": "53613039",
+    "_collection_link": "https://go.postman.co/collection/53613039-afd31198-acfa-4c31-8d43-b34eac77948d?source=collection_link"
   },
   "item": [
     {
@@ -3014,7 +3014,10 @@
                   "name": "GET Item Categories",
                   "request": {
                     "method": "GET",
-                    "header": []
+                    "header": [],
+                    "url": {
+                      "raw": ""
+                    }
                   },
                   "response": []
                 },
@@ -3022,7 +3025,10 @@
                   "name": "GET Item Categories by Id",
                   "request": {
                     "method": "GET",
-                    "header": []
+                    "header": [],
+                    "url": {
+                      "raw": ""
+                    }
                   },
                   "response": []
                 },
@@ -3030,7 +3036,10 @@
                   "name": "POST Item Categories",
                   "request": {
                     "method": "GET",
-                    "header": []
+                    "header": [],
+                    "url": {
+                      "raw": ""
+                    }
                   },
                   "response": []
                 }
@@ -3090,7 +3099,10 @@
                   "name": "GET Item School",
                   "request": {
                     "method": "GET",
-                    "header": []
+                    "header": [],
+                    "url": {
+                      "raw": ""
+                    }
                   },
                   "response": []
                 },
@@ -3098,7 +3110,10 @@
                   "name": "GET Item Community",
                   "request": {
                     "method": "GET",
-                    "header": []
+                    "header": [],
+                    "url": {
+                      "raw": ""
+                    }
                   },
                   "response": []
                 },
@@ -3219,7 +3234,10 @@
                   "name": "PATCH Edit Item",
                   "request": {
                     "method": "GET",
-                    "header": []
+                    "header": [],
+                    "url": {
+                      "raw": ""
+                    }
                   },
                   "response": []
                 },
@@ -3227,7 +3245,10 @@
                   "name": "DELETE Deactivate Item",
                   "request": {
                     "method": "GET",
-                    "header": []
+                    "header": [],
+                    "url": {
+                      "raw": ""
+                    }
                   },
                   "response": []
                 }
@@ -3240,7 +3261,10 @@
                   "name": "GET Item Variant",
                   "request": {
                     "method": "GET",
-                    "header": []
+                    "header": [],
+                    "url": {
+                      "raw": ""
+                    }
                   },
                   "response": []
                 },
@@ -3343,7 +3367,10 @@
                   "name": "DELETE Deactivate Item Variant",
                   "request": {
                     "method": "GET",
-                    "header": []
+                    "header": [],
+                    "url": {
+                      "raw": ""
+                    }
                   },
                   "response": []
                 }
@@ -3836,20 +3863,9 @@
               "response": []
             },
             {
-              "name": "Student Info",
-              "request": {
-                "method": "GET",
-                "header": [],
-                "url": {
-                  "raw": ""
-                }
-              },
-              "response": []
-            },
-            {
               "name": "5.2 Parent Update Student",
               "request": {
-                "method": "PUT",
+                "method": "PATCH",
                 "header": [
                   {
                     "key": "Content-Type",
@@ -3858,17 +3874,17 @@
                 ],
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n    \"firstName\": \"Test\",\n    \"lastName\": \"Student\",\n    \"birthDate\": \"2016-01-15\",\n    \"phone\": \"910000001\",\n    \"nif\": \"222222222\"\n}"
+                  "raw": "{\n    \"firstName\": \"Andre\",\n    \"lastName\": \"Andrade\",\n    \"birthDate\": \"2010-01-15\",\n    \"phone\": \"914536783\",\n    \"nif\": \"987364758\"\n}"
                 },
                 "url": {
-                  "raw": "{{base_url}}/api/students/3",
+                  "raw": "{{base_url}}/api/students/10",
                   "host": [
                     "{{base_url}}"
                   ],
                   "path": [
                     "api",
                     "students",
-                    "3"
+                    "10"
                   ]
                 }
               },
@@ -3942,7 +3958,7 @@
                   "raw": "{\n    \"reason\": \"Wrong NIF. Please provide a valid NIF number.\"\n}"
                 },
                 "url": {
-                  "raw": "{{base_url}}/api/students/{{student_id}}/reject",
+                  "raw": "{{base_url}}/api/students/{{student_id}}/accept",
                   "host": [
                     "{{base_url}}"
                   ],
@@ -3950,7 +3966,7 @@
                     "api",
                     "students",
                     "{{student_id}}",
-                    "reject"
+                    "accept"
                   ]
                 }
               },
@@ -3998,7 +4014,9 @@
                     "exec": [
                       "pm.test(\"Status 200 or 204\", () => pm.expect(pm.response.code).to.be.oneOf([200, 204]));"
                     ],
-                    "type": "text/javascript"
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
                   }
                 }
               ],
@@ -4006,7 +4024,7 @@
                 "method": "GET",
                 "header": [],
                 "url": {
-                  "raw": "{{base_url}}/api/ee/classes/available-slots?from=2026-04-01&to=2026-04-07",
+                  "raw": "{{base_url}}/api/ee/classes/available-slots?from=2026-04-28&to=2026-05-28",
                   "host": [
                     "{{base_url}}"
                   ],
@@ -4019,11 +4037,11 @@
                   "query": [
                     {
                       "key": "from",
-                      "value": "2026-04-01"
+                      "value": "2026-04-28"
                     },
                     {
                       "key": "to",
-                      "value": "2026-04-07"
+                      "value": "2026-05-28"
                     }
                   ]
                 },
@@ -4304,7 +4322,9 @@
                       "pm.test(\"Staff approved\", () => pm.response.to.have.status(204));",
                       "console.log(\"Class\", pm.collectionVariables.get(\"class_id\"), \"→ StaffApproved(7). Coach notified.\");"
                     ],
-                    "type": "text/javascript"
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
                   }
                 }
               ],
@@ -4312,14 +4332,14 @@
                 "method": "PATCH",
                 "header": [],
                 "url": {
-                  "raw": "{{base_url}}/api/coachclasses/{{class_id}}/staff-approve",
+                  "raw": "{{base_url}}/api/coachclasses/23/staff-approve",
                   "host": [
                     "{{base_url}}"
                   ],
                   "path": [
                     "api",
                     "coachclasses",
-                    "{{class_id}}",
+                    "23",
                     "staff-approve"
                   ]
                 },
@@ -4339,7 +4359,7 @@
                 ],
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n    \"email\": \"staff@staff.com\",\n    \"password\": \"12345678\"\n}"
+                  "raw": "{\n    \"email\": \"coach@coach.com\",\n    \"password\": \"12345678\"\n}"
                 },
                 "url": {
                   "raw": "{{base_url}}/api/auth/login",
@@ -4587,6 +4607,64 @@
                   ]
                 },
                 "description": "[parent] Own booked classes for the week (calendar)."
+              },
+              "response": []
+            },
+            {
+              "name": "6.1 - Staff Login",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"email\": \"staff@staff.com\",\n    \"password\": \"12345678\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/auth/login",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "auth",
+                    "login"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "6.2 -  Staff View Notifications",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/notifications/user/8?page=1&pageSize=20",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "notifications",
+                    "user",
+                    "8"
+                  ],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "pageSize",
+                      "value": "20"
+                    }
+                  ]
+                }
               },
               "response": []
             }

@@ -14,7 +14,7 @@ namespace DanceSchoolApp.Server.Services.Social
             _context = context;
         }
 
-        // ─── Queries ──────────────────────────────────────────────────────────
+        //  Queries 
 
         public async Task<List<EventListResponse>> GetAllAsync()
         {
@@ -79,7 +79,7 @@ namespace DanceSchoolApp.Server.Services.Social
             };
         }
 
-        // ─── Commands ─────────────────────────────────────────────────────────
+        //  Commands 
 
         public async Task<int> CreateAsync(EventCreateRequest request, int createdByUserId)
         {
@@ -144,7 +144,7 @@ namespace DanceSchoolApp.Server.Services.Social
                 throw new KeyNotFoundException($"Event with id {id} was not found.");
         }
 
-        // ─── Private helpers ──────────────────────────────────────────────────
+        //  Private helpers 
 
         private static string? ResolveAuthorName(User? user)
         {

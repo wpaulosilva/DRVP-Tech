@@ -19,7 +19,7 @@ namespace DanceSchoolApp.Server.Controllers.People
             _roleService = roleService;
         }
 
-        // ─── GET /api/roles ────────────────────────────────────────────────────
+        //  GET /api/roles 
         [Authorize(Roles = "staff")]
         [HttpGet]
         public async Task<IActionResult> GetRoles()
@@ -39,7 +39,7 @@ namespace DanceSchoolApp.Server.Controllers.People
             }
         }
 
-        // ─── GET /api/roles/{id} ───────────────────────────────────────────────
+        //  GET /api/roles/{id} 
         [Authorize(Roles = "staff")]
         [HttpGet("{id}")]
         public async Task<IActionResult> GetRole(byte id)
@@ -59,7 +59,7 @@ namespace DanceSchoolApp.Server.Controllers.People
             }
         }
 
-        // ─── POST /api/roles ───────────────────────────────────────────────────
+        //  POST /api/roles 
         // Intentionally disabled — roles are seeded at DB level.
         // Remove the early return when proper admin-only authorization is in place.
         [Authorize(Roles = "staff")]
@@ -79,7 +79,7 @@ namespace DanceSchoolApp.Server.Controllers.People
             // catch (Exception ex) { return StatusCode(500, ex.Message); }
         }
 
-        // ─── POST /api/roles/assign ────────────────────────────────────────────
+        //  POST /api/roles/assign 
         [Authorize(Roles = "staff")]
         [HttpPost("assign")]
         public async Task<IActionResult> AssignRole([FromBody] RoleAssignRequest request)
@@ -106,7 +106,7 @@ namespace DanceSchoolApp.Server.Controllers.People
             }
         }
 
-        // ─── DELETE /api/roles/remove ──────────────────────────────────────────
+        //  DELETE /api/roles/remove 
         [Authorize(Roles = "staff")]
         [HttpDelete("remove")]
         public async Task<IActionResult> RemoveRole([FromBody] RoleAssignRequest request)

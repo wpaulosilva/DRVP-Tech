@@ -16,7 +16,7 @@ namespace DanceSchoolApp.Server.Services
             _context = context;
         }
 
-        // ─── Dashboard ────────────────────────────────────────────────────────
+        //  Dashboard 
 
         public async Task<ParentDashboardResponse> GetDashboardAsync(int userId)
         {
@@ -66,7 +66,7 @@ namespace DanceSchoolApp.Server.Services
             };
         }
 
-        // ─── My classes (calendar) ────────────────────────────────────────────
+        //  My classes (calendar) 
 
         public async Task<List<ParentUpcomingClass>> GetMyClassesAsync(
             int userId, DateOnly from, DateOnly to)
@@ -93,7 +93,7 @@ namespace DanceSchoolApp.Server.Services
             return classes.Select(MapToUpcomingClass).ToList();
         }
 
-        // ─── Open classes ─────────────────────────────────────────────────────
+        //  Open classes 
 
         public async Task<PagedResult<OpenClassItem>> GetOpenClassesAsync(
             int? modalityId, int page, int pageSize)
@@ -150,7 +150,7 @@ namespace DanceSchoolApp.Server.Services
             };
         }
 
-        // ─── Pending validations ──────────────────────────────────────────────
+        //  Pending validations 
 
         // Returns one entry per CLASS (not per participant).
         // Only shows classes that have at least one of this parent's students
@@ -221,7 +221,7 @@ namespace DanceSchoolApp.Server.Services
             };
         }
 
-        // ─── My students ──────────────────────────────────────────────────────
+        //  My students 
 
         public async Task<List<ParentStudentItem>> GetMyStudentsAsync(int userId)
         {
@@ -245,7 +245,7 @@ namespace DanceSchoolApp.Server.Services
             }).ToList();
         }
 
-        // ─── School inventory ─────────────────────────────────────────────────
+        //  School inventory 
 
         public async Task<PagedResult<InventoryItemCard>> GetSchoolInventoryAsync(
             int? categoryId, string? search, int page, int pageSize)
@@ -305,7 +305,7 @@ namespace DanceSchoolApp.Server.Services
             };
         }
 
-        // ─── Community inventory ──────────────────────────────────────────────
+        //  Community inventory 
 
         public async Task<PagedResult<CommunityItemCard>> GetCommunityInventoryAsync(
             int? categoryId, decimal? maxPrice, string? search, int page, int pageSize)
@@ -371,7 +371,7 @@ namespace DanceSchoolApp.Server.Services
             };
         }
 
-        // ─── Private helpers ──────────────────────────────────────────────────
+        //  Private helpers 
 
         private static ParentUpcomingClass MapToUpcomingClass(CoachClass c) =>
             new ParentUpcomingClass

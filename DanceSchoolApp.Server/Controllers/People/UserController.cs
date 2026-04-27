@@ -18,7 +18,7 @@ namespace DanceSchoolApp.Server.Controllers.People
             _userService = userService;
         }
 
-        // ─── GET /api/users ────────────────────────────────────────────────────
+        //  GET /api/users 
         [HttpGet]
         [Authorize(Roles = "staff")]
         public async Task<IActionResult> GetUsers()
@@ -39,7 +39,7 @@ namespace DanceSchoolApp.Server.Controllers.People
             }
         }
 
-        // ─── GET /api/users/{id} ───────────────────────────────────────────────
+        //  GET /api/users/{id} 
         [HttpGet("{id}")]
         [Authorize(Roles = "staff")]
         public async Task<IActionResult> GetUser(int id)
@@ -59,7 +59,7 @@ namespace DanceSchoolApp.Server.Controllers.People
             }
         }
 
-        // ─── GET /api/users/{id}/roles ──────────────────────────────────────────
+        //  GET /api/users/{id}/roles 
         [HttpGet("{id}/roles")]
         [Authorize(Roles = "staff")]
 
@@ -80,7 +80,7 @@ namespace DanceSchoolApp.Server.Controllers.People
             }
         }
 
-        // ─── POST /api/users ───────────────────────────────────────────────────
+        //  POST /api/users 
         [HttpPost]
         [Authorize(Roles = "staff,admin")]
         public async Task<IActionResult> CreateUser([FromBody] UserCreateRequest request)
@@ -110,7 +110,7 @@ namespace DanceSchoolApp.Server.Controllers.People
             }
         }
 
-        // ─── PATCH /api/users/{id}/personinfo ─────────────────────────────────
+        //  PATCH /api/users/{id}/personinfo 
         // Ownership: caller must be {id} OR staff. All fields optional.
         // Creates PersonInfo if the user has none yet.
         [HttpPatch("{id}/personinfo")]
@@ -134,7 +134,7 @@ namespace DanceSchoolApp.Server.Controllers.People
             catch (Exception ex) { return StatusCode(500, ex.Message); }
         }
 
-        // ─── PATCH /api/users/{id}/activate ───────────────────────────────────
+        //  PATCH /api/users/{id}/activate 
         [HttpPatch("{id}/activate")]
         [Authorize(Roles = "staff,admin")]
         public async Task<IActionResult> ActivateUser(int id)
@@ -154,11 +154,11 @@ namespace DanceSchoolApp.Server.Controllers.People
             }
         }
 
-        // ─── Helpers ──────────────────────────────────────────────────────────
+        //  Helpers 
         private int GetUserId() =>
             int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
-        // ─── PATCH /api/users/{id}/deactivate ─────────────────────────────────
+        //  PATCH /api/users/{id}/deactivate 
         [Authorize(Roles = "staff,admin")]
         [HttpPatch("{id}/deactivate")]
         public async Task<IActionResult> DeactivateUser(int id)
