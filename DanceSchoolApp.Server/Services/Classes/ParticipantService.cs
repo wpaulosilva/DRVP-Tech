@@ -169,13 +169,11 @@ namespace DanceSchoolApp.Server.Services.Classes
                 throw new KeyNotFoundException(
                     $"Participant record with id {participantId} was not found.");
 
-            // Validation only makes sense after the class is finished (or pending
-            // when the 48h window expired and the worker already advanced it).
+            // Validation only makes sense after the class is finished
             var status = participant.IdCoachClassNavigation.Status;
-            if (status != (byte)CoachClassStatus.Finished &&
-                status != (byte)CoachClassStatus.Pending)
+            if (status != (byte)CoachClassStatus.Finished)
                 throw new InvalidOperationException(
-                    "Validation is only available for Finished or Pending classes.");
+                    "Validation is only available for Finished classes.");
 
             // Parent can only validate after the coach validates first.
             if (participant.IdCoachClassNavigation.CoachValidatedAt is null)
@@ -194,28 +192,6 @@ namespace DanceSchoolApp.Server.Services.Classes
             participant.ParentValidatedAt = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
-
-            // If the class is already Pending (48h window expired), notify staff
-            // that a parent is validating past due.
-            if (status == (byte)CoachClassStatus.Pending)
-            {
-                var staffIds = await _context.Users
-                    .Include(u => u.IdRoles)
-                    .Where(u => u.IdRoles.Any(r => r.RoleId == 1) && u.IsActive)
-                    .Select(u => u.UserId)
-                    .ToListAsync();
-
-                foreach (var staffId in staffIds)
-                {
-                    await _notificationService.SendAsync(
-                        userId: staffId,
-                        title: "Past-Due Parent Validation",
-                        message: $"A parent submitted a validation for class id {participant.IdCoachClass} while the class is already pending staff review.",
-                        type: NotificationType.Warning,
-                        entityType: "CoachClass",
-                        entityId: participant.IdCoachClass);
-                }
-            }
 
             // After saving, check if all participants in this class have now
             // responded — if so, the class can be moved to Pending for staff
