@@ -78,7 +78,7 @@ namespace DanceSchoolApp.Server.Controllers.People
             if (file == null || file.Length == 0)
                 return BadRequest("No file provided.");
 
-            var permitted = new[] { ".jpg", ".jpeg", ".png", ".gif" };
+            var permitted = new[] { ".jpg", ".jpeg", ".png" };
             var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
             if (string.IsNullOrEmpty(ext) || !permitted.Contains(ext))
                 return BadRequest("Invalid file type.");
