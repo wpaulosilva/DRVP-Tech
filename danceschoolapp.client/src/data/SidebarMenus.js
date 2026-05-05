@@ -7,8 +7,8 @@ export const sidebarMenus = {
     staff: [
         { label: 'Dashboard', to: '/staff' },
         { label: 'Utilizadores', to: '/staff/utilizadores' },
-        { label: 'Validar Estudantes', to: '/staff/validar-estudantes' },
-        { label: 'Validar Aulas', to: '/staff/validar-aulas' },
+        { label: 'Estudantes', to: '/staff/validar-estudantes' },
+        { label: 'Aulas', to: '/staff/validar-aulas' },
         { label: 'Modalidades', to: '/staff/modalidades' },
         { label: 'Estúdios', to: '/staff/estudios' },
         { label: 'Eventos', to: '/staff/eventos' },
@@ -28,7 +28,7 @@ export const sidebarMenus = {
     parent: [
         { label: 'Dashboard', to: '/parent' },
         { label: 'Aulas', to: '/parent/aulas' },
-        { label: 'Meus Estudantes', to: '/parent/meus-estudantes' },
+        { label: 'Meus Estudantes', to: '/parent/estudantes' },
         { label: 'Inventário', to: '/parent/inventario' },
         { label: 'Eventos', to: '/parent/eventos' },
     ],

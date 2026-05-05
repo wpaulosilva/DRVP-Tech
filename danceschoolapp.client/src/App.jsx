@@ -113,7 +113,7 @@ function App() {
             >
                 <Route path="/parent" element={<ParentDashboardPage />} />
                 <Route path="/parent/aulas" element={<ParentClassesPage />} />
-                <Route path="/parent/meus-estudantes" element={<ParentStudentsPage />} />
+                <Route path="/parent/estudantes" element={<ParentStudentsPage />} />
                 <Route path="/parent/inventario" element={<ParentInventoryPage />} />
                 <Route path="/parent/eventos" element={<ParentEventsPage />} />
             </Route>

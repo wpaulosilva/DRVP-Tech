@@ -57,3 +57,12 @@
     justify-content: flex-end;
     margin-top: 20px;
 }
+
+.form-error {
+    background: #ffe5e5;
+    color: #c62828;
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 14px;
+    margin-top: 10px;
+}

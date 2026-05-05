@@ -86,7 +86,7 @@ function StaffValidateClassesPage() {
 
     return (
         <section className="dashboard-page-card">
-            <h2>Validações de Aulas</h2>
+            <h2>Aulas</h2>
             <p>Aprovar aulas requisitadas e validar aulas pendentes após o prazo de 48h.</p>
 
             {/* KPI cards */}
