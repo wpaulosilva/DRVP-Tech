@@ -3,6 +3,7 @@ using System.Text;
 using System.Reflection;
 using DanceSchoolApp.Server.Data;
 using DanceSchoolApp.Server.Services;
+using DanceSchoolApp.Server.Services.Scheduling;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.SqlServer;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -23,8 +24,10 @@ foreach (var service in serviceTypes)
 }
 
 builder.Services.AddHostedService<ClassLifecycleWorker>();
+builder.Services.AddHostedService<HolidaySyncWorker>();
 
-//  Controllers 
+//  HttpClient Factory for external API calls
+builder.Services.AddHttpClient();
 builder.Services.AddControllers();
 
 
@@ -98,11 +101,8 @@ var email = Environment.GetEnvironmentVariable("DanceSchoolApp_Email_Password");
 if (email == null) Console.WriteLine($"{YELLOW}Warning{NORMAL} - DanceSchoolApp_Email_Password environment variable is not set!");
 
 
-
-
-// 
-
 var app = builder.Build();
+
 
 app.UseDefaultFiles();
 app.UseStaticFiles();

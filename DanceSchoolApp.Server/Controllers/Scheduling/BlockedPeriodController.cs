@@ -10,10 +10,14 @@ namespace DanceSchoolApp.Server.Controllers.Scheduling
     public class BlockedPeriodController : ControllerBase
     {
         private readonly BlockedPeriodService _blockedPeriodService;
+        private readonly PortugueseHolidayService _portugueseHolidayService;
 
-        public BlockedPeriodController(BlockedPeriodService blockedPeriodService)
+        public BlockedPeriodController(
+            BlockedPeriodService blockedPeriodService,
+            PortugueseHolidayService portugueseHolidayService)
         {
             _blockedPeriodService = blockedPeriodService;
+            _portugueseHolidayService = portugueseHolidayService;
         }
 
         //  GET /api/blockedperiods 
@@ -216,6 +220,25 @@ namespace DanceSchoolApp.Server.Controllers.Scheduling
             catch (KeyNotFoundException ex)
             {
                 return NotFound(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+            }
+        }
+
+        //  POST /api/blockedperiods/holidays/sync 
+        // Manually sync Portuguese public holidays for the current and next year.
+        // This is called automatically once daily by the HolidaySyncWorker,
+        // but can be triggered manually here for testing or immediate updates.
+        [Authorize(Roles = "staff")]
+        [HttpPost("holidays/sync")]
+        public async Task<IActionResult> SyncPortugueseHolidays()
+        {
+            try
+            {
+                await _portugueseHolidayService.SyncCurrentAndNextYearAsync();
+                return Ok(new { message = "Portuguese holidays synced successfully" });
             }
             catch (Exception ex)
             {
