@@ -159,15 +159,20 @@ namespace DanceSchoolApp.Server.Services.Classes
             return participant.ParticipantId;
         }
 
-        public async Task ParentValidateAsync(int participantId, bool attended)
+        public async Task ParentValidateAsync(int participantId, bool attended, int callingUserId)
         {
             var participant = await _context.Participants
                 .Include(p => p.IdCoachClassNavigation)
+                .Include(p => p.IdStudentNavigation)
                 .FirstOrDefaultAsync(p => p.ParticipantId == participantId);
 
             if (participant is null)
                 throw new KeyNotFoundException(
                     $"Participant record with id {participantId} was not found.");
+
+            if (participant.IdStudentNavigation.ParentUserId != callingUserId)
+                throw new UnauthorizedAccessException(
+                    "You can only validate attendance for your own students.");
 
             // Validation only makes sense after the class is finished
             var status = participant.IdCoachClassNavigation.Status;

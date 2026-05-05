@@ -5,7 +5,8 @@ import Input from '../../components/common/Input'
 import UsersTable from '../../features/users/components/UsersTable'
 import CreateDirectionUserModal from '../../features/users/components/CreateDirectionUserModal'
 import {
-    getStaffUsers,
+    getCoaches,
+    getParents,
     createUser,
     activateUser,
     deactivateUser,
@@ -14,7 +15,23 @@ import '../../styles/AdminPage.css'
 
 const PAGE_SIZE = 7
 
-function StaffUsersPage() {
+// Transformar dados de coach/parent para formato da tabela
+const transformUser = (user, isCoach = false) => {
+    const personInfo = user.personInfo || {}
+    const id = isCoach ? user.coachId : user.parentId
+
+    return {
+        userId: id,
+        name: `${personInfo.firstName || ''} ${personInfo.lastName || ''}`.trim(),
+        email: personInfo.email || user.email || '',
+        isActive: user.isActive,
+        // Manter campos originais para referência
+        coachId: isCoach ? id : undefined,
+        parentId: !isCoach ? id : undefined,
+    }
+}
+
+function DirectionUsersPage() {
     const [users, setUsers] = useState([])
     const [total, setTotal] = useState(0)
     const [page, setPage] = useState(1)
@@ -41,7 +58,7 @@ function StaffUsersPage() {
         setError('')
 
         try {
-            const data = await getStaffUsers({
+            const coachesData = await getCoaches({
                 page: currentPage,
                 pageSize: PAGE_SIZE,
                 search: currentSearch,
@@ -49,12 +66,42 @@ function StaffUsersPage() {
                 sortDir,
             })
 
-            const items = Array.isArray(data) ? data : data.items ?? []
+            const parentsData = await getParents({
+                page: currentPage,
+                pageSize: PAGE_SIZE,
+                search: currentSearch,
+                sortBy,
+                sortDir,
+            })
 
-            setUsers(items)
-            setTotal(Array.isArray(data) ? data.length : data.totalCount ?? 0)
+            // Transformar coaches
+            const transformedCoaches = (coachesData.items || coachesData || [])
+                .map(coach => transformUser(coach, true))
+
+            // Transformar parents
+            const transformedParents = (parentsData.items || parentsData || [])
+                .map(parent => transformUser(parent, false))
+
+            // Combinar coaches e parents
+            const combinedUsers = [
+                ...transformedCoaches,
+                ...transformedParents,
+            ]
+
+            // Ordenar por nome se houver busca
+            if (currentSearch) {
+                combinedUsers.sort((a, b) => {
+                    return sortDir === 'asc' 
+                        ? a.name.localeCompare(b.name) 
+                        : b.name.localeCompare(a.name)
+                })
+            }
+
+            setUsers(combinedUsers)
+            setTotal(combinedUsers.length)
         } catch (err) {
-            setError(err.message)
+            console.error('Erro ao buscar utilizadores:', err)
+            setError(err.message || 'Erro ao carregar utilizadores')
         } finally {
             setLoading(false)
         }
@@ -74,6 +121,10 @@ function StaffUsersPage() {
     }, [page, debouncedSearch, fetchUsersData])
 
     const handleCreate = async () => {
+        if (!newUserType) {
+            setModalError('Selecione o tipo de utilizador.')
+            return
+        }
         if (!newEmail.trim()) {
             setModalError('O email é obrigatório.')
             return
@@ -95,11 +146,10 @@ function StaffUsersPage() {
         setModalError('')
 
         try {
-            // primeiro papel selecionado (2 = coach, 3 = parent)
             await createUser({
                 email: newEmail.trim(),
                 username: newUsername.trim() || undefined,
-                firstRole: parseInt(newUserType) || 0,
+                firstRole: parseInt(newUserType),
                 personInfo: {
                     firstName: newFirstName.trim(),
                     lastName: newLastName.trim(),
@@ -115,6 +165,7 @@ function StaffUsersPage() {
             setNewBirthDate('')
             setNewNif('')
             setNewUsername('')
+            setNewUserType('')
             setPage(1)
             fetchUsersData(1, debouncedSearch)
         } catch (err) {
@@ -171,8 +222,8 @@ function StaffUsersPage() {
         <PageCard>
             <div className="admin-page-header">
                 <div>
-                    <h2>Utilizadores</h2>
-                    <p>Criar e gerir contas de utilizadores internos.</p>
+                    <h2>Encarregados e Professores</h2>
+                    <p>Criar e gerir contas de encarregados de educação e professores.</p>
                 </div>
 
                 <Button variant="primary" onClick={openModal}>
@@ -194,7 +245,7 @@ function StaffUsersPage() {
             <UsersTable
                 users={users}
                 loading={loading}
-                // onEdit={(user) => console.log('editar', user.userId)}
+                onEdit={(user) => console.log('editar', user.userId)}
                 onActivate={handleActivate}
                 onDeactivate={handleDeactivate}
                 onSort={handleSort}
@@ -228,8 +279,8 @@ function StaffUsersPage() {
 
             <CreateDirectionUserModal
                 open={showModal}
-                title="Nova Conta de Utilizador"
-                description="Criar uma nova conta de utilizador interno (Professor ou Encarregado)."
+                title="Nova Conta de Direção"
+                description="Criar uma nova conta de encarregado ou professor."
                 email={newEmail}
                 onEmailChange={(value) => {
                     setNewEmail(value)
@@ -256,5 +307,4 @@ function StaffUsersPage() {
     )
 }
 
-export default StaffUsersPage
-
+export default DirectionUsersPage

@@ -8,7 +8,6 @@ namespace DanceSchoolApp.Server.Services.People
 {
     public class StaffService
     {
-
         private readonly AppDbContext _context;
 
         public StaffService(AppDbContext context)
@@ -18,24 +17,90 @@ namespace DanceSchoolApp.Server.Services.People
 
         //  Queries 
 
-        public async Task<List<StaffListResponse>> GetStaffsAsync()
+        public async Task<PagedResponse<StaffListResponse>> GetStaffsAsync(
+            int page = 1,
+            int pageSize = 7,
+            string? search = "",
+            string? sortBy = "",
+            string? sortDir = "asc")
         {
-            return await _context.Users
+            var query = _context.Users
                 .Include(u => u.PersonInfo)
                 .Include(u => u.IdRoles)
-                .Where(u => u.IdRoles.Any(r => r.RoleId == Roles.Staff))
-                .Select(r => new StaffListResponse
+                .Where(u =>
+                    u.IdRoles.Any(r => r.RoleId == Roles.Coach) ||
+                    u.IdRoles.Any(r => r.RoleId == Roles.Parent)
+                );
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                search = search.ToLower();
+
+                query = query.Where(u =>
+                    u.Email.ToLower().Contains(search) ||
+                    u.Username.ToLower().Contains(search) ||
+                    (u.PersonInfo != null &&
+                        (
+                            u.PersonInfo.FirstName.ToLower().Contains(search) ||
+                            u.PersonInfo.LastName.ToLower().Contains(search)
+                        )
+                    )
+                );
+            }
+
+            query = sortBy switch
+            {
+                "name" => sortDir == "desc"
+                    ? query.OrderByDescending(u => u.PersonInfo!.FirstName).ThenByDescending(u => u.PersonInfo!.LastName)
+                    : query.OrderBy(u => u.PersonInfo!.FirstName).ThenBy(u => u.PersonInfo!.LastName),
+
+                "email" => sortDir == "desc"
+                    ? query.OrderByDescending(u => u.Email)
+                    : query.OrderBy(u => u.Email),
+
+                "status" => sortDir == "desc"
+                    ? query.OrderByDescending(u => u.IsActive)
+                    : query.OrderBy(u => u.IsActive),
+
+                "role" => sortDir == "desc"
+                    ? query.OrderByDescending(u =>
+                        u.IdRoles.Any(r => r.RoleId == Roles.Coach) ? 1 :
+                        u.IdRoles.Any(r => r.RoleId == Roles.Parent) ? 2 : 3)
+                    : query.OrderBy(u =>
+                        u.IdRoles.Any(r => r.RoleId == Roles.Coach) ? 1 :
+                        u.IdRoles.Any(r => r.RoleId == Roles.Parent) ? 2 : 3),
+
+                _ => query.OrderBy(u => u.UserId)
+            };
+
+            var totalCount = await query.CountAsync();
+
+            var items = await query
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .Select(u => new StaffListResponse
                 {
-                    StaffId = r.UserId,
-                    IsActive = r.IsActive,
-                    PersonInfo = r.PersonInfo == null ? null : new PersonListResponse
+                    StaffId = u.UserId,
+                    IsActive = u.IsActive,
+                    Email = u.Email,
+                    Role = u.IdRoles.Any(r => r.RoleId == Roles.Coach)
+                    ? "Professor"
+                    : u.IdRoles.Any(r => r.RoleId == Roles.Parent)
+                        ? "Encarregado"
+                        : "—",
+                    PersonInfo = u.PersonInfo == null ? null : new PersonListResponse
                     {
-                        PersonId = r.PersonInfo.PersonId,
-                        FirstName = r.PersonInfo.FirstName,
-                        LastName = r.PersonInfo.LastName
+                        PersonId = u.PersonInfo.PersonId,
+                        FirstName = u.PersonInfo.FirstName,
+                        LastName = u.PersonInfo.LastName
                     }
                 })
                 .ToListAsync();
+
+            return new PagedResponse<StaffListResponse>
+            {
+                Items = items,
+                TotalCount = totalCount
+            };
         }
 
         public async Task<StaffMeResponse> GetStaffMeAsync(int userId)
@@ -53,12 +118,12 @@ namespace DanceSchoolApp.Server.Services.People
 
             return new StaffMeResponse
             {
-                StaffId  = user.UserId,
+                StaffId = user.UserId,
                 Username = user.Username,
-                Name     = p is not null
+                Name = p is not null
                     ? $"{p.FirstName} {p.LastName}".Trim()
                     : user.Username,
-                Email    = user.Email
+                Email = user.Email
             };
         }
 
@@ -88,6 +153,11 @@ namespace DanceSchoolApp.Server.Services.People
                 }
             };
         }
+    }
 
+    public class PagedResponse<T>
+    {
+        public List<T> Items { get; set; } = new();
+        public int TotalCount { get; set; }
     }
 }

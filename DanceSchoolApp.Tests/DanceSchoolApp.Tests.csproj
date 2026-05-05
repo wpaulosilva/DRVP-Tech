@@ -31,4 +31,8 @@
     <ProjectReference Include="..\DanceSchoolApp.Server\DanceSchoolApp.Server.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Services\Scheduling\" />
+  </ItemGroup>
+
 </Project>
