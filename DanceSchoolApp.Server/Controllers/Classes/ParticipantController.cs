@@ -86,15 +86,14 @@ namespace DanceSchoolApp.Server.Controllers.Classes
         // automatically advanced to Pending for staff final review.
         [Authorize(Roles = "parent")]
         [HttpPatch("{id}/parent-validate")]
-        public async Task<IActionResult> ParentValidate(
-            int id, [FromBody] ParticipantValidateRequest request)
+        public async Task<IActionResult> ParentValidate(int id, [FromBody] ParticipantValidateRequest request)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
             try
             {
-                await _participantService.ParentValidateAsync(id, request.Attended);
+                await _participantService.ParentValidateAsync(id, request.Attended, GetUserId());
                 return NoContent();
             }
             catch (KeyNotFoundException ex)
@@ -104,6 +103,10 @@ namespace DanceSchoolApp.Server.Controllers.Classes
             catch (InvalidOperationException ex)
             {
                 return Conflict(ex.Message);
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return StatusCode(StatusCodes.Status403Forbidden, ex.Message);
             }
             catch (Exception ex)
             {
@@ -126,7 +129,7 @@ namespace DanceSchoolApp.Server.Controllers.Classes
                 return NoContent();
             }
             catch (KeyNotFoundException ex)
-            {
+            {   
                 return NotFound(ex.Message);
             }
             catch (InvalidOperationException ex)
@@ -138,5 +141,9 @@ namespace DanceSchoolApp.Server.Controllers.Classes
                 return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
         }
+
+        //  Helpers 
+        private int GetUserId() =>
+            int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
     }
 }
