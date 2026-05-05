@@ -1,4 +1,4 @@
-import { get, patch } from '@/api/client'
+import { get, patch, post } from '@/api/client'
 // See EndpointsMapping.md for full API reference
 
 export function getMyClasses({ from, to } = {}) {
@@ -19,8 +19,9 @@ export function getAvailableSlots({ from, to, modalityId, coachId } = {}) {
     return get(`/api/ee/classes/available-slots${qs ? `?${qs}` : ''}`)
 }
 
-export function getOpenClasses({ page = 1, pageSize = 10 } = {}) {
+export function getOpenClasses({ page = 1, pageSize = 10, modalityId } = {}) {
     const params = new URLSearchParams({ page, pageSize })
+    if (modalityId) params.set('modalityId', modalityId)
     return get(`/api/ee/classes/open?${params}`)
 }
 
@@ -31,4 +32,14 @@ export function getValidateClasses({ page = 1, pageSize = 10 } = {}) {
 
 export function parentValidateParticipant(participantId, attended) {
     return patch(`/api/participants/${participantId}/parent-validate`, { attended })
+}
+
+/** POST /api/coachclasses — parent requests a new class on an available slot */
+export function createClass(body) {
+    return post('/api/coachclasses', body)
+}
+
+/** POST /api/participants — parent enrolls a student in an existing open class */
+export function enrollInClass(body) {
+    return post('/api/participants', body)
 }
