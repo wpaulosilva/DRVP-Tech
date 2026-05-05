@@ -1,11 +1,13 @@
 // Tabs: minhas-marcacoes | marcar | grupo | validar
-// Tab 1 — GET /api/ee/classes/my?from=&to=  (monthly calendar)
-// Tab 2 — GET /api/modalities, GET /api/ee/coaches, GET /api/ee/classes/available-slots?from=&to=&modalityId=&coachId=
-//          POST /api/coachclasses  body: { coachId, modalityId, startDatetime, endDatetime, maxParticipants, studentIds[] }
-// Tab 3 — GET /api/ee/classes/open?page=&pageSize=&modalityId=
-//          POST /api/participants  body: { classId, studentId }
-// Tab 4 — GET /api/ee/classes/validate?page=&pageSize=
-//          PATCH /api/participants/{id}/parent-validate  body: { attended: bool }
+// Tab 1 — GET /api/ee/classes/my?from=&to=  (monthly calendar, ParentUpcomingClass[])
+// Tab 2 — GET /api/ee/classes/available-slots?from=&to=&modalityId=&coachId=
+//          Response: DaySlotResponse[] → [{ Date:"YYYY-MM-DD", Slots:[{ CoachId, CoachName, StartTime, EndTime, ModalityIds, ModalityNames }] }]
+//          POST /api/coachclasses body: { coachId, modalityId, startDatetime, endDatetime, maxParticipants, studentIds[] }
+// Tab 3 — GET /api/ee/classes/open?page=1&pageSize=50
+//          Response: PagedResult<OpenClassItem> → { Items:[...], TotalCount }
+//          POST /api/participants body: { classId, studentId }
+// Tab 4 — GET /api/ee/classes/validate  (PagedResult<ParentValidateItem>)
+//          PATCH /api/participants/{id}/parent-validate body: { attended: bool }
 import { useEffect, useMemo, useState } from 'react'
 import PageCard from '../../components/common/PageCard'
 import ClassValidationCard from '../../components/common/ClassValidationCard'
@@ -34,35 +36,13 @@ function isoDate(d) {
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
-function getWeekStartDate(date) {
-    const d = new Date(date)
-    d.setDate(d.getDate() - d.getDay())
-    d.setHours(0, 0, 0, 0)
-    return d
-}
-
 function getMonthRange(date) {
     const y = date.getFullYear(), m = date.getMonth()
     return { from: isoDate(new Date(y, m, 1)), to: isoDate(new Date(y, m + 1, 0)) }
 }
 
-function getWeekRange(weekStart) {
-    const end = new Date(weekStart)
-    end.setDate(weekStart.getDate() + 6)
-    return { from: isoDate(weekStart), to: isoDate(end) }
-}
-
 function fmtMonthLabel(date) {
     return date.toLocaleDateString('pt-PT', { month: 'long', year: 'numeric' })
-}
-
-function fmtWeekRange(weekStart) {
-    const end = new Date(weekStart)
-    end.setDate(weekStart.getDate() + 6)
-    if (weekStart.getMonth() === end.getMonth()) {
-        return `${weekStart.getDate()} – ${end.getDate()} ${weekStart.toLocaleDateString('pt-PT', { month: 'long', year: 'numeric' })}`
-    }
-    return `${weekStart.getDate()} ${weekStart.toLocaleDateString('pt-PT', { month: 'short' })} – ${end.getDate()} ${end.toLocaleDateString('pt-PT', { month: 'short', year: 'numeric' })}`
 }
 
 function fmtDate(iso) {
@@ -83,39 +63,96 @@ function fmtTime(iso) {
     catch { return iso }
 }
 
+// Converts "09:00:00" (TimeOnly) → "09:00"
+function fmtTime24(t) {
+    return t ? t.slice(0, 5) : ''
+}
+
+// Handles both PascalCase (Items) and camelCase (items) from PagedResult<T>
 function normalizeItems(data) {
     if (Array.isArray(data)) return data
+    if (data && Array.isArray(data.Items)) return data.Items
     if (data && Array.isArray(data.items)) return data.items
     return []
 }
 
 function studentLabel(s) {
-    if (!s) return ''
-    if (s.firstName) return `${s.firstName} ${s.lastName ?? s.lastNme ?? ''}`.trim()
-    return s.name ?? s.Name ?? ''
+    const fn = s.FirstName ?? s.firstName ?? ''
+    const ln = s.LastName ?? s.lastName ?? ''
+    if (fn || ln) return `${fn} ${ln}`.trim()
+    return s.Name ?? s.name ?? ''
 }
+
+// ---- Constants ----
 
 const STATUS_LABEL = {
     0: 'Solicitada', 1: 'Aprovada', 2: 'Recusada',
-    3: 'Cancelada', 4: 'Finalizada', 5: 'Validada', 6: 'Pendente', 7: 'Aprovada (Staff)',
+    3: 'Cancelada', 4: 'Finalizada', 5: 'Validada', 6: 'Pendente', 7: 'Staff Aprovada',
 }
 
-function statusVariant(s) {
-    if (s === 1 || s === 5) return 'confirmed'
-    if (s === 2 || s === 3) return 'rejected'
-    return 'pending'
+// Chip colors per status (for calendar chips in Tab 1)
+const STATUS_CHIP = {
+    0: { background: '#fef3c7', color: '#92400e' },
+    1: { background: '#ede9fe', color: '#6d28d9' },
+    2: { background: '#fee2e2', color: '#991b1b' },
+    3: { background: '#f3f4f6', color: '#6b7280' },
+    4: { background: '#d1fae5', color: '#065f46' },
+    5: { background: '#d1fae5', color: '#065f46' },
+    6: { background: '#ffedd5', color: '#9a3412' },
+    7: { background: '#ede9fe', color: '#6d28d9' },
+}
+
+function statusCardClass(s) {
+    if (s === 0) return 'class-card--amber'
+    if (s === 2 || s === 3) return 'class-card--contested'
+    if (s === 4 || s === 5) return 'class-card--green'
+    if (s === 6) return 'class-card--orange'
+    return ''  // default purple
 }
 
 const DAYS_PT = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
 
 const TABS = [
     { id: 'minhas-marcacoes', label: 'Minhas Marcações', activeExtra: '' },
-    { id: 'marcar', label: 'Criar Aula', activeExtra: '' },
-    { id: 'grupo', label: 'Aulas Existentes', activeExtra: '-teal' },
-    { id: 'validar', label: 'Validar Aulas', activeExtra: '-orange' },
+    { id: 'marcar',           label: 'Criar Aula',       activeExtra: '' },
+    { id: 'grupo',            label: 'Aulas Existentes', activeExtra: '-teal' },
+    { id: 'validar',          label: 'Validar Aulas',    activeExtra: '-orange' },
 ]
 
-const T3_PAGE_SIZE = 10
+// ---- Shared MonthCalendar ----
+
+function MonthCalendar({ month, onPrev, onNext, renderDay, loading }) {
+    const year = month.getFullYear()
+    const mon  = month.getMonth()
+    const daysInMonth = new Date(year, mon + 1, 0).getDate()
+    const firstDow    = new Date(year, mon, 1).getDay()
+
+    return (
+        <div className="pc-card">
+            <div className="pc-cal-header">
+                <h3 className="pc-cal-title">{fmtMonthLabel(month)}</h3>
+                <div className="pc-cal-nav">
+                    <button className="pc-cal-nav-btn" onClick={onPrev} aria-label="Mês anterior">‹</button>
+                    <button className="pc-cal-nav-btn" onClick={onNext} aria-label="Próximo mês">›</button>
+                </div>
+            </div>
+            {loading ? (
+                <div className="validate-empty"><p>Carregando...</p></div>
+            ) : (
+                <div className="pc-month-grid">
+                    {DAYS_PT.map(d => <div key={d} className="pc-dow-label">{d}</div>)}
+                    {Array.from({ length: firstDow }, (_, i) => (
+                        <div key={`e${i}`} className="pc-day-cell pc-day-cell--empty" />
+                    ))}
+                    {Array.from({ length: daysInMonth }, (_, i) => {
+                        const key = isoDate(new Date(year, mon, i + 1))
+                        return renderDay(key, i + 1)
+                    })}
+                </div>
+            )}
+        </div>
+    )
+}
 
 // ---- Component ----
 
@@ -123,7 +160,7 @@ function ParentClassesPage() {
 
     // ===== Shared data (modalities, coaches, students) =====
     const [modalities, setModalities] = useState([])
-    const [coaches, setCoaches] = useState([])
+    const [coaches, setCoaches]       = useState([])
     const [myStudents, setMyStudents] = useState([])
 
     useEffect(() => {
@@ -132,48 +169,62 @@ function ParentClassesPage() {
             getCoachesForParent(),
             getMyStudents(),
         ]).then(([modsRes, coachesRes, studentsRes]) => {
-            if (modsRes.status === 'fulfilled') setModalities(normalizeItems(modsRes.value))
-            if (coachesRes.status === 'fulfilled') setCoaches(normalizeItems(coachesRes.value))
+            if (modsRes.status === 'fulfilled')     setModalities(normalizeItems(modsRes.value))
+            if (coachesRes.status === 'fulfilled')  setCoaches(normalizeItems(coachesRes.value))
             if (studentsRes.status === 'fulfilled') setMyStudents(normalizeItems(studentsRes.value))
         })
     }, [])
 
+    // CoachAvailableResponse: { CoachId, Name, Modalities: [{ ModalityId, Name }] }
     const modalityOptions = useMemo(() =>
         modalities.map(m => ({
-            value: String(m.modalityId ?? m.id ?? m.ModalityId ?? ''),
-            label: m.name ?? m.Name ?? '',
+            value: String(m.ModalityId ?? m.modalityId ?? ''),
+            label: m.Name ?? m.name ?? '',
         })), [modalities])
 
     const coachOptions = useMemo(() =>
         coaches.map(c => ({
-            value: String(c.coachId ?? c.id ?? c.CoachId ?? ''),
-            label: c.name ?? c.Name ?? c.fullName ?? c.FullName ?? '',
+            value: String(c.CoachId ?? c.coachId ?? ''),
+            label: c.Name ?? c.name ?? '',
         })), [coaches])
 
     const studentOptions = useMemo(() =>
         myStudents.map(s => ({
-            value: String(s.studentId ?? s.id ?? s.StudentId ?? ''),
+            value: String(s.StudentId ?? s.studentId ?? ''),
             label: studentLabel(s),
         })), [myStudents])
 
     // ===== Active tab =====
     const [activeTab, setActiveTab] = useState('minhas-marcacoes')
 
+    const prevMonth = (setter) => setter(prev => {
+        const d = new Date(prev)
+        d.setDate(1)
+        d.setMonth(d.getMonth() - 1)
+        return d
+    })
+    const nextMonth = (setter) => setter(prev => {
+        const d = new Date(prev)
+        d.setDate(1)
+        d.setMonth(d.getMonth() + 1)
+        return d
+    })
+
     // ===================================================
     // TAB 1 — Minhas Marcações (monthly calendar)
+    // ParentUpcomingClass: { ClassId, StartDatetime, EndDatetime, ModalityName, CoachName, StudioName, Status, StudentName }
     // ===================================================
-    const [t1Month, setT1Month] = useState(new Date())
-    const [t1Classes, setT1Classes] = useState([])
-    const [t1Loading, setT1Loading] = useState(false)
-    const [t1Error, setT1Error] = useState('')
+    const [t1Month, setT1Month]             = useState(new Date())
+    const [t1Classes, setT1Classes]         = useState([])
+    const [t1Loading, setT1Loading]         = useState(false)
+    const [t1Error, setT1Error]             = useState('')
     const [t1SelectedDate, setT1SelectedDate] = useState(null)
 
     useEffect(() => {
         if (activeTab !== 'minhas-marcacoes') return
         let cancelled = false
         const { from, to } = getMonthRange(t1Month)
-        setT1Loading(true)
-        setT1Error('')
+        setT1Loading(true); setT1Error('')
         getMyClasses({ from, to })
             .then(d => { if (!cancelled) setT1Classes(normalizeItems(d)) })
             .catch(e => { if (!cancelled) setT1Error(e.message) })
@@ -181,98 +232,130 @@ function ParentClassesPage() {
         return () => { cancelled = true }
     }, [activeTab, t1Month])
 
+    // Group by date key "YYYY-MM-DD"
     const t1ByDate = useMemo(() => {
         const map = {}
         t1Classes.forEach(c => {
-            const dt = c.startDatetime ?? c.StartDatetime ?? c.date
-            if (!dt) return
-            const key = dt.slice(0, 10)
-            ;(map[key] ||= []).push(c)
+            const key = (c.StartDatetime ?? '').slice(0, 10)
+            if (key) (map[key] ||= []).push(c)
         })
         return map
     }, [t1Classes])
 
     // ===================================================
-    // TAB 2 — Criar Aula (weekly slot calendar)
+    // TAB 2 — Criar Aula (monthly slot calendar)
+    // DaySlotResponse[]: [{ Date:"YYYY-MM-DD", Slots:[{ CoachId, CoachName, StartTime, EndTime, ModalityIds, ModalityNames }] }]
     // ===================================================
-    const [t2WeekStart, setT2WeekStart] = useState(() => getWeekStartDate(new Date()))
-    const [t2Modality, setT2Modality] = useState('')
-    const [t2Coach, setT2Coach] = useState('')
-    const [t2Slots, setT2Slots] = useState([])
-    const [t2Loading, setT2Loading] = useState(false)
-    const [t2Error, setT2Error] = useState('')
-    const [t2SelectedDate, setT2SelectedDate] = useState(null)
+    const [t2Month, setT2Month]                   = useState(new Date())
+    const [t2Modality, setT2Modality]             = useState('')
+    const [t2Coach, setT2Coach]                   = useState('')
+    const [t2SlotsByDate, setT2SlotsByDate]       = useState({})
+    const [t2Loading, setT2Loading]               = useState(false)
+    const [t2Error, setT2Error]                   = useState('')
+    const [t2SelectedDate, setT2SelectedDate]     = useState(null)
 
-    // Booking modal state
-    const [bookingSlot, setBookingSlot] = useState(null)
+    // Booking modal
+    const [bookingSlot, setBookingSlot]           = useState(null)   // CoachSlot
+    const [bookingDate, setBookingDate]           = useState('')     // "YYYY-MM-DD"
     const [bookingModalityId, setBookingModalityId] = useState('')
-    const [bookingStudentId, setBookingStudentId] = useState('')
-    const [bookingMaxParts, setBookingMaxParts] = useState(1)
+    const [bookingStudentId, setBookingStudentId]   = useState('')
+    const [bookingMaxParts, setBookingMaxParts]     = useState(1)
+    const [bookingStartTime, setBookingStartTime]   = useState('')  // "HH:MM"
+    const [bookingEndTime, setBookingEndTime]       = useState('')  // "HH:MM"
     const [bookingSubmitting, setBookingSubmitting] = useState(false)
-    const [bookingError, setBookingError] = useState('')
-    const [bookingSuccess, setBookingSuccess] = useState(false)
+    const [bookingError, setBookingError]           = useState('')
+    const [bookingSuccess, setBookingSuccess]       = useState(false)
 
     useEffect(() => {
         if (activeTab !== 'marcar') return
         let cancelled = false
-        const { from, to } = getWeekRange(t2WeekStart)
-        setT2Loading(true)
-        setT2Error('')
+        const { from, to } = getMonthRange(t2Month)
+        setT2Loading(true); setT2Error(''); setT2SlotsByDate({})
         const params = { from, to }
         if (t2Modality) params.modalityId = t2Modality
-        if (t2Coach) params.coachId = t2Coach
+        if (t2Coach)    params.coachId    = t2Coach
         getAvailableSlots(params)
-            .then(d => { if (!cancelled) setT2Slots(normalizeItems(d)) })
+            .then(data => {
+                if (cancelled) return
+                // data is null (204) or DaySlotResponse[]
+                // DaySlotResponse: { Date: "YYYY-MM-DD", Slots: [...] } — PascalCase
+                const byDate = {}
+                if (Array.isArray(data)) {
+                    for (const day of data) {
+                        const key   = day.Date ?? day.date
+                        const slots = day.Slots ?? day.slots ?? []
+                        if (key) byDate[key] = slots
+                    }
+                }
+                setT2SlotsByDate(byDate)
+            })
             .catch(e => { if (!cancelled) setT2Error(e.message) })
             .finally(() => { if (!cancelled) setT2Loading(false) })
         return () => { cancelled = true }
-    }, [activeTab, t2WeekStart, t2Modality, t2Coach])
+    }, [activeTab, t2Month, t2Modality, t2Coach])
 
-    const t2SlotsByDate = useMemo(() => {
-        const map = {}
-        t2Slots.forEach(s => {
-            const dt = s.startDatetime ?? s.StartDatetime ?? s.start
-            if (!dt) return
-            const key = dt.slice(0, 10)
-            ;(map[key] ||= []).push(s)
-        })
-        return map
-    }, [t2Slots])
-
-    const openBookingModal = (slot) => {
+    const openBookingModal = (slot, date) => {
+        // CoachSlot: { CoachId, CoachName, StartTime, EndTime, ModalityIds, ModalityNames }
         setBookingSlot(slot)
-        setBookingModalityId(t2Modality || (slot.modalityId ? String(slot.modalityId) : ''))
+        setBookingDate(date)
+        const firstModalityId = (slot.ModalityIds ?? slot.modalityIds ?? [])[0]
+        setBookingModalityId(firstModalityId ? String(firstModalityId) : '')
         setBookingStudentId('')
         setBookingMaxParts(1)
+        setBookingStartTime(fmtTime24(slot.StartTime ?? slot.startTime))
+        setBookingEndTime(fmtTime24(slot.EndTime ?? slot.endTime))
         setBookingError('')
         setBookingSuccess(false)
     }
 
+    // Modality options filtered to just what the selected slot's coach offers
+    const bookingModalityOptions = useMemo(() => {
+        if (!bookingSlot) return modalityOptions
+        const names = bookingSlot.ModalityNames ?? bookingSlot.modalityNames ?? []
+        const ids   = bookingSlot.ModalityIds   ?? bookingSlot.modalityIds   ?? []
+        if (names.length === 0) return modalityOptions
+        return names.map((name, i) => ({ value: String(ids[i] ?? ''), label: name }))
+    }, [bookingSlot, modalityOptions])
+
     const handleBookingSubmit = async (e) => {
         e.preventDefault()
-        if (!bookingStudentId) { setBookingError('Selecione um aluno.'); return }
-        if (!bookingModalityId) { setBookingError('Selecione uma modalidade.'); return }
-        setBookingSubmitting(true)
-        setBookingError('')
+        if (!bookingStudentId)   { setBookingError('Selecione um aluno.'); return }
+        if (!bookingModalityId)  { setBookingError('Selecione uma modalidade.'); return }
+        if (!bookingStartTime)   { setBookingError('Defina a hora de início.'); return }
+        if (!bookingEndTime)     { setBookingError('Defina a hora de fim.'); return }
+        if (bookingEndTime <= bookingStartTime) { setBookingError('A hora de fim deve ser depois da hora de início.'); return }
+        setBookingSubmitting(true); setBookingError('')
         try {
+            const coachId = bookingSlot.CoachId ?? bookingSlot.coachId
             await createClass({
-                coachId: bookingSlot.coachId ?? bookingSlot.CoachId ?? (t2Coach ? Number(t2Coach) : undefined),
-                modalityId: Number(bookingModalityId),
-                startDatetime: bookingSlot.startDatetime ?? bookingSlot.StartDatetime,
-                endDatetime: bookingSlot.endDatetime ?? bookingSlot.EndDatetime,
+                coachId,
+                modalityId:      Number(bookingModalityId),
+                startDatetime:   `${bookingDate}T${bookingStartTime}:00`,
+                endDatetime:     `${bookingDate}T${bookingEndTime}:00`,
                 maxParticipants: Number(bookingMaxParts),
-                studentIds: [Number(bookingStudentId)],
+                studentIds:      [Number(bookingStudentId)],
             })
             setBookingSuccess(true)
-            // Refresh slots after a short delay so user sees the success state
             setTimeout(() => {
                 setBookingSlot(null)
-                const { from, to } = getWeekRange(t2WeekStart)
+                // Re-fetch slots for the current month
+                const { from, to } = getMonthRange(t2Month)
                 const params = { from, to }
                 if (t2Modality) params.modalityId = t2Modality
-                if (t2Coach) params.coachId = t2Coach
-                getAvailableSlots(params).then(d => setT2Slots(normalizeItems(d))).catch(() => {})
-            }, 1200)
+                if (t2Coach)    params.coachId    = t2Coach
+                getAvailableSlots(params)
+                    .then(data => {
+                        const byDate = {}
+                        if (Array.isArray(data)) {
+                            for (const day of data) {
+                                const key = day.Date ?? day.date
+                                if (key) byDate[key] = day.Slots ?? day.slots ?? []
+                            }
+                        }
+                        setT2SlotsByDate(byDate)
+                    })
+                    .catch(() => {})
+            }, 1400)
         } catch (err) {
             setBookingError(err.message)
         } finally {
@@ -281,54 +364,63 @@ function ParentClassesPage() {
     }
 
     // ===================================================
-    // TAB 3 — Aulas Existentes (paginated open classes)
+    // TAB 3 — Aulas Existentes (monthly open-classes calendar)
+    // PagedResult<OpenClassItem>: { Items:[{ ClassId, StartDatetime, EndDatetime, ModalityName, CoachName, StudioName, CurrentParticipants, MaxParticipants, SpotsAvailable }], TotalCount }
     // ===================================================
-    const [t3Modality, setT3Modality] = useState('')
-    const [t3Classes, setT3Classes] = useState([])
-    const [t3Total, setT3Total] = useState(0)
-    const [t3Page, setT3Page] = useState(1)
-    const [t3Loading, setT3Loading] = useState(false)
-    const [t3Error, setT3Error] = useState('')
-    const [t3Refresh, setT3Refresh] = useState(0)
+    const [t3Month, setT3Month]               = useState(new Date())
+    const [t3Modality, setT3Modality]         = useState('')
+    const [t3Classes, setT3Classes]           = useState([])
+    const [t3Loading, setT3Loading]           = useState(false)
+    const [t3Error, setT3Error]               = useState('')
+    const [t3SelectedDate, setT3SelectedDate] = useState(null)
+    const [t3Refresh, setT3Refresh]           = useState(0)
 
-    // Enroll modal state
-    const [enrollTarget, setEnrollTarget] = useState(null)
+    // Enroll modal
+    const [enrollTarget, setEnrollTarget]     = useState(null)
     const [enrollStudentId, setEnrollStudentId] = useState('')
     const [enrollSubmitting, setEnrollSubmitting] = useState(false)
-    const [enrollError, setEnrollError] = useState('')
+    const [enrollError, setEnrollError]       = useState('')
 
     useEffect(() => {
         if (activeTab !== 'grupo') return
         let cancelled = false
-        setT3Loading(true)
-        setT3Error('')
-        const params = { page: t3Page, pageSize: T3_PAGE_SIZE }
+        setT3Loading(true); setT3Error('')
+        const params = { page: 1, pageSize: 50 }
         if (t3Modality) params.modalityId = t3Modality
         getOpenClasses(params)
-            .then(d => {
-                if (!cancelled) {
-                    setT3Classes(normalizeItems(d))
-                    setT3Total(d?.totalCount ?? d?.TotalCount ?? d?.total ?? 0)
-                }
+            .then(data => {
+                if (cancelled) return
+                // PagedResult → normalizeItems handles { Items:[...] }
+                setT3Classes(normalizeItems(data))
             })
             .catch(e => { if (!cancelled) setT3Error(e.message) })
             .finally(() => { if (!cancelled) setT3Loading(false) })
         return () => { cancelled = true }
-    }, [activeTab, t3Modality, t3Page, t3Refresh])
+    }, [activeTab, t3Modality, t3Refresh])
 
-    const handleT3ModalityChange = (v) => {
-        setT3Modality(v)
-        setT3Page(1)
+    // Group open classes by date
+    const t3ByDate = useMemo(() => {
+        const map = {}
+        t3Classes.forEach(c => {
+            const key = (c.StartDatetime ?? '').slice(0, 10)
+            if (key) (map[key] ||= []).push(c)
+        })
+        return map
+    }, [t3Classes])
+
+    const openEnrollModal = (cls) => {
+        setEnrollTarget(cls)
+        setEnrollStudentId('')
+        setEnrollError('')
     }
 
     const handleEnrollSubmit = async (e) => {
         e.preventDefault()
         if (!enrollStudentId) { setEnrollError('Selecione um aluno.'); return }
-        setEnrollSubmitting(true)
-        setEnrollError('')
+        setEnrollSubmitting(true); setEnrollError('')
         try {
             await enrollInClass({
-                classId: enrollTarget.classId ?? enrollTarget.ClassId ?? enrollTarget.id,
+                classId:   enrollTarget.ClassId ?? enrollTarget.classId,
                 studentId: Number(enrollStudentId),
             })
             setEnrollTarget(null)
@@ -342,16 +434,16 @@ function ParentClassesPage() {
 
     // ===================================================
     // TAB 4 — Validar Aulas
+    // PagedResult<ParentValidateItem>: { Items:[{ ClassId, ModalityName, StartDatetime, CoachName, ExpiresAt, Participants:[{ ParticipantId, StudentName, ValidationStatus }] }] }
     // ===================================================
-    const [t4Items, setT4Items] = useState([])
+    const [t4Items, setT4Items]   = useState([])
     const [t4Loading, setT4Loading] = useState(false)
-    const [t4Error, setT4Error] = useState('')
+    const [t4Error, setT4Error]   = useState('')
 
     useEffect(() => {
         if (activeTab !== 'validar') return
         let cancelled = false
-        setT4Loading(true)
-        setT4Error('')
+        setT4Loading(true); setT4Error('')
         getValidateClasses({ page: 1, pageSize: 20 })
             .then(d => { if (!cancelled) setT4Items(normalizeItems(d)) })
             .catch(e => { if (!cancelled) setT4Error(e.message) })
@@ -365,12 +457,12 @@ function ParentClassesPage() {
             setT4Items(prev => prev.map(cls => {
                 const parts = cls.Participants ?? cls.participants ?? []
                 if (!parts.some(p => (p.ParticipantId ?? p.participantId) === participantId)) return cls
-                const updateParts = list => list?.map(p => {
-                    if ((p.ParticipantId ?? p.participantId) === participantId)
-                        return { ...p, ValidationStatus: attended ? 1 : 2, validationStatus: attended ? 1 : 2 }
-                    return p
-                })
-                return { ...cls, Participants: updateParts(cls.Participants), participants: updateParts(cls.participants) }
+                const update = list => list?.map(p =>
+                    (p.ParticipantId ?? p.participantId) === participantId
+                        ? { ...p, ValidationStatus: attended ? 1 : 2, validationStatus: attended ? 1 : 2 }
+                        : p
+                )
+                return { ...cls, Participants: update(cls.Participants), participants: update(cls.participants) }
             }))
         } catch (err) {
             alert(err.message)
@@ -389,97 +481,77 @@ function ParentClassesPage() {
         }), [t4Items])
 
     // ===================================================
-    // RENDER HELPERS
+    // RENDER — TAB 1
     // ===================================================
 
     const renderMinhasMarcacoes = () => {
-        const year = t1Month.getFullYear()
-        const month = t1Month.getMonth()
-        const daysInMonth = new Date(year, month + 1, 0).getDate()
-        const firstDow = new Date(year, month, 1).getDay()
         const dayList = t1SelectedDate ? (t1ByDate[t1SelectedDate] ?? []) : []
+        const totalClasses = t1Classes.length
+
+        const renderDay = (key, dayNum) => {
+            const items = t1ByDate[key] ?? []
+            const isSelected = key === t1SelectedDate
+            return (
+                <div
+                    key={key}
+                    className={`pc-day-cell${items.length ? ' pc-day-cell--has' : ''}${isSelected ? ' pc-day-cell--selected' : ''}`}
+                    onClick={() => items.length && setT1SelectedDate(isSelected ? null : key)}
+                >
+                    <span className="pc-day-num">{dayNum}</span>
+                    {items.slice(0, 2).map((c, ci) => {
+                        const status = c.Status ?? 0
+                        return (
+                            <div key={ci} className="pc-event-chip" style={STATUS_CHIP[status] ?? STATUS_CHIP[0]}>
+                                {fmtTime(c.StartDatetime)} {c.ModalityName}
+                            </div>
+                        )
+                    })}
+                    {items.length > 2 && <div className="pc-event-more">+{items.length - 2}</div>}
+                </div>
+            )
+        }
 
         return (
             <div>
                 <p className="tab-description">Visualize as aulas marcadas para os seus educandos no mês.</p>
                 {t1Error && <p className="admin-error">{t1Error}</p>}
 
-                <div className="pc-card">
-                    <div className="pc-cal-header">
-                        <h3 className="pc-cal-title">{fmtMonthLabel(t1Month)}</h3>
-                        <div className="pc-cal-nav">
-                            <button
-                                className="pc-cal-nav-btn"
-                                onClick={() => { setT1Month(new Date(year, month - 1, 1)); setT1SelectedDate(null) }}
-                                aria-label="Mês anterior"
-                            >‹</button>
-                            <button
-                                className="pc-cal-nav-btn"
-                                onClick={() => { setT1Month(new Date(year, month + 1, 1)); setT1SelectedDate(null) }}
-                                aria-label="Próximo mês"
-                            >›</button>
-                        </div>
-                    </div>
-
-                    {t1Loading ? (
-                        <div className="validate-empty"><p>Carregando...</p></div>
-                    ) : (
-                        <div className="pc-month-grid">
-                            {DAYS_PT.map(d => <div key={d} className="pc-dow-label">{d}</div>)}
-                            {Array.from({ length: firstDow }).map((_, i) => (
-                                <div key={`e${i}`} className="pc-day-cell pc-day-cell--empty" />
-                            ))}
-                            {Array.from({ length: daysInMonth }).map((_, i) => {
-                                const day = i + 1
-                                const key = isoDate(new Date(year, month, day))
-                                const items = t1ByDate[key] ?? []
-                                const isSelected = key === t1SelectedDate
-                                return (
-                                    <div
-                                        key={key}
-                                        className={`pc-day-cell${items.length ? ' pc-day-cell--has' : ''}${isSelected ? ' pc-day-cell--selected' : ''}`}
-                                        onClick={() => setT1SelectedDate(isSelected ? null : key)}
-                                    >
-                                        <span className="pc-day-num">{day}</span>
-                                        {items.slice(0, 3).map((c, ci) => {
-                                            const start = c.startDatetime ?? c.StartDatetime
-                                            return (
-                                                <div key={ci} className="pc-event-chip" title={`${fmtTime(start)} – ${c.modalityName ?? c.ModalityName ?? ''}`}>
-                                                    {fmtTime(start)} {c.modalityName ?? c.ModalityName ?? ''}
-                                                </div>
-                                            )
-                                        })}
-                                        {items.length > 3 && <div className="pc-event-more">+{items.length - 3}</div>}
-                                    </div>
-                                )
-                            })}
-                        </div>
-                    )}
-                </div>
+                <MonthCalendar
+                    month={t1Month}
+                    onPrev={() => { prevMonth(setT1Month); setT1SelectedDate(null) }}
+                    onNext={() => { nextMonth(setT1Month); setT1SelectedDate(null) }}
+                    renderDay={renderDay}
+                    loading={t1Loading}
+                />
 
                 {/* Selected day detail */}
                 {t1SelectedDate && dayList.length > 0 && (
                     <div>
                         <h3 className="validate-section-heading">{fmtDateLong(t1SelectedDate)}</h3>
                         {dayList
-                            .sort((a, b) => (a.startDatetime ?? a.StartDatetime ?? '').localeCompare(b.startDatetime ?? b.StartDatetime ?? ''))
+                            .sort((a, b) => (a.StartDatetime ?? '').localeCompare(b.StartDatetime ?? ''))
                             .map((c, i) => {
-                                const status = c.status ?? c.Status ?? 0
-                                const start = c.startDatetime ?? c.StartDatetime
-                                const end = c.endDatetime ?? c.EndDatetime
+                                const status = c.Status ?? 0
                                 return (
-                                    <div key={c.classId ?? c.ClassId ?? i} className="session-card">
-                                        <div className="session-card-top">
-                                            <h3 className="session-card-name">{c.modalityName ?? c.ModalityName ?? 'Aula'}</h3>
-                                            <span className={`status-pill status-pill--${statusVariant(status)}`}>
-                                                {STATUS_LABEL[status] ?? `Estado ${status}`}
-                                            </span>
-                                        </div>
-                                        <div className="session-card-info">
-                                            <span>🕐 {fmtTime(start)}{end ? ` – ${fmtTime(end)}` : ''}</span>
-                                            {(c.coachName ?? c.CoachName) && <span>👨‍🏫 {c.coachName ?? c.CoachName}</span>}
-                                            {(c.studioName ?? c.StudioName) && <span>📍 {c.studioName ?? c.StudioName}</span>}
-                                            {(c.studentName ?? c.StudentName) && <span>👤 {c.studentName ?? c.StudentName}</span>}
+                                    <div key={c.ClassId ?? i} className={`class-card ${statusCardClass(status)}`}>
+                                        <div className="class-card-header" style={{ cursor: 'default' }}>
+                                            <div style={{ flex: '1 1 auto', minWidth: 0 }}>
+                                                <div className="class-card-title-row">
+                                                    <h3 className="class-card-title">{c.ModalityName ?? 'Aula'}</h3>
+                                                    <span className="status-pill" style={STATUS_CHIP[status] ?? {}}>
+                                                        {STATUS_LABEL[status] ?? `Estado ${status}`}
+                                                    </span>
+                                                </div>
+                                                <div className="class-card-info-grid">
+                                                    <div>
+                                                        <span className="label">Horário: </span>
+                                                        {fmtTime(c.StartDatetime)} – {fmtTime(c.EndDatetime)}
+                                                    </div>
+                                                    {c.CoachName && <div><span className="label">Coach: </span>{c.CoachName}</div>}
+                                                    {c.StudioName && <div><span className="label">Estúdio: </span>{c.StudioName}</div>}
+                                                    {c.StudentName && <div><span className="label">Aluno: </span>{c.StudentName}</div>}
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 )
@@ -495,7 +567,7 @@ function ParentClassesPage() {
                     </div>
                 )}
 
-                {!t1Loading && !t1Error && t1Classes.length === 0 && !t1SelectedDate && (
+                {!t1Loading && !t1Error && totalClasses === 0 && !t1SelectedDate && (
                     <div className="validate-empty">
                         <div className="validate-empty-icon">📅</div>
                         <h3>Sem marcações</h3>
@@ -506,18 +578,38 @@ function ParentClassesPage() {
         )
     }
 
+    // ===================================================
+    // RENDER — TAB 2
+    // ===================================================
+
     const renderCriarAula = () => {
-        const weekDays = Array.from({ length: 7 }, (_, i) => {
-            const d = new Date(t2WeekStart)
-            d.setDate(t2WeekStart.getDate() + i)
-            return d
-        })
         const selectedSlots = t2SelectedDate ? (t2SlotsByDate[t2SelectedDate] ?? []) : []
+        const hasAnySlots = Object.keys(t2SlotsByDate).length > 0
+
+        const renderDay = (key, dayNum) => {
+            const slots = t2SlotsByDate[key] ?? []
+            const isSelected = key === t2SelectedDate
+            return (
+                <div
+                    key={key}
+                    className={`pc-day-cell${slots.length ? ' pc-day-cell--has-slot' : ''}${isSelected ? ' pc-day-cell--selected' : ''}`}
+                    onClick={() => slots.length && setT2SelectedDate(isSelected ? null : key)}
+                >
+                    <span className="pc-day-num">{dayNum}</span>
+                    {slots.slice(0, 2).map((s, si) => (
+                        <div key={si} className="pc-slot-chip">
+                            {fmtTime24(s.StartTime ?? s.startTime)}
+                        </div>
+                    ))}
+                    {slots.length > 2 && <div className="pc-event-more">+{slots.length - 2}</div>}
+                </div>
+            )
+        }
 
         return (
             <div>
                 <p className="tab-description">
-                    Escolha uma modalidade e professor, selecione um horário disponível e envie o pedido de aula.
+                    Filtre por modalidade ou professor, clique num dia com vagas disponíveis e envie o pedido de aula.
                 </p>
                 {t2Error && <p className="admin-error">{t2Error}</p>}
 
@@ -541,108 +633,98 @@ function ParentClassesPage() {
                     </div>
                 </div>
 
-                {/* Weekly slot calendar */}
-                <div className="pc-card">
-                    <div className="pc-cal-header">
-                        <h3 className="pc-cal-title">{fmtWeekRange(t2WeekStart)}</h3>
-                        <div className="pc-cal-nav">
-                            <button
-                                className="pc-cal-nav-btn"
-                                onClick={() => { const d = new Date(t2WeekStart); d.setDate(d.getDate() - 7); setT2WeekStart(d); setT2SelectedDate(null) }}
-                                aria-label="Semana anterior"
-                            >‹</button>
-                            <button
-                                className="pc-cal-nav-btn"
-                                onClick={() => { const d = new Date(t2WeekStart); d.setDate(d.getDate() + 7); setT2WeekStart(d); setT2SelectedDate(null) }}
-                                aria-label="Próxima semana"
-                            >›</button>
-                        </div>
-                    </div>
+                <MonthCalendar
+                    month={t2Month}
+                    onPrev={() => { prevMonth(setT2Month); setT2SelectedDate(null) }}
+                    onNext={() => { nextMonth(setT2Month); setT2SelectedDate(null) }}
+                    renderDay={renderDay}
+                    loading={t2Loading}
+                />
 
-                    {t2Loading ? (
-                        <div className="validate-empty"><p>Carregando vagas...</p></div>
-                    ) : (
-                        <div className="pc-week-grid">
-                            {DAYS_PT.map(d => <div key={d} className="pc-dow-label">{d}</div>)}
-                            {weekDays.map(date => {
-                                const key = isoDate(date)
-                                const daySlots = t2SlotsByDate[key] ?? []
-                                const isSelected = key === t2SelectedDate
-                                return (
-                                    <div
-                                        key={key}
-                                        className={`pc-week-cell${daySlots.length ? ' pc-week-cell--has' : ' pc-week-cell--empty'}${isSelected ? ' pc-week-cell--selected' : ''}`}
-                                        onClick={() => daySlots.length && setT2SelectedDate(isSelected ? null : key)}
-                                        title={daySlots.length ? `${daySlots.length} vaga(s)` : 'Sem vagas'}
-                                    >
-                                        <span className="pc-day-num">{date.getDate()}</span>
-                                        {daySlots.slice(0, 3).map((s, si) => (
-                                            <div key={si} className="pc-slot-chip">
-                                                {fmtTime(s.startDatetime ?? s.StartDatetime ?? s.start)}
-                                            </div>
-                                        ))}
-                                        {daySlots.length > 3 && <div className="pc-event-more">+{daySlots.length - 3}</div>}
-                                    </div>
-                                )
-                            })}
-                        </div>
-                    )}
-                </div>
-
-                {/* Selected day slot list */}
+                {/* Selected day slot cards */}
                 {t2SelectedDate && selectedSlots.length > 0 && (
                     <div>
                         <h3 className="validate-section-heading">Vagas para {fmtDateLong(t2SelectedDate)}</h3>
                         {selectedSlots
-                            .sort((a, b) => (a.startDatetime ?? '').localeCompare(b.startDatetime ?? ''))
+                            .sort((a, b) => (a.StartTime ?? a.startTime ?? '').localeCompare(b.StartTime ?? b.startTime ?? ''))
                             .map((slot, i) => {
-                                const start = slot.startDatetime ?? slot.StartDatetime
-                                const end = slot.endDatetime ?? slot.EndDatetime
+                                const coachName = slot.CoachName ?? slot.coachName ?? ''
+                                const modNames  = (slot.ModalityNames ?? slot.modalityNames ?? []).join(', ')
+                                const start     = fmtTime24(slot.StartTime ?? slot.startTime)
+                                const end       = fmtTime24(slot.EndTime   ?? slot.endTime)
                                 return (
-                                    <div key={i} className="pc-slot-card">
-                                        <div className="pc-slot-info">
-                                            <div className="pc-slot-time">
-                                                {fmtTime(start)}{end ? ` – ${fmtTime(end)}` : ''}
+                                    <div key={i} className="class-card class-card--green">
+                                        <div className="class-card-header" style={{ cursor: 'default' }}>
+                                            <div style={{ flex: '1 1 auto', minWidth: 0 }}>
+                                                <div className="class-card-title-row">
+                                                    <h3 className="class-card-title">{coachName || 'Horário disponível'}</h3>
+                                                    <span className="class-card-capacity" style={{ background: '#d1fae5', color: '#065f46' }}>
+                                                        {start} – {end}
+                                                    </span>
+                                                </div>
+                                                <div className="class-card-info-grid">
+                                                    {coachName && <div><span className="label">Professor: </span>{coachName}</div>}
+                                                    {modNames  && <div><span className="label">Modalidades: </span>{modNames}</div>}
+                                                </div>
                                             </div>
-                                            <div className="pc-slot-detail">
-                                                {(slot.coachName ?? slot.CoachName) && <span>👨‍🏫 {slot.coachName ?? slot.CoachName}</span>}
-                                                {(slot.studioName ?? slot.StudioName) && <span>📍 {slot.studioName ?? slot.StudioName}</span>}
-                                                {(slot.modalityName ?? slot.ModalityName) && <span>💃 {slot.modalityName ?? slot.ModalityName}</span>}
-                                            </div>
+                                            <Button variant="primary" onClick={() => openBookingModal(slot, t2SelectedDate)}>
+                                                Pedir Aula
+                                            </Button>
                                         </div>
-                                        <Button variant="primary" onClick={() => openBookingModal(slot)}>
-                                            Pedir Aula
-                                        </Button>
                                     </div>
                                 )
                             })}
                     </div>
                 )}
 
-                {t2SelectedDate && selectedSlots.length === 0 && !t2Loading && (
-                    <div className="validate-empty">
-                        <div className="validate-empty-icon">📅</div>
-                        <h3>Sem vagas</h3>
-                        <p>Nenhuma vaga disponível para este dia com os filtros selecionados.</p>
-                    </div>
-                )}
-
-                {!t2Loading && !t2SelectedDate && t2Slots.length === 0 && (
+                {!t2Loading && !hasAnySlots && (
                     <div className="validate-empty">
                         <div className="validate-empty-icon">🔍</div>
                         <h3>Sem vagas disponíveis</h3>
-                        <p>Não há vagas nesta semana. Tente outra semana ou altere os filtros.</p>
+                        <p>Não há vagas neste mês. Tente outro mês ou altere os filtros.</p>
+                    </div>
+                )}
+
+                {!t2Loading && hasAnySlots && !t2SelectedDate && (
+                    <div className="validate-empty" style={{ padding: '20px' }}>
+                        <p style={{ color: '#6b7280' }}>Clique num dia assinalado a verde para ver os horários disponíveis.</p>
                     </div>
                 )}
             </div>
         )
     }
 
+    // ===================================================
+    // RENDER — TAB 3
+    // ===================================================
+
     const renderAulasExistentes = () => {
-        const totalPages = Math.max(1, Math.ceil(t3Total / T3_PAGE_SIZE))
+        const selectedClasses = t3SelectedDate ? (t3ByDate[t3SelectedDate] ?? []) : []
+        const hasAnyClasses   = Object.keys(t3ByDate).length > 0
+
+        const renderDay = (key, dayNum) => {
+            const classes  = t3ByDate[key] ?? []
+            const isSelected = key === t3SelectedDate
+            return (
+                <div
+                    key={key}
+                    className={`pc-day-cell${classes.length ? ' pc-day-cell--has-open' : ''}${isSelected ? ' pc-day-cell--selected' : ''}`}
+                    onClick={() => classes.length && setT3SelectedDate(isSelected ? null : key)}
+                >
+                    <span className="pc-day-num">{dayNum}</span>
+                    {classes.slice(0, 2).map((c, ci) => (
+                        <div key={ci} className="pc-slot-chip" style={{ background: '#ccfbf1', color: '#0f766e' }}>
+                            {fmtTime(c.StartDatetime)} {c.ModalityName}
+                        </div>
+                    ))}
+                    {classes.length > 2 && <div className="pc-event-more">+{classes.length - 2}</div>}
+                </div>
+            )
+        }
+
         return (
             <div>
-                <p className="tab-description">Aulas abertas a inscrições — inscreva o seu educando diretamente.</p>
+                <p className="tab-description">Aulas abertas a inscrições — clique num dia para ver as aulas disponíveis.</p>
                 {t3Error && <p className="admin-error">{t3Error}</p>}
 
                 {/* Modality filter */}
@@ -651,97 +733,86 @@ function ParentClassesPage() {
                         <label className="pc-filter-label">Filtrar por modalidade</label>
                         <Select
                             value={t3Modality}
-                            onChange={handleT3ModalityChange}
+                            onChange={v => { setT3Modality(v); setT3SelectedDate(null) }}
                             options={[{ value: '', label: 'Todas' }, ...modalityOptions]}
                         />
                     </div>
                 </div>
 
-                {t3Loading ? (
-                    <div className="validate-empty"><p>Carregando...</p></div>
-                ) : t3Classes.length === 0 ? (
+                <MonthCalendar
+                    month={t3Month}
+                    onPrev={() => { prevMonth(setT3Month); setT3SelectedDate(null) }}
+                    onNext={() => { nextMonth(setT3Month); setT3SelectedDate(null) }}
+                    renderDay={renderDay}
+                    loading={t3Loading}
+                />
+
+                {/* Selected day class cards */}
+                {t3SelectedDate && selectedClasses.length > 0 && (
+                    <div>
+                        <h3 className="validate-section-heading">Aulas para {fmtDateLong(t3SelectedDate)}</h3>
+                        {selectedClasses
+                            .sort((a, b) => (a.StartDatetime ?? '').localeCompare(b.StartDatetime ?? ''))
+                            .map((c, i) => {
+                                const isFull = (c.SpotsAvailable ?? 1) <= 0
+                                return (
+                                    <div key={c.ClassId ?? i} className="class-card class-card--teal">
+                                        <div className="class-card-header" style={{ cursor: 'default' }}>
+                                            <div style={{ flex: '1 1 auto', minWidth: 0 }}>
+                                                <div className="class-card-title-row">
+                                                    <h3 className="class-card-title">{c.ModalityName ?? 'Aula'}</h3>
+                                                    <span className="class-card-capacity class-card-capacity--teal">
+                                                        Vagas {c.SpotsAvailable}/{c.MaxParticipants}
+                                                    </span>
+                                                    {isFull && <span className="status-pill status-pill--rejected">Lotado</span>}
+                                                </div>
+                                                <div className="class-card-info-grid">
+                                                    <div>
+                                                        <span className="label">Horário: </span>
+                                                        {fmtTime(c.StartDatetime)} – {fmtTime(c.EndDatetime)}
+                                                    </div>
+                                                    {c.CoachName   && <div><span className="label">Coach: </span>{c.CoachName}</div>}
+                                                    {c.StudioName  && <div><span className="label">Estúdio: </span>{c.StudioName}</div>}
+                                                </div>
+                                            </div>
+                                            <Button
+                                                variant={isFull ? 'secondary' : 'primary'}
+                                                disabled={isFull}
+                                                onClick={() => !isFull && openEnrollModal(c)}
+                                            >
+                                                {isFull ? 'Lotado' : 'Inscrever'}
+                                            </Button>
+                                        </div>
+                                    </div>
+                                )
+                            })}
+                    </div>
+                )}
+
+                {!t3Loading && !hasAnyClasses && (
                     <div className="validate-empty">
                         <div className="validate-empty-icon">🎭</div>
                         <h3>Sem aulas disponíveis</h3>
                         <p>Não há aulas abertas a inscrições neste momento.</p>
                     </div>
-                ) : (
-                    <>
-                        {t3Classes.map((c, i) => {
-                            const id = c.classId ?? c.ClassId ?? c.id ?? i
-                            const enrolled = c.totalParticipants ?? c.TotalParticipants ?? (c.participants?.length ?? c.Participants?.length ?? 0)
-                            const maxParts = c.maxParticipants ?? c.MaxParticipants ?? 0
-                            const isFull = maxParts > 0 && enrolled >= maxParts
-                            const start = c.startDatetime ?? c.StartDatetime
-                            const end = c.endDatetime ?? c.EndDatetime
-                            return (
-                                <div key={id} className="class-card class-card--teal">
-                                    <div className="class-card-header" style={{ cursor: 'default' }}>
-                                        <div style={{ flex: '1 1 auto', minWidth: 0 }}>
-                                            <div className="class-card-title-row">
-                                                <h3 className="class-card-title">{c.modalityName ?? c.ModalityName ?? 'Aula'}</h3>
-                                                <span className="class-card-capacity class-card-capacity--teal">
-                                                    Alunos {enrolled}/{maxParts || '?'}
-                                                </span>
-                                                {isFull && <span className="status-pill status-pill--rejected">Lotado</span>}
-                                            </div>
-                                            <div className="class-card-info-grid">
-                                                <div>
-                                                    <span className="label">Data: </span>
-                                                    {fmtDate(start)} · {fmtTime(start)}{end ? ` – ${fmtTime(end)}` : ''}
-                                                </div>
-                                                {(c.studioName ?? c.StudioName) && (
-                                                    <div><span className="label">Estúdio: </span>{c.studioName ?? c.StudioName}</div>
-                                                )}
-                                                {(c.coachName ?? c.CoachName) && (
-                                                    <div><span className="label">Coach: </span>{c.coachName ?? c.CoachName}</div>
-                                                )}
-                                            </div>
-                                        </div>
-                                        <Button
-                                            variant={isFull ? 'secondary' : 'primary'}
-                                            disabled={isFull}
-                                            onClick={() => {
-                                                if (!isFull) {
-                                                    setEnrollTarget(c)
-                                                    setEnrollStudentId('')
-                                                    setEnrollError('')
-                                                }
-                                            }}
-                                        >
-                                            {isFull ? 'Lotado' : 'Inscrever'}
-                                        </Button>
-                                    </div>
-                                </div>
-                            )
-                        })}
+                )}
 
-                        {t3Total > T3_PAGE_SIZE && (
-                            <div className="pagination-row">
-                                <button
-                                    className="pc-cal-nav-btn"
-                                    disabled={t3Page <= 1}
-                                    onClick={() => setT3Page(p => p - 1)}
-                                    aria-label="Página anterior"
-                                >‹</button>
-                                <span className="pagination-label">Página {t3Page} de {totalPages}</span>
-                                <button
-                                    className="pc-cal-nav-btn"
-                                    disabled={t3Page >= totalPages}
-                                    onClick={() => setT3Page(p => p + 1)}
-                                    aria-label="Próxima página"
-                                >›</button>
-                            </div>
-                        )}
-                    </>
+                {!t3Loading && hasAnyClasses && !t3SelectedDate && (
+                    <div className="validate-empty" style={{ padding: '20px' }}>
+                        <p style={{ color: '#6b7280' }}>Clique num dia assinalado a verde-azulado para ver as aulas disponíveis.</p>
+                    </div>
                 )}
             </div>
         )
     }
 
+    // ===================================================
+    // RENDER — TAB 4
+    // ===================================================
+
     const renderValidarAulas = () => {
         if (t4Loading) return <div className="validate-empty"><p>Carregando...</p></div>
-        if (t4Error) return <p className="admin-error">{t4Error}</p>
+        if (t4Error)   return <p className="admin-error">{t4Error}</p>
         if (!t4Items.length) return (
             <div className="validate-empty">
                 <div className="validate-empty-icon">✓</div>
@@ -782,7 +853,7 @@ function ParentClassesPage() {
                     <>
                         <h3 className="validate-section-heading">Já Validadas ({t4Done.length})</h3>
                         {t4Done.map((cls, i) => {
-                            const parts = cls.Participants ?? cls.participants ?? []
+                            const parts        = cls.Participants ?? cls.participants ?? []
                             const allConfirmed = parts.every(p => (p.ValidationStatus ?? p.validationStatus) === 1)
                             return (
                                 <div
@@ -847,9 +918,9 @@ function ParentClassesPage() {
 
             <div className="tab-content">
                 {activeTab === 'minhas-marcacoes' && renderMinhasMarcacoes()}
-                {activeTab === 'marcar' && renderCriarAula()}
-                {activeTab === 'grupo' && renderAulasExistentes()}
-                {activeTab === 'validar' && renderValidarAulas()}
+                {activeTab === 'marcar'           && renderCriarAula()}
+                {activeTab === 'grupo'            && renderAulasExistentes()}
+                {activeTab === 'validar'          && renderValidarAulas()}
             </div>
 
             {/* ====== Booking Modal (Tab 2 — Pedir Aula) ====== */}
@@ -862,15 +933,17 @@ function ParentClassesPage() {
                     <div className="validate-empty" style={{ padding: '24px' }}>
                         <div className="validate-empty-icon">✓</div>
                         <h3>Pedido enviado!</h3>
-                        <p>O seu pedido de aula foi submetido e aguarda aprovação.</p>
+                        <p>O seu pedido de aula foi submetido e aguarda aprovação da direção.</p>
                     </div>
                 ) : (
                     <form onSubmit={handleBookingSubmit} className="modal-form">
                         {bookingSlot && (
                             <div className="reject-class-summary">
-                                <p>📅 {fmtDate(bookingSlot.startDatetime ?? bookingSlot.StartDatetime)} · {fmtTime(bookingSlot.startDatetime ?? bookingSlot.StartDatetime)}{(bookingSlot.endDatetime ?? bookingSlot.EndDatetime) ? ` – ${fmtTime(bookingSlot.endDatetime ?? bookingSlot.EndDatetime)}` : ''}</p>
-                                {(bookingSlot.coachName ?? bookingSlot.CoachName) && <p>👨‍🏫 {bookingSlot.coachName ?? bookingSlot.CoachName}</p>}
-                                {(bookingSlot.studioName ?? bookingSlot.StudioName) && <p>📍 {bookingSlot.studioName ?? bookingSlot.StudioName}</p>}
+                                <div>📅 {fmtDateLong(bookingDate)}</div>
+                                {(bookingSlot.CoachName ?? bookingSlot.coachName) && (
+                                    <div>👨‍🏫 {bookingSlot.CoachName ?? bookingSlot.coachName}</div>
+                                )}
+                                <div>🕐 Janela disponível: {fmtTime24(bookingSlot.StartTime ?? bookingSlot.startTime)} – {fmtTime24(bookingSlot.EndTime ?? bookingSlot.endTime)}</div>
                             </div>
                         )}
 
@@ -880,7 +953,7 @@ function ParentClassesPage() {
                                 value={bookingModalityId}
                                 onChange={setBookingModalityId}
                                 placeholder="Selecione a modalidade"
-                                options={modalityOptions}
+                                options={bookingModalityOptions}
                             />
                         </div>
 
@@ -892,6 +965,29 @@ function ParentClassesPage() {
                                 placeholder="Selecione o aluno"
                                 options={studentOptions}
                             />
+                        </div>
+
+                        <div className="pc-time-row">
+                            <div className="modal-field">
+                                <label className="modal-label">Hora de início *</label>
+                                <input
+                                    type="time"
+                                    className="input"
+                                    value={bookingStartTime}
+                                    onChange={e => setBookingStartTime(e.target.value)}
+                                    required
+                                />
+                            </div>
+                            <div className="modal-field">
+                                <label className="modal-label">Hora de fim *</label>
+                                <input
+                                    type="time"
+                                    className="input"
+                                    value={bookingEndTime}
+                                    onChange={e => setBookingEndTime(e.target.value)}
+                                    required
+                                />
+                            </div>
                         </div>
 
                         <div className="modal-field">
@@ -929,12 +1025,11 @@ function ParentClassesPage() {
                 <form onSubmit={handleEnrollSubmit} className="modal-form">
                     {enrollTarget && (
                         <div className="reject-class-summary">
-                            <p>💃 {enrollTarget.modalityName ?? enrollTarget.ModalityName ?? 'Aula'}</p>
-                            <p>📅 {fmtDate(enrollTarget.startDatetime ?? enrollTarget.StartDatetime)} · {fmtTime(enrollTarget.startDatetime ?? enrollTarget.StartDatetime)}</p>
-                            {(enrollTarget.coachName ?? enrollTarget.CoachName) && (
-                                <p>👨‍🏫 {enrollTarget.coachName ?? enrollTarget.CoachName}</p>
-                            )}
-                            <p>Vagas: {enrollTarget.totalParticipants ?? enrollTarget.TotalParticipants ?? 0}/{enrollTarget.maxParticipants ?? enrollTarget.MaxParticipants ?? '?'}</p>
+                            <div>💃 {enrollTarget.ModalityName ?? 'Aula'}</div>
+                            <div>📅 {fmtDateLong((enrollTarget.StartDatetime ?? '').slice(0, 10))} · {fmtTime(enrollTarget.StartDatetime)} – {fmtTime(enrollTarget.EndDatetime)}</div>
+                            {enrollTarget.CoachName  && <div>👨‍🏫 {enrollTarget.CoachName}</div>}
+                            {enrollTarget.StudioName && <div>📍 {enrollTarget.StudioName}</div>}
+                            <div>Vagas restantes: {enrollTarget.SpotsAvailable}/{enrollTarget.MaxParticipants}</div>
                         </div>
                     )}
 

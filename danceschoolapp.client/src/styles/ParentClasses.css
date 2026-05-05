@@ -110,6 +110,28 @@
     background: #f5f3ff;
 }
 
+/* Green variant — available slots (Tab 2) */
+.pc-day-cell--has-slot {
+    border-color: #6ee7b7;
+    background: #f0fdf4;
+}
+
+.pc-day-cell--has-slot:hover:not(.pc-day-cell--empty) {
+    background: #dcfce7;
+    border-color: #34d399;
+}
+
+/* Teal variant — open classes (Tab 3) */
+.pc-day-cell--has-open {
+    border-color: #5eead4;
+    background: #f0fdfa;
+}
+
+.pc-day-cell--has-open:hover:not(.pc-day-cell--empty) {
+    background: #ccfbf1;
+    border-color: #14b8a6;
+}
+
 .pc-day-cell--selected {
     border-color: #7c3aed !important;
     background: #f5f3ff !important;
@@ -330,6 +352,16 @@
     gap: 10px;
     justify-content: flex-end;
     flex-wrap: wrap;
+}
+
+/* Side-by-side time inputs in booking modal */
+.pc-time-row {
+    display: flex;
+    gap: 12px;
+}
+
+.pc-time-row .modal-field {
+    flex: 1;
 }
 
 .modal-actions .btn {
