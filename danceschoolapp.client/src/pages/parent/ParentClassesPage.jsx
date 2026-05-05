@@ -15,7 +15,7 @@ import Modal from '../../components/common/Modal'
 import Button from '../../components/common/Button'
 import Select from '../../components/common/Select'
 import {
-    getMyClasses,
+    getClassesByParent,
     getAvailableSlots,
     getOpenClasses,
     getValidateClasses,
@@ -26,6 +26,7 @@ import {
 import { getModalities } from '../../services/modalitiesService'
 import { getCoachesForParent } from '../../services/coachService'
 import { getMyStudents } from '../../services/studentsService'
+import { useAuth } from '../../context/useAuth'
 import '../../styles/AdminPage.css'
 import '../../styles/ValidateClasses.css'
 import '../../styles/ParentClasses.css'
@@ -157,6 +158,7 @@ function MonthCalendar({ month, onPrev, onNext, renderDay, loading }) {
 // ---- Component ----
 
 function ParentClassesPage() {
+    const { user } = useAuth()
 
     // ===== Shared data (modalities, coaches, students) =====
     const [modalities, setModalities] = useState([])
@@ -212,35 +214,56 @@ function ParentClassesPage() {
 
     // ===================================================
     // TAB 1 — Minhas Marcações (monthly calendar)
-    // ParentUpcomingClass: { ClassId, StartDatetime, EndDatetime, ModalityName, CoachName, StudioName, Status, StudentName }
+    // Uses GET /api/coachclasses/parent/{id} → CoachClassListResponse[]
+    // { ClassId, StartDatetime, EndDatetime, ModalityName, CoachName, StudioName,
+    //   Status (int), MaxParticipants, CurrentParticipants, CreatedAt }
+    // All classes for parent's students are fetched once; month filter is client-side.
     // ===================================================
-    const [t1Month, setT1Month]             = useState(new Date())
-    const [t1Classes, setT1Classes]         = useState([])
-    const [t1Loading, setT1Loading]         = useState(false)
-    const [t1Error, setT1Error]             = useState('')
+    const [t1Month, setT1Month]               = useState(new Date())
+    const [t1AllClasses, setT1AllClasses]     = useState([])   // full dataset
+    const [t1Loading, setT1Loading]           = useState(false)
+    const [t1Error, setT1Error]               = useState('')
     const [t1SelectedDate, setT1SelectedDate] = useState(null)
 
     useEffect(() => {
-        if (activeTab !== 'minhas-marcacoes') return
+        if (activeTab !== 'minhas-marcacoes' || !user?.UserId) return
         let cancelled = false
-        const { from, to } = getMonthRange(t1Month)
         setT1Loading(true); setT1Error('')
-        getMyClasses({ from, to })
-            .then(d => { if (!cancelled) setT1Classes(normalizeItems(d)) })
+        getClassesByParent(user.UserId)
+            .then(d => { if (!cancelled) setT1AllClasses(normalizeItems(d)) })
             .catch(e => { if (!cancelled) setT1Error(e.message) })
             .finally(() => { if (!cancelled) setT1Loading(false) })
         return () => { cancelled = true }
-    }, [activeTab, t1Month])
+    }, [activeTab, user?.UserId])
 
-    // Group by date key "YYYY-MM-DD"
+    // Group ALL classes by date key "YYYY-MM-DD" (no month filter).
+    // The calendar only renders days of the current month, so entries outside the
+    // visible month stay in the map but are never looked up — no wasted rendering.
     const t1ByDate = useMemo(() => {
         const map = {}
-        t1Classes.forEach(c => {
+        t1AllClasses.forEach(c => {
             const key = (c.StartDatetime ?? '').slice(0, 10)
             if (key) (map[key] ||= []).push(c)
         })
         return map
-    }, [t1Classes])
+    }, [t1AllClasses])
+
+    // Classes visible in the currently displayed month (for the detail list + empty state)
+    const t1Classes = useMemo(() => {
+        const { from, to } = getMonthRange(t1Month)
+        return t1AllClasses.filter(c => {
+            const d = (c.StartDatetime ?? '').slice(0, 10)
+            return d >= from && d <= to
+        })
+    }, [t1AllClasses, t1Month])
+
+    // Next upcoming class (for hint when current month is empty)
+    const t1NextClass = useMemo(() => {
+        const today = new Date().toISOString().slice(0, 10)
+        return [...t1AllClasses]
+            .filter(c => (c.StartDatetime ?? '').slice(0, 10) >= today)
+            .sort((a, b) => (a.StartDatetime ?? '').localeCompare(b.StartDatetime ?? ''))[0] ?? null
+    }, [t1AllClasses])
 
     // ===================================================
     // TAB 2 — Criar Aula (monthly slot calendar)
@@ -486,7 +509,9 @@ function ParentClassesPage() {
 
     const renderMinhasMarcacoes = () => {
         const dayList = t1SelectedDate ? (t1ByDate[t1SelectedDate] ?? []) : []
+        // totalClasses = classes in current displayed month; used for empty state only
         const totalClasses = t1Classes.length
+        const hasAnyData   = t1AllClasses.length > 0
 
         const renderDay = (key, dayNum) => {
             const items = t1ByDate[key] ?? []
@@ -549,7 +574,6 @@ function ParentClassesPage() {
                                                     </div>
                                                     {c.CoachName && <div><span className="label">Coach: </span>{c.CoachName}</div>}
                                                     {c.StudioName && <div><span className="label">Estúdio: </span>{c.StudioName}</div>}
-                                                    {c.StudentName && <div><span className="label">Aluno: </span>{c.StudentName}</div>}
                                                 </div>
                                             </div>
                                         </div>
@@ -567,11 +591,27 @@ function ParentClassesPage() {
                     </div>
                 )}
 
-                {!t1Loading && !t1Error && totalClasses === 0 && !t1SelectedDate && (
+                {/* No classes at all */}
+                {!t1Loading && !t1Error && !hasAnyData && !t1SelectedDate && (
                     <div className="validate-empty">
                         <div className="validate-empty-icon">📅</div>
                         <h3>Sem marcações</h3>
-                        <p>Não tem aulas marcadas este mês.</p>
+                        <p>Não tem aulas marcadas. Crie uma aula no separador "Criar Aula".</p>
+                    </div>
+                )}
+
+                {/* Has classes but none this month → hint with next class */}
+                {!t1Loading && !t1Error && hasAnyData && totalClasses === 0 && !t1SelectedDate && (
+                    <div className="validate-empty" style={{ padding: '20px' }}>
+                        <p style={{ color: '#6b7280', marginBottom: '8px' }}>
+                            Não tem aulas marcadas este mês.
+                            {t1AllClasses.length > 0 && ` Tem ${t1AllClasses.length} aula${t1AllClasses.length > 1 ? 's' : ''} noutros meses.`}
+                        </p>
+                        {t1NextClass && (
+                            <p style={{ color: '#7c3aed', fontWeight: 600, fontSize: '0.92rem' }}>
+                                Próxima aula: {fmtDateLong((t1NextClass.StartDatetime ?? '').slice(0, 10))} às {fmtTime(t1NextClass.StartDatetime)} — {t1NextClass.ModalityName}
+                            </p>
+                        )}
                     </div>
                 )}
             </div>
@@ -598,7 +638,7 @@ function ParentClassesPage() {
                     <span className="pc-day-num">{dayNum}</span>
                     {slots.slice(0, 2).map((s, si) => (
                         <div key={si} className="pc-slot-chip">
-                            {fmtTime24(s.StartTime ?? s.startTime)}
+                            {fmtTime24(s.StartTime ?? s.startTime)} – {fmtTime24(s.EndTime ?? s.endTime)}
                         </div>
                     ))}
                     {slots.length > 2 && <div className="pc-event-more">+{slots.length - 2}</div>}

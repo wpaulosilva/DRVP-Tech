@@ -9,6 +9,11 @@ export function getMyClasses({ from, to } = {}) {
     return get(`/api/ee/classes/my${qs ? `?${qs}` : ''}`)
 }
 
+/** Returns all classes where any of this parent's students are enrolled */
+export function getClassesByParent(parentUserId) {
+    return get(`/api/coachclasses/parent/${parentUserId}`)
+}
+
 export function getAvailableSlots({ from, to, modalityId, coachId } = {}) {
     const params = new URLSearchParams()
     if (from) params.set('from', from)
