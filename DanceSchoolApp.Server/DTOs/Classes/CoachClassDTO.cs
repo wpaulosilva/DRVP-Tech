@@ -136,7 +136,7 @@ namespace DanceSchoolApp.Server.DTOs.Classes
                     "EndDatetime must be after StartDatetime.",
                     new[] { nameof(EndDatetime) });
 
-            if (StartDatetime < DateTime.UtcNow)
+            if (StartDatetime < DateTime.Now)
                 yield return new ValidationResult(
                     "StartDatetime cannot be in the past.",
                     new[] { nameof(StartDatetime) });

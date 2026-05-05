@@ -134,7 +134,7 @@ namespace DanceSchoolApp.Server.Services.Classes
             {
                 IdCoachClass = request.ClassId,
                 IdStudent = request.StudentId,
-                JoinedAt = DateOnly.FromDateTime(DateTime.UtcNow),
+                JoinedAt = DateOnly.FromDateTime(DateTime.Now),
                 ValidationStatus = (byte)ParticipantValidationStatus.Pending
             };
 
@@ -189,7 +189,7 @@ namespace DanceSchoolApp.Server.Services.Classes
                 ? (byte)ParticipantValidationStatus.ParentConfirmed
                 : (byte)ParticipantValidationStatus.Disputed;
 
-            participant.ParentValidatedAt = DateTime.UtcNow;
+            participant.ParentValidatedAt = DateTime.Now;
 
             await _context.SaveChangesAsync();
 

@@ -71,7 +71,7 @@ namespace DanceSchoolApp.Server.Services.Social
                 Type = (byte)request.Type,
                 EntityType = request.EntityType,
                 EntityId = request.EntityId,
-                CreatedAt = DateTime.UtcNow,
+                CreatedAt = DateTime.Now,
                 IsSent = false,
                 IsDeleted = false
             };
@@ -96,7 +96,7 @@ namespace DanceSchoolApp.Server.Services.Social
             // Idempotent — marking an already-read notification as read is fine.
             if (notification.ReadAt is null)
             {
-                notification.ReadAt = DateTime.UtcNow;
+                notification.ReadAt = DateTime.Now;
                 await _context.SaveChangesAsync();
             }
         }
@@ -115,7 +115,7 @@ namespace DanceSchoolApp.Server.Services.Social
                     n.ReadAt == null &&
                     (n.IsDeleted == null || n.IsDeleted == false))
                 .ExecuteUpdateAsync(n =>
-                    n.SetProperty(x => x.ReadAt, DateTime.UtcNow));
+                    n.SetProperty(x => x.ReadAt, DateTime.Now));
         }
 
         public async Task SoftDeleteAsync(int notificationId)
@@ -155,7 +155,7 @@ namespace DanceSchoolApp.Server.Services.Social
                 Type = (byte)type,
                 EntityType = entityType,
                 EntityId = entityId,
-                CreatedAt = DateTime.UtcNow,
+                CreatedAt = DateTime.Now,
                 IsSent = true,   // internally sent = already dispatched
                 IsDeleted = false
             };

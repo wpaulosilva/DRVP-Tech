@@ -55,7 +55,7 @@ namespace DanceSchoolApp.Server.Services.Scheduling
 
         public async Task<List<BlockedPeriodListResponse>> GetActiveAsync()
         {
-            var now = DateTime.UtcNow;
+            var now = DateTime.Now;
 
             return await _context.BlockedPeriods
                 .Include(b => b.IdStudioNavigation)
@@ -185,7 +185,7 @@ namespace DanceSchoolApp.Server.Services.Scheduling
             if (end <= start)
                 throw new ArgumentException("EndDatetime must be after StartDatetime.");
 
-            if (start <= DateTime.UtcNow)
+            if (start <= DateTime.Now)
                 throw new ArgumentException("Blocked periods must start in the future.");
         }
 

@@ -292,7 +292,7 @@ namespace DanceSchoolApp.Server.Services.People
 
         private static void ValidateBirthDate(DateOnly birthDate)
         {
-            var today = DateOnly.FromDateTime(DateTime.UtcNow);
+            var today = DateOnly.FromDateTime(DateTime.Now);
             if (birthDate > today)
                 throw new InvalidOperationException("BirthDate cannot be in the future.");
 
