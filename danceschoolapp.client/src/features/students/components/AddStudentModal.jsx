@@ -101,8 +101,11 @@ function AddStudentModal({
                 </div>
             </div>
 
-            {error && <p className="admin-modal-error">{error}</p>}
-
+            {error && (
+                <div className="form-error">
+                    {error}
+                </div>
+            )}
             <div className="modal-actions">
                 <Button variant="secondary" onClick={onClose}>
                     Cancelar

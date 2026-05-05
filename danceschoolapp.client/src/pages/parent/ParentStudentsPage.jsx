@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/context/useAuth'
 import {
-    getStudentsByParent,
+    getMyStudents,
     createStudent,
     updateStudent,
     getStudent,
@@ -34,7 +34,7 @@ function ParentStudentsPage() {
         setLoadingStudents(true)
 
         try {
-            const data = await getStudentsByParent(user.userId)
+            const data = await getMyStudents()
             setStudents(Array.isArray(data) ? data : [])
         } catch {
             setStudents([])
@@ -88,13 +88,28 @@ function ParentStudentsPage() {
     }
 
     const handleSubmit = async () => {
+        // Nome
         if (!firstName.trim() || !lastName.trim()) {
             setError('Nome e apelido são obrigatórios.')
             return
         }
 
+        // Data
         if (!birthDate) {
             setError('Data de nascimento é obrigatória.')
+            return
+        }
+
+        // Data futura
+        const today = new Date().toISOString().split('T')[0]
+        if (birthDate > today) {
+            setError('Data de nascimento não pode ser no futuro.')
+            return
+        }
+
+        // NIF (opcional mas se tiver validar)
+        if (nif && nif.length !== 9) {
+            setError('NIF deve ter 9 dígitos.')
             return
         }
 

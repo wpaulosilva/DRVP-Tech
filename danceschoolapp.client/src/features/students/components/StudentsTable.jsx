@@ -3,8 +3,16 @@ import Button from '../../../components/common/Button'
 
 function StudentsTable({ students, loading, onEditRejected }) {
     const getName = (student) => {
-        const firstName = student.personInfo?.firstName ?? ''
-        const lastName = student.personInfo?.lastName ?? ''
+        const firstName =
+            student.firstName ??
+            student.personInfo?.firstName ??
+            ''
+
+        const lastName =
+            student.lastName ??
+            student.personInfo?.lastName ??
+            ''
+
         return `${firstName} ${lastName}`.trim() || '—'
     }
 
@@ -46,7 +54,11 @@ function StudentsTable({ students, loading, onEditRejected }) {
                                 <td>{getName(student)}</td>
 
                                 <td>
-                                    <StatusBadge active={student.isActive} />
+                                    {student.acceptanceStatus === 1 ? (
+                                        <StatusBadge active={student.isActive} />
+                                    ) : (
+                                        <span className="muted-status">—</span>
+                                    )}
                                 </td>
 
                                 <td>{getStatusLabel(student.acceptanceStatus)}</td>
