@@ -75,7 +75,7 @@ namespace DanceSchoolApp.Server.Services
                     $"Setting with key '{key}' was not found.");
 
             setting.SettingValue = value;
-            setting.UpdatedAt    = DateOnly.FromDateTime(DateTime.UtcNow);
+            setting.UpdatedAt    = DateOnly.FromDateTime(DateTime.Now);
             await _context.SaveChangesAsync();
         }
 
@@ -97,7 +97,7 @@ namespace DanceSchoolApp.Server.Services
             {
                 SettingKey   = key,
                 SettingValue = defaultValue,
-                UpdatedAt    = DateOnly.FromDateTime(DateTime.UtcNow)
+                UpdatedAt    = DateOnly.FromDateTime(DateTime.Now)
             };
 
             _context.AppSettings.Add(setting);

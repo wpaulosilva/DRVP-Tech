@@ -186,10 +186,10 @@ namespace DanceSchoolApp.Server.Services.Scheduling
         // today's date so creating a slot for earlier today will be rejected.
         private static void ValidateNotInPast(TimeOnly startTime, DateOnly? validFrom)
         {
-            var effectiveDate = validFrom ?? DateOnly.FromDateTime(DateTime.UtcNow);
-            var startDateTimeUtc = effectiveDate.ToDateTime(startTime, DateTimeKind.Utc);
+            var effectiveDate = validFrom ?? DateOnly.FromDateTime(DateTime.Now);
+            var startDateTime = effectiveDate.ToDateTime(startTime);
 
-            if (startDateTimeUtc < DateTime.UtcNow)
+            if (startDateTime < DateTime.Now)
                 throw new ArgumentException("Start time cannot be in the past.");
         }
 

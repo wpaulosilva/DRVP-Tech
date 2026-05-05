@@ -147,7 +147,7 @@ namespace DanceSchoolApp.Server.Services.People
                 Email = request.Email,
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword(generatedPassword),
                 IsActive = true,
-                CreatedAt = DateOnly.FromDateTime(DateTime.UtcNow),
+                CreatedAt = DateOnly.FromDateTime(DateTime.Now),
                 PersonInfo = request.PersonInfo is null ? null : new PersonInfo
                 {
                     FirstName = request.PersonInfo.FirstName,
@@ -224,7 +224,7 @@ namespace DanceSchoolApp.Server.Services.People
 
         private static void ValidateBirthDate(DateOnly birthDate)
         {
-            var today = DateOnly.FromDateTime(DateTime.UtcNow);
+            var today = DateOnly.FromDateTime(DateTime.Now);
             if (birthDate > today)
                 throw new InvalidOperationException("BirthDate cannot be in the future.");
 

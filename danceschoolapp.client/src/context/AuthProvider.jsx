@@ -7,12 +7,28 @@ export function AuthProvider({ children }) {
 
     const refreshSession = async () => {
         try {
-            const response = await fetch('/api/auth/me', {
+            // Try the existing access token first (no DB hit)
+            let response = await fetch('/api/auth/me', {
                 method: 'GET',
                 credentials: 'include',
             })
 
             if (response.status === 401) {
+                // Access token expired — try the refresh token
+                const refreshRes = await fetch('/api/auth/refresh', {
+                    method: 'POST',
+                    credentials: 'include',
+                })
+                if (!refreshRes.ok) {
+                    setUser(null)
+                    return
+                }
+                const data = await refreshRes.json()
+                setUser(data)
+                return
+            }
+
+            if (!response.ok) {
                 setUser(null)
                 return
             }
@@ -29,6 +45,13 @@ export function AuthProvider({ children }) {
 
     useEffect(() => {
         refreshSession()
+    }, [])
+
+    // Force logout when the API client fires auth:expired (refresh token invalid)
+    useEffect(() => {
+        const handler = () => setUser(null)
+        window.addEventListener('auth:expired', handler)
+        return () => window.removeEventListener('auth:expired', handler)
     }, [])
 
     const logout = async () => {

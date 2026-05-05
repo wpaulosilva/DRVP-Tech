@@ -41,7 +41,7 @@ namespace DanceSchoolApp.Server.Services
 
         public async Task<CoachDashboardResponse> GetDashboardAsync(int coachId)
         {
-            var now       = DateTime.UtcNow;
+            var now       = DateTime.Now;
             int thisYear  = now.Year;
             int thisMonth = now.Month;
 

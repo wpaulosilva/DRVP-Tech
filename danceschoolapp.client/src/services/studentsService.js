@@ -1,30 +1,18 @@
-import { get, post, patch } from '@/api/client'
+import { get, post, put, patch } from '@/api/client'
+// See EndpointsMapping.md for full API reference
 
-export function getStudentsByParent(parentId) {
-    return get(`/api/students/parent/${parentId}`)
+export function getMyStudents() {
+    return get('/api/ee/students')
 }
 
-export function createStudent(data) {
-    return post('/api/students', data)
+export function createStudent(body) {
+    return post('/api/students', { personInfo: body })
 }
 
-export function updateStudent(studentId, data) {
-    return patch(`/api/students/${studentId}`, data)
+export function updateStudent(id, body) {
+    return put(`/api/students/${id}`, body)
 }
 
-export function getValidateStudents({ status = 'pending', page = 1, pageSize = 10 } = {}) {
-    const params = new URLSearchParams({ status, page, pageSize })
-    return get(`/api/staff/validate-students?${params}`)
-}
-
-export function acceptStudent(studentId) {
-    return patch(`/api/students/${studentId}/accept`)
-}
-
-export function rejectStudent(studentId, reason) {
-    return patch(`/api/students/${studentId}/reject`, { reason })
-}
-
-export function getStudent(studentId) {
-    return get(`/api/students/${studentId}`)
+export function deactivateStudent(id) {
+    return patch(`/api/students/${id}/deactivate`)
 }

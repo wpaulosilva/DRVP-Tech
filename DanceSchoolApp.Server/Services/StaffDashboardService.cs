@@ -20,7 +20,7 @@ namespace DanceSchoolApp.Server.Services
 
         public async Task<StaffDashboardResponse> GetDashboardAsync()
         {
-            var now       = DateTime.UtcNow;
+            var now       = DateTime.Now;
             int thisYear  = now.Year;
             int thisMonth = now.Month;
 

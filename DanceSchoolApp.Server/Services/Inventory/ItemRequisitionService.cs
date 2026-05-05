@@ -72,7 +72,7 @@ namespace DanceSchoolApp.Server.Services.Inventory
                 throw new InvalidOperationException(
                     "Only school items can be requisitioned. Community items cannot be requisitioned.");
             //  Validação de datas 
-            var today = DateTime.UtcNow.Date;
+            var today = DateTime.Now.Date;
 
             if (request.NeedFrom.HasValue && request.NeedFrom.Value.Date < today)
                 throw new InvalidOperationException(
@@ -97,7 +97,7 @@ namespace DanceSchoolApp.Server.Services.Inventory
                 ItemVariantId = request.ItemVariantId,
                 IdParent = parentUserId,
                 Quantity = request.Quantity,
-                RequestedAt = DateTime.UtcNow,
+                RequestedAt = DateTime.Now,
                 NeedFrom = request.NeedFrom,
                 NeedUntil = request.NeedUntil,
                 Note = request.Note,
@@ -189,7 +189,7 @@ namespace DanceSchoolApp.Server.Services.Inventory
             // Restore stock
             requisition.ItemVariant.Quantity += request.ReturnQuantity;
             requisition.ReturnQuantity = request.ReturnQuantity;
-            requisition.ReturnedAt = DateTime.UtcNow;
+            requisition.ReturnedAt = DateTime.Now;
             requisition.Status = RequisitionStatus.Returned;
             if (request.ReturnNote is not null) requisition.Note = request.ReturnNote;
 
