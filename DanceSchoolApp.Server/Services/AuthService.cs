@@ -12,7 +12,7 @@ namespace DanceSchoolApp.Server.Services
 {
     public class AuthService
     {
-        private const int AccessTokenMinutes = 15;
+        private const int AccessTokenMinutes = 5;
         private const int RefreshTokenDays   = 7;
 
         private readonly AppDbContext _context;
