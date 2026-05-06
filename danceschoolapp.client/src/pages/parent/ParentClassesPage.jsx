@@ -226,15 +226,15 @@ function ParentClassesPage() {
     const [t1SelectedDate, setT1SelectedDate] = useState(null)
 
     useEffect(() => {
-        if (activeTab !== 'minhas-marcacoes' || !user?.UserId) return
+        if (activeTab !== 'minhas-marcacoes' || !user?.userId) return
         let cancelled = false
         setT1Loading(true); setT1Error('')
-        getClassesByParent(user.UserId)
+        getClassesByParent(user.userId)
             .then(d => { if (!cancelled) setT1AllClasses(normalizeItems(d)) })
             .catch(e => { if (!cancelled) setT1Error(e.message) })
             .finally(() => { if (!cancelled) setT1Loading(false) })
         return () => { cancelled = true }
-    }, [activeTab, user?.UserId])
+    }, [activeTab, user?.userId])
 
     // Group ALL classes by date key "YYYY-MM-DD" (no month filter).
     // The calendar only renders days of the current month, so entries outside the
@@ -242,7 +242,7 @@ function ParentClassesPage() {
     const t1ByDate = useMemo(() => {
         const map = {}
         t1AllClasses.forEach(c => {
-            const key = (c.StartDatetime ?? '').slice(0, 10)
+            const key = (c.StartDatetime ?? c.startDatetime ?? '').slice(0, 10)
             if (key) (map[key] ||= []).push(c)
         })
         return map
@@ -252,7 +252,7 @@ function ParentClassesPage() {
     const t1Classes = useMemo(() => {
         const { from, to } = getMonthRange(t1Month)
         return t1AllClasses.filter(c => {
-            const d = (c.StartDatetime ?? '').slice(0, 10)
+            const d = (c.StartDatetime ?? c.startDatetime ?? '').slice(0, 10)
             return d >= from && d <= to
         })
     }, [t1AllClasses, t1Month])
@@ -261,8 +261,8 @@ function ParentClassesPage() {
     const t1NextClass = useMemo(() => {
         const today = new Date().toISOString().slice(0, 10)
         return [...t1AllClasses]
-            .filter(c => (c.StartDatetime ?? '').slice(0, 10) >= today)
-            .sort((a, b) => (a.StartDatetime ?? '').localeCompare(b.StartDatetime ?? ''))[0] ?? null
+            .filter(c => (c.StartDatetime ?? c.startDatetime ?? '').slice(0, 10) >= today)
+            .sort((a, b) => (a.StartDatetime ?? a.startDatetime ?? '').localeCompare(b.StartDatetime ?? b.startDatetime ?? ''))[0] ?? null
     }, [t1AllClasses])
 
     // ===================================================
@@ -509,7 +509,6 @@ function ParentClassesPage() {
 
     const renderMinhasMarcacoes = () => {
         const dayList = t1SelectedDate ? (t1ByDate[t1SelectedDate] ?? []) : []
-        // totalClasses = classes in current displayed month; used for empty state only
         const totalClasses = t1Classes.length
         const hasAnyData   = t1AllClasses.length > 0
 
@@ -524,10 +523,10 @@ function ParentClassesPage() {
                 >
                     <span className="pc-day-num">{dayNum}</span>
                     {items.slice(0, 2).map((c, ci) => {
-                        const status = c.Status ?? 0
+                        const status = c.Status ?? c.status ?? 0
                         return (
                             <div key={ci} className="pc-event-chip" style={STATUS_CHIP[status] ?? STATUS_CHIP[0]}>
-                                {fmtTime(c.StartDatetime)} {c.ModalityName}
+                                {fmtTime(c.StartDatetime ?? c.startDatetime)} {c.ModalityName ?? c.modalityName}
                             </div>
                         )
                     })}
@@ -556,13 +555,18 @@ function ParentClassesPage() {
                         {dayList
                             .sort((a, b) => (a.StartDatetime ?? '').localeCompare(b.StartDatetime ?? ''))
                             .map((c, i) => {
-                                const status = c.Status ?? 0
+                                const status = c.Status ?? c.status ?? 0
+                                const modalityName = c.ModalityName ?? c.modalityName ?? 'Aula'
+                                const coachName    = c.CoachName   ?? c.coachName
+                                const studioName   = c.StudioName  ?? c.studioName
+                                const start        = c.StartDatetime ?? c.startDatetime
+                                const end          = c.EndDatetime   ?? c.endDatetime
                                 return (
-                                    <div key={c.ClassId ?? i} className={`class-card ${statusCardClass(status)}`}>
+                                    <div key={c.ClassId ?? c.classId ?? i} className={`class-card ${statusCardClass(status)}`}>
                                         <div className="class-card-header" style={{ cursor: 'default' }}>
                                             <div style={{ flex: '1 1 auto', minWidth: 0 }}>
                                                 <div className="class-card-title-row">
-                                                    <h3 className="class-card-title">{c.ModalityName ?? 'Aula'}</h3>
+                                                    <h3 className="class-card-title">{modalityName}</h3>
                                                     <span className="status-pill" style={STATUS_CHIP[status] ?? {}}>
                                                         {STATUS_LABEL[status] ?? `Estado ${status}`}
                                                     </span>
@@ -570,10 +574,10 @@ function ParentClassesPage() {
                                                 <div className="class-card-info-grid">
                                                     <div>
                                                         <span className="label">Horário: </span>
-                                                        {fmtTime(c.StartDatetime)} – {fmtTime(c.EndDatetime)}
+                                                        {fmtTime(start)} – {fmtTime(end)}
                                                     </div>
-                                                    {c.CoachName && <div><span className="label">Coach: </span>{c.CoachName}</div>}
-                                                    {c.StudioName && <div><span className="label">Estúdio: </span>{c.StudioName}</div>}
+                                                    {coachName  && <div><span className="label">Coach: </span>{coachName}</div>}
+                                                    {studioName && <div><span className="label">Estúdio: </span>{studioName}</div>}
                                                 </div>
                                             </div>
                                         </div>
@@ -609,7 +613,7 @@ function ParentClassesPage() {
                         </p>
                         {t1NextClass && (
                             <p style={{ color: '#7c3aed', fontWeight: 600, fontSize: '0.92rem' }}>
-                                Próxima aula: {fmtDateLong((t1NextClass.StartDatetime ?? '').slice(0, 10))} às {fmtTime(t1NextClass.StartDatetime)} — {t1NextClass.ModalityName}
+                                Próxima aula: {fmtDateLong((t1NextClass.StartDatetime ?? t1NextClass.startDatetime ?? '').slice(0, 10))} às {fmtTime(t1NextClass.StartDatetime ?? t1NextClass.startDatetime)} — {t1NextClass.ModalityName ?? t1NextClass.modalityName}
                             </p>
                         )}
                     </div>
