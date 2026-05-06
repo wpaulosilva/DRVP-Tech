@@ -1,0 +1,68 @@
+.input-field {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-family: inherit;
+    transition: border-color 0.2s ease;
+    background-color: #ffffff;
+}
+
+.input-field:hover {
+    border-color: #9ca3af;
+}
+
+.input-field:focus {
+    outline: none;
+    border-color: #7c3aed;
+    box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+    .form-row > div {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .form-row > div:only-child {
+        grid-column: 1 / -1;
+    }
+
+.form-row label {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #374151;
+}
+
+.admin-modal-error {
+    color: #b91c1c;
+    font-size: 0.9rem;
+    margin: 12px 0;
+    padding: 8px 12px;
+    background-color: #fee2e2;
+    border-radius: 8px;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+    margin-top: 20px;
+}
+
+.form-error {
+    background: #ffe5e5;
+    color: #c62828;
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 14px;
+    margin-top: 10px;
+}

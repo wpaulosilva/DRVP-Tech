@@ -342,7 +342,7 @@ namespace DanceSchoolApp.Server.Services.Classes
                 EndDatetime = request.EndDatetime,
                 MaxParticipants = request.MaxParticipants,
                 Status = (byte)CoachClassStatus.Requested,
-                CreatedAt = DateOnly.FromDateTime(DateTime.UtcNow)
+                CreatedAt = DateOnly.FromDateTime(DateTime.Now)
             };
 
             _context.CoachClasses.Add(coachClass);
@@ -358,7 +358,7 @@ namespace DanceSchoolApp.Server.Services.Classes
                 {
                     IdCoachClass = coachClass.ClassId,
                     IdStudent = studentId,
-                    JoinedAt = DateOnly.FromDateTime(DateTime.UtcNow),
+                    JoinedAt = DateOnly.FromDateTime(DateTime.Now),
                     ValidationStatus = 0  // pending validation
                 });
             }
@@ -597,7 +597,7 @@ namespace DanceSchoolApp.Server.Services.Classes
             coachClass.CoachValidationStatus = didTeach
                 ? (byte)CoachValidationStatus.Confirmed
                 : (byte)CoachValidationStatus.Denied;
-            coachClass.CoachValidatedAt = DateTime.UtcNow;
+            coachClass.CoachValidatedAt = DateTime.Now;
             await _context.SaveChangesAsync();
 
             var notifTitle = didTeach ? "Professor confirmou aula" : "Professor negou aula";
@@ -692,7 +692,7 @@ namespace DanceSchoolApp.Server.Services.Classes
                 throw new InvalidOperationException(
                     "Staff validation is only available for Pending classes.");
 
-            coachClass.StaffValidatedAt = DateTime.UtcNow;
+            coachClass.StaffValidatedAt = DateTime.Now;
             coachClass.Status = (byte)CoachClassStatus.Validated;
             await _context.SaveChangesAsync();
 

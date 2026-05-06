@@ -1,7 +1,7 @@
 import { Outlet } from 'react-router-dom'
 import Sidebar from './Sidebar'
 import Topbar from './Topbar'
-import { sidebarMenus } from '../data/sidebarMenus'
+import { sidebarMenus } from '../data/SidebarMenus'
 import '../styles/Dashboard.css'
 
 function DashboardLayout({ role = 'admin' }) {

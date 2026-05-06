@@ -50,6 +50,8 @@ public partial class AppDbContext : DbContext
 
     public virtual DbSet<User> Users { get; set; }
 
+    public virtual DbSet<RefreshToken> RefreshTokens { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<AppSetting>(entity =>
@@ -602,6 +604,33 @@ public partial class AppDbContext : DbContext
                         j.IndexerProperty<int>("IdUser").HasColumnName("id_user");
                         j.IndexerProperty<byte>("IdRole").HasColumnName("id_role");
                     });
+        });
+
+        modelBuilder.Entity<RefreshToken>(entity =>
+        {
+            entity.HasKey(e => e.TokenId).HasName("PK__Refresh_Token");
+
+            entity.ToTable("Refresh_Token");
+
+            entity.HasIndex(e => e.TokenHash)
+                .IsUnique()
+                .HasDatabaseName("UQ_RefreshToken_Hash");
+
+            entity.Property(e => e.TokenId).HasColumnName("token_id");
+            entity.Property(e => e.IdUser).HasColumnName("id_user");
+            entity.Property(e => e.TokenHash)
+                .HasMaxLength(64)
+                .IsUnicode(false)
+                .HasColumnName("token_hash");
+            entity.Property(e => e.ExpiresAt).HasColumnName("expires_at");
+            entity.Property(e => e.CreatedAt).HasColumnName("created_at");
+            entity.Property(e => e.RevokedAt).HasColumnName("revoked_at");
+
+            entity.HasOne(e => e.IdUserNavigation)
+                .WithMany()
+                .HasForeignKey(e => e.IdUser)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("FK__Refresh_Token__id_user");
         });
 
         modelBuilder.Entity<Role>().HasData(

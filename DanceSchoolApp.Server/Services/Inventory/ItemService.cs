@@ -148,7 +148,7 @@ namespace DanceSchoolApp.Server.Services.Inventory
                 ContactPhone = request.ContactPhone,
                 ContactEmail = request.ContactEmail,
                 ContactAddress = request.ContactAddress,
-                CreatedAt = DateOnly.FromDateTime(DateTime.UtcNow),
+                CreatedAt = DateOnly.FromDateTime(DateTime.Now),
                 IsActive = true
             };
 

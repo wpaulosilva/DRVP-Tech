@@ -20,7 +20,7 @@ namespace DanceSchoolApp.Server.Services
 
         public async Task<ParentDashboardResponse> GetDashboardAsync(int userId)
         {
-            var now = DateTime.UtcNow;
+            var now = DateTime.Now;
 
             var user = await _context.Users
                 .Include(u => u.PersonInfo)
@@ -98,7 +98,7 @@ namespace DanceSchoolApp.Server.Services
         public async Task<PagedResult<OpenClassItem>> GetOpenClassesAsync(
             int? modalityId, int page, int pageSize)
         {
-            var now = DateTime.UtcNow;
+            var now = DateTime.Now;
 
             var baseQuery = _context.CoachClasses
                 .Include(c => c.IdModalityNavigation)
@@ -415,7 +415,7 @@ namespace DanceSchoolApp.Server.Services
         private static int? ComputeAge(DateOnly? birthDate)
         {
             if (birthDate is null) return null;
-            var today = DateOnly.FromDateTime(DateTime.UtcNow);
+            var today = DateOnly.FromDateTime(DateTime.Now);
             int age = today.Year - birthDate.Value.Year;
             if (today < birthDate.Value.AddYears(age)) age--;
             return age;

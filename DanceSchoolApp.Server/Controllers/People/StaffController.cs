@@ -42,14 +42,22 @@ namespace DanceSchoolApp.Server.Controllers.People
         //  GET /api/staff 
         [Authorize(Roles = "staff")]
         [HttpGet]
-        public async Task<IActionResult> GetStaffs()
+        public async Task<IActionResult> GetStaffs(
+    [FromQuery] int page = 1,
+    [FromQuery] int pageSize = 7,
+    [FromQuery] string? search = "",
+    [FromQuery] string? sortBy = "",
+    [FromQuery] string? sortDir = "asc")
         {
             try
             {
-                var result = await _StaffService.GetStaffsAsync();
-
-                if (!result.Any())
-                    return NoContent();
+                var result = await _StaffService.GetStaffsAsync(
+                    page,
+                    pageSize,
+                    search,
+                    sortBy,
+                    sortDir
+                );
 
                 return Ok(result);
             }

@@ -16,11 +16,70 @@ export function getAdminUsers({
     return get(`/api/admin/users?${params}`)
 }
 
-export function getStaffUsers({ page = 1, pageSize = 20, search = '', role = '' }) {
+export function getStaffUsers({
+    page = 1,
+    pageSize = 7,
+    search = '',
+    role = '',
+    sortBy = '',
+    sortDir = 'asc',
+}) {
     const params = new URLSearchParams({ page, pageSize })
+
     if (search) params.set('search', search)
     if (role) params.set('role', role)
-    return get(`/api/users?${params}`)
+    if (sortBy) params.set('sortBy', sortBy)
+    if (sortDir) params.set('sortDir', sortDir)
+
+    return get(`/api/staff?${params}`)
+}
+
+export function getDirectionUsers({
+    page = 1,
+    pageSize = 7,
+    search = '',
+    sortBy = '',
+    sortDir = 'asc',
+}) {
+    const params = new URLSearchParams({ page, pageSize })
+
+    if (search) params.set('search', search)
+    if (sortBy) params.set('sortBy', sortBy)
+    if (sortDir) params.set('sortDir', sortDir)
+
+    return get(`/api/staff?${params}`)
+}
+
+export function getCoaches({
+    page = 1,
+    pageSize = 7,
+    search = '',
+    sortBy = '',
+    sortDir = 'asc',
+}) {
+    const params = new URLSearchParams({ page, pageSize })
+
+    if (search) params.set('search', search)
+    if (sortBy) params.set('sortBy', sortBy)
+    if (sortDir) params.set('sortDir', sortDir)
+
+    return get(`/api/coaches?${params}`)
+}
+
+export function getParents({
+    page = 1,
+    pageSize = 7,
+    search = '',
+    sortBy = '',
+    sortDir = 'asc',
+}) {
+    const params = new URLSearchParams({ page, pageSize })
+
+    if (search) params.set('search', search)
+    if (sortBy) params.set('sortBy', sortBy)
+    if (sortDir) params.set('sortDir', sortDir)
+
+    return get(`/api/parents?${params}`)
 }
 
 export function createUser({ email, username, firstRole, personInfo }) {

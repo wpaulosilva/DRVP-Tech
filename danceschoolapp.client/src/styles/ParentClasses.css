@@ -1,0 +1,402 @@
+/* ===== PARENT CLASSES PAGE — Calendar, Slot Grid, Open Classes ===== */
+
+/* Tab description */
+.tab-description {
+    margin: 0 0 20px;
+    color: #6b7280;
+    font-size: 0.95rem;
+}
+
+/* ---- Shared card wrapper ---- */
+.pc-card {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 16px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+/* ---- Calendar header (shared between month and week) ---- */
+.pc-cal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+}
+
+.pc-cal-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0;
+    text-transform: capitalize;
+}
+
+.pc-cal-nav {
+    display: flex;
+    gap: 6px;
+}
+
+.pc-cal-nav-btn {
+    width: 34px;
+    height: 34px;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    background: #ffffff;
+    color: #374151;
+    font-size: 1rem;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s, border-color 0.15s;
+}
+
+.pc-cal-nav-btn:hover:not(:disabled) {
+    background: #f3f4f6;
+    border-color: #d1d5db;
+}
+
+.pc-cal-nav-btn:disabled {
+    opacity: 0.4;
+    cursor: default;
+}
+
+/* ---- Day-of-week header labels ---- */
+.pc-dow-label {
+    text-align: center;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #9ca3af;
+    padding: 6px 0 10px;
+}
+
+/* ---- Monthly calendar grid ---- */
+.pc-month-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+}
+
+.pc-day-cell {
+    min-height: 80px;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 6px;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s, box-shadow 0.15s;
+    overflow: hidden;
+}
+
+.pc-day-cell:hover:not(.pc-day-cell--empty) {
+    background: #f9fafb;
+    border-color: #d1d5db;
+}
+
+.pc-day-cell--empty {
+    border-color: transparent;
+    background: transparent;
+    cursor: default;
+    min-height: 80px;
+}
+
+.pc-day-cell--has {
+    border-color: #c4b5fd;
+    background: #faf5ff;
+}
+
+.pc-day-cell--has:hover {
+    background: #f5f3ff;
+}
+
+/* Green variant — available slots (Tab 2) */
+.pc-day-cell--has-slot {
+    border-color: #6ee7b7;
+    background: #f0fdf4;
+}
+
+.pc-day-cell--has-slot:hover:not(.pc-day-cell--empty) {
+    background: #dcfce7;
+    border-color: #34d399;
+}
+
+/* Teal variant — open classes (Tab 3) */
+.pc-day-cell--has-open {
+    border-color: #5eead4;
+    background: #f0fdfa;
+}
+
+.pc-day-cell--has-open:hover:not(.pc-day-cell--empty) {
+    background: #ccfbf1;
+    border-color: #14b8a6;
+}
+
+.pc-day-cell--selected {
+    border-color: #7c3aed !important;
+    background: #f5f3ff !important;
+    box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.15);
+}
+
+.pc-day-num {
+    display: block;
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: #374151;
+    margin-bottom: 4px;
+}
+
+.pc-day-cell--selected .pc-day-num {
+    color: #7c3aed;
+    font-weight: 700;
+}
+
+.pc-event-chip {
+    display: block;
+    font-size: 0.68rem;
+    background: #ede9fe;
+    color: #6d28d9;
+    border-radius: 4px;
+    padding: 2px 4px;
+    margin-bottom: 2px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    line-height: 1.4;
+}
+
+.pc-event-more {
+    font-size: 0.68rem;
+    color: #9ca3af;
+    margin-top: 2px;
+}
+
+/* ---- Weekly slot calendar grid ---- */
+.pc-week-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+}
+
+.pc-week-cell {
+    aspect-ratio: 1;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 6px;
+    cursor: pointer;
+    overflow: hidden;
+    transition: background 0.15s, border-color 0.15s, box-shadow 0.15s;
+}
+
+.pc-week-cell--has {
+    border-color: #6ee7b7;
+    background: #f0fdf4;
+    cursor: pointer;
+}
+
+.pc-week-cell--has:hover {
+    background: #dcfce7;
+}
+
+.pc-week-cell--selected {
+    border-color: #7c3aed !important;
+    background: #f5f3ff !important;
+    box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.15);
+}
+
+.pc-week-cell--empty {
+    border-color: #f3f4f6;
+    background: #f9fafb;
+    opacity: 0.5;
+    cursor: default;
+}
+
+.pc-slot-chip {
+    display: block;
+    width: 100%;
+    font-size: 0.68rem;
+    background: #d1fae5;
+    color: #065f46;
+    border-radius: 4px;
+    padding: 2px 4px;
+    margin-bottom: 2px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    line-height: 1.4;
+}
+
+/* ---- Slot detail card (below weekly grid) ---- */
+.pc-slot-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-left: 4px solid #10b981;
+    border-radius: 14px;
+    padding: 16px;
+    margin-bottom: 10px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    flex-wrap: wrap;
+}
+
+.pc-slot-info {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.pc-slot-time {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 6px;
+}
+
+.pc-slot-detail {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 20px;
+    font-size: 0.88rem;
+    color: #6b7280;
+}
+
+/* ---- Filter bar ---- */
+.pc-filter-bar {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    padding: 16px;
+    margin-bottom: 16px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+}
+
+.pc-filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.pc-filter-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #374151;
+}
+
+/* ---- Open classes card (teal variant) ---- */
+.class-card--teal {
+    border-left-color: #14b8a6;
+}
+
+.class-card-capacity--teal {
+    background: #ccfbf1;
+    color: #0f766e;
+}
+
+/* ---- Pagination ---- */
+.pagination-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 20px;
+}
+
+.pagination-label {
+    font-size: 0.9rem;
+    color: #6b7280;
+    font-weight: 500;
+}
+
+/* ---- Teal active tab ---- */
+.validate-tab--active-teal {
+    color: #0f766e;
+}
+
+.validate-tab--active-teal::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #14b8a6, #34d399);
+    border-radius: 3px 3px 0 0;
+    z-index: 1;
+}
+
+/* ---- Modal form styles ---- */
+.modal-form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.modal-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.modal-label {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: #374151;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+}
+
+/* Side-by-side time inputs in booking modal */
+.pc-time-row {
+    display: flex;
+    gap: 12px;
+}
+
+.pc-time-row .modal-field {
+    flex: 1;
+}
+
+.modal-actions .btn {
+    flex: 1 1 120px;
+}
+
+/* ---- Responsive ---- */
+@media (max-width: 640px) {
+    .pc-month-grid {
+        gap: 2px;
+    }
+
+    .pc-day-cell {
+        min-height: 60px;
+        padding: 4px;
+    }
+
+    .pc-event-chip {
+        display: none;
+    }
+
+    .pc-week-cell {
+        padding: 4px;
+    }
+
+    .pc-filter-bar {
+        grid-template-columns: 1fr;
+    }
+
+    .pc-slot-card {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .pc-slot-card .btn {
+        width: 100%;
+    }
+}

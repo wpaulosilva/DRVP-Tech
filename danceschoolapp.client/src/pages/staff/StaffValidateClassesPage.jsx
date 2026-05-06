@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import ClassValidationCard from '../../components/common/ClassValidationCard'
 import Modal from '../../components/common/Modal'
-import { getValidateClasses, staffApprove, staffReject, staffValidate } from '../../services/staffService'
+import { getValidateClasses, staffApprove, staffReject, staffValidate, cancelClass } from '../../services/staffService'
 import '../../styles/ValidateClasses.css'
 
 function StaffValidateClassesPage() {
@@ -57,7 +57,7 @@ function StaffValidateClassesPage() {
         if (!id) return
         setRejecting(true)
         try {
-            await staffReject(id)
+            await staffReject(id, rejectReason || undefined)
             setRejectTarget(null)
             setRejectReason('')
             fetchData()
@@ -70,14 +70,14 @@ function StaffValidateClassesPage() {
 
     const handleValidate = async (id) => {
         try {
-            await staffValidate(id, true)
+            await staffValidate(id)
             fetchData()
         } catch (e) { console.error(e) }
     }
 
     const handleCancel = async (id) => {
         try {
-            await staffValidate(id, false)
+            await cancelClass(id)
             fetchData()
         } catch (e) { console.error(e) }
     }
@@ -86,7 +86,7 @@ function StaffValidateClassesPage() {
 
     return (
         <section className="dashboard-page-card">
-            <h2>Validações de Aulas</h2>
+            <h2>Aulas</h2>
             <p>Aprovar aulas requisitadas e validar aulas pendentes após o prazo de 48h.</p>
 
             {/* KPI cards */}

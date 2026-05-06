@@ -16,6 +16,7 @@ import AdminUsersPage from './pages/admin/AdminUsersPage'
 // Staff
 import StaffDashboardPage from './pages/staff/StaffDashboardPage'
 import StaffUsersPage from './pages/staff/StaffUsersPage'
+import DirectionUsersPage from './pages/staff/DirectionUsersPage'
 import StaffValidateStudentsPage from './pages/staff/StaffValidateStudentsPage'
 import StaffValidateClassesPage from './pages/staff/StaffValidateClassesPage'
 import StaffModalitiesPage from './pages/staff/StaffModalitiesPage'
@@ -76,6 +77,7 @@ function App() {
             >
                 <Route path="/staff" element={<StaffDashboardPage />} />
                 <Route path="/staff/utilizadores" element={<StaffUsersPage />} />
+                <Route path="/staff/direcao" element={<DirectionUsersPage />} />
                 <Route path="/staff/validar-estudantes" element={<StaffValidateStudentsPage />} />
                 <Route path="/staff/validar-aulas" element={<StaffValidateClassesPage />} />
                 <Route path="/staff/modalidades" element={<StaffModalitiesPage />} />
@@ -111,7 +113,7 @@ function App() {
             >
                 <Route path="/parent" element={<ParentDashboardPage />} />
                 <Route path="/parent/aulas" element={<ParentClassesPage />} />
-                <Route path="/parent/meus-estudantes" element={<ParentStudentsPage />} />
+                <Route path="/parent/estudantes" element={<ParentStudentsPage />} />
                 <Route path="/parent/inventario" element={<ParentInventoryPage />} />
                 <Route path="/parent/eventos" element={<ParentEventsPage />} />
             </Route>
