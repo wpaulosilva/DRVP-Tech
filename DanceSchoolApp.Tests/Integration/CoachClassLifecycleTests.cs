@@ -39,10 +39,10 @@ public class CoachClassLifecycleTests : IClassFixture<CustomWebApplicationFactor
 
         var setCookie = response.Headers
             .GetValues("Set-Cookie")
-            .FirstOrDefault(h => h.StartsWith("jwt="));
+            .FirstOrDefault(h => h.StartsWith("access_token="));
 
-        setCookie.Should().NotBeNull(because: "login response must set the jwt cookie");
-        return setCookie!.Split(';')[0].Substring("jwt=".Length);
+        setCookie.Should().NotBeNull(because: "login response must set the access_token cookie");
+        return setCookie!.Split(';')[0].Substring("access_token=".Length);
     }
 
     /// <summary>
@@ -53,7 +53,7 @@ public class CoachClassLifecycleTests : IClassFixture<CustomWebApplicationFactor
         HttpMethod method, string url, string jwt, object? body = null)
     {
         var req = new HttpRequestMessage(method, url);
-        req.Headers.Add("Cookie", $"jwt={jwt}");
+        req.Headers.Add("Cookie", $"access_token={jwt}");
 
         if (body is not null)
         {
@@ -145,21 +145,23 @@ public class CoachClassLifecycleTests : IClassFixture<CustomWebApplicationFactor
         classId.Should().BeGreaterThan(0, because: "response body must contain a positive classId");
 
 
-        //  Step 2 — Staff approves (Requested → StaffApproved) 
+        //  Step 2 — Staff approves (Requested → StaffApproved)
         var staffJwt = await LoginAndGetCookie("staff_lc");
         var approveResp = await _client.SendAsync(
-            MakeRequest(HttpMethod.Patch, $"/api/coachclasses/{classId}/staff-approve", staffJwt));
+            MakeRequest(HttpMethod.Patch, $"/api/coachclasses/{classId}/staff-respond", staffJwt,
+                new { approve = true }));
 
         approveResp.StatusCode.Should().Be(HttpStatusCode.NoContent,
-            because: "staff-approve on a Requested class must return 204");
+            because: "staff-respond (approve=true) on a Requested class must return 204");
 
-        //  Step 3 — Coach accepts (StaffApproved → Approved) 
+        //  Step 3 — Coach accepts (StaffApproved → Approved)
         var coachJwt = await LoginAndGetCookie("coach_lc");
         var acceptResp = await _client.SendAsync(
-            MakeRequest(HttpMethod.Patch, $"/api/coachclasses/{classId}/coach-accept", coachJwt));
+            MakeRequest(HttpMethod.Patch, $"/api/coachclasses/{classId}/coach-respond", coachJwt,
+                new { accept = true }));
 
         acceptResp.StatusCode.Should().Be(HttpStatusCode.NoContent,
-            because: "coach-accept on a StaffApproved class must return 204");
+            because: "coach-respond (accept=true) on a StaffApproved class must return 204");
 
         //  Step 4 — Simulate worker transitioning Approved → Finished 
         // The /finish endpoint has been removed; the transition is now automated

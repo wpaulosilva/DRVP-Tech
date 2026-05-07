@@ -50,11 +50,11 @@ public class AuthIntegrationTests : IClassFixture<CustomWebApplicationFactory>
     {
         var setCookie = response.Headers
             .GetValues("Set-Cookie")
-            .FirstOrDefault(h => h.StartsWith("jwt="));
+            .FirstOrDefault(h => h.StartsWith("access_token="));
 
-        setCookie.Should().NotBeNull(because: "login response must include the jwt Set-Cookie header");
+        setCookie.Should().NotBeNull(because: "login response must include the access_token Set-Cookie header");
 
-        return setCookie!.Split(';')[0].Substring("jwt=".Length);
+        return setCookie!.Split(';')[0].Substring("access_token=".Length);
     }
 
     //  tests 
@@ -75,8 +75,8 @@ public class AuthIntegrationTests : IClassFixture<CustomWebApplicationFactory>
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         response.Headers.TryGetValues("Set-Cookie", out var cookies).Should().BeTrue();
-        cookies!.Should().Contain(c => c.StartsWith("jwt="),
-            because: "a successful login must set the jwt HttpOnly cookie");
+        cookies!.Should().Contain(c => c.StartsWith("access_token="),
+            because: "a successful login must set the access_token HttpOnly cookie");
     }
 
     [Fact]
@@ -171,10 +171,10 @@ public class AuthIntegrationTests : IClassFixture<CustomWebApplicationFactory>
 
         var logoutCookie = response.Headers
             .GetValues("Set-Cookie")
-            .FirstOrDefault(h => h.StartsWith("jwt="));
+            .FirstOrDefault(h => h.StartsWith("access_token="));
 
-        logoutCookie.Should().NotBeNull(because: "logout must emit a Set-Cookie header to clear the jwt");
-        logoutCookie!.Split(';')[0].Should().Be("jwt=",
+        logoutCookie.Should().NotBeNull(because: "logout must emit a Set-Cookie header to clear the access_token");
+        logoutCookie!.Split(';')[0].Should().Be("access_token=",
             because: "the cleared cookie must have an empty value");
     }
 }
