@@ -6,7 +6,10 @@ function Topbar() {
     const { user, logout } = useAuth()
     const navigate = useNavigate()
 
-    const username = user?.username || user?.Username || 'Utilizador'
+    const firstName = user?.firstName ?? user?.FirstName ?? ''
+    const lastName  = user?.lastName  ?? user?.LastName  ?? ''
+    const fullName  = [firstName, lastName].filter(Boolean).join(' ')
+    const username  = fullName || user?.username || user?.Username || 'Utilizador'
 
     const handleLogout = async () => {
         navigate('/')

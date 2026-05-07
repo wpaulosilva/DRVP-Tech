@@ -39,6 +39,7 @@ namespace DanceSchoolApp.Server.DTOs.Parent
         public int CurrentParticipants { get; set; }
         public int MaxParticipants { get; set; }
         public int SpotsAvailable { get; set; }
+        public List<string> EnrolledStudents { get; set; } = new();
     }
 
     // ─── Validate ─────────────────────────────────────────────────────────────

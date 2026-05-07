@@ -93,37 +93,37 @@ namespace DanceSchoolApp.Server.Services
             return classes.Select(MapToUpcomingClass).ToList();
         }
 
-        //  Open classes 
+        //  Open classes
 
-        public async Task<PagedResult<OpenClassItem>> GetOpenClassesAsync(
-            int? modalityId, int page, int pageSize)
+        public async Task<List<OpenClassItem>> GetOpenClassesAsync(
+            int? modalityId, DateOnly from, DateOnly to)
         {
-            var now = DateTime.Now;
+            var fromDt = from.ToDateTime(TimeOnly.MinValue);
+            var toDt   = to.ToDateTime(new TimeOnly(23, 59, 59, 999));
 
-            var baseQuery = _context.CoachClasses
+            var query = _context.CoachClasses
                 .Include(c => c.IdModalityNavigation)
                 .Include(c => c.IdStudioNavigation)
                 .Include(c => c.IdCoachNavigation)
                     .ThenInclude(coach => coach.CoachNavigation)
                         .ThenInclude(u => u.PersonInfo)
                 .Include(c => c.Participants)
+                    .ThenInclude(p => p.IdStudentNavigation)
+                        .ThenInclude(s => s.PersonInfo)
                 .Where(c =>
                     c.Status == (byte)CoachClassStatus.Approved &&
-                    c.StartDatetime > now &&
+                    c.StartDatetime >= fromDt &&
+                    c.StartDatetime <= toDt &&
                     c.Participants.Count < c.MaxParticipants);
 
             if (modalityId.HasValue)
-                baseQuery = baseQuery.Where(c => c.IdModality == modalityId.Value);
+                query = query.Where(c => c.IdModality == modalityId.Value);
 
-            var total = await baseQuery.CountAsync();
-
-            var classes = await baseQuery
+            var classes = await query
                 .OrderBy(c => c.StartDatetime)
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
                 .ToListAsync();
 
-            var items = classes.Select(c =>
+            return classes.Select(c =>
             {
                 int current = c.Participants.Count;
                 return new OpenClassItem
@@ -137,17 +137,12 @@ namespace DanceSchoolApp.Server.Services
                     StudioName          = c.IdStudioNavigation.Name,
                     CurrentParticipants = current,
                     MaxParticipants     = c.MaxParticipants,
-                    SpotsAvailable      = c.MaxParticipants - current
+                    SpotsAvailable      = c.MaxParticipants - current,
+                    EnrolledStudents    = c.Participants
+                        .Select(p => ResolveStudentName(p.IdStudentNavigation))
+                        .ToList()
                 };
             }).ToList();
-
-            return new PagedResult<OpenClassItem>
-            {
-                Items      = items,
-                TotalCount = total,
-                Page       = page,
-                PageSize   = pageSize
-            };
         }
 
         //  Pending validations 

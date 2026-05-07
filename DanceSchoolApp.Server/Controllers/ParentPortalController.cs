@@ -98,23 +98,22 @@ namespace DanceSchoolApp.Server.Controllers
             }
         }
 
-        //  GET /api/ee/classes/open 
-        // Query: modalityId? (int), page (default 1), pageSize (default 10, max 50)
+        //  GET /api/ee/classes/open
+        // Query: from (DateOnly, required), to (DateOnly, required), modalityId? (int)
         [HttpGet("classes/open")]
         public async Task<IActionResult> GetOpenClasses(
-            [FromQuery] int? modalityId = null,
-            [FromQuery] int  page       = 1,
-            [FromQuery] int  pageSize   = 10)
+            [FromQuery] DateOnly from,
+            [FromQuery] DateOnly to,
+            [FromQuery] int? modalityId = null)
         {
-            if (page < 1)      page     = 1;
-            if (pageSize < 1)  pageSize = 1;
-            if (pageSize > 50) pageSize = 50;
+            if (to < from)
+                return BadRequest("'to' must be on or after 'from'.");
 
             try
             {
-                var result = await _parentService.GetOpenClassesAsync(modalityId, page, pageSize);
+                var result = await _parentService.GetOpenClassesAsync(modalityId, from, to);
 
-                if (result.TotalCount == 0)
+                if (!result.Any())
                     return NoContent();
 
                 return Ok(result);

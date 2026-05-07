@@ -1,7 +1,9 @@
+using DanceSchoolApp.Server.Data;
 using DanceSchoolApp.Server.DTOs;
 using DanceSchoolApp.Server.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 
 namespace DanceSchoolApp.Server.Controllers
@@ -15,11 +17,13 @@ namespace DanceSchoolApp.Server.Controllers
 
         private readonly AuthService _authService;
         private readonly IWebHostEnvironment _env;
+        private readonly AppDbContext _db;
 
-        public AuthController(AuthService authService, IWebHostEnvironment env)
+        public AuthController(AuthService authService, IWebHostEnvironment env, AppDbContext db)
         {
             _authService = authService;
             _env = env;
+            _db = db;
         }
 
         //  POST /api/auth/login
@@ -104,10 +108,9 @@ namespace DanceSchoolApp.Server.Controllers
         }
 
         //  GET /api/auth/me
-        // Reads user context from the access token claims — no DB call.
         [HttpGet("me")]
         [Authorize]
-        public IActionResult Me()
+        public async Task<IActionResult> Me()
         {
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             var username    = User.FindFirst(ClaimTypes.Name)?.Value;
@@ -116,7 +119,20 @@ namespace DanceSchoolApp.Server.Controllers
             if (userIdClaim is null || username is null)
                 return Unauthorized("Token claims are missing.");
 
-            return Ok(new { UserId = int.Parse(userIdClaim), Username = username, Roles = roles });
+            var userId = int.Parse(userIdClaim);
+            var person = await _db.Users
+                .Where(u => u.UserId == userId)
+                .Select(u => new { u.PersonInfo!.FirstName, u.PersonInfo!.LastName })
+                .FirstOrDefaultAsync();
+
+            return Ok(new
+            {
+                UserId    = userId,
+                Username  = username,
+                Roles     = roles,
+                FirstName = person?.FirstName,
+                LastName  = person?.LastName,
+            });
         }
 
         private void SetAccessCookie(string token, DateTime expires)

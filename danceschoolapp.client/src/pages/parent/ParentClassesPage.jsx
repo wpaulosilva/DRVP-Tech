@@ -397,6 +397,7 @@ function ParentClassesPage() {
     const [t3Error, setT3Error]               = useState('')
     const [t3SelectedDate, setT3SelectedDate] = useState(null)
     const [t3Refresh, setT3Refresh]           = useState(0)
+    const [t3ExpandedCard, setT3ExpandedCard] = useState(null)
 
     // Enroll modal
     const [enrollTarget, setEnrollTarget]     = useState(null)
@@ -408,24 +409,24 @@ function ParentClassesPage() {
         if (activeTab !== 'grupo') return
         let cancelled = false
         setT3Loading(true); setT3Error('')
-        const params = { page: 1, pageSize: 50 }
+        const { from, to } = getMonthRange(t3Month)
+        const params = { from, to }
         if (t3Modality) params.modalityId = t3Modality
         getOpenClasses(params)
             .then(data => {
                 if (cancelled) return
-                // PagedResult → normalizeItems handles { Items:[...] }
                 setT3Classes(normalizeItems(data))
             })
             .catch(e => { if (!cancelled) setT3Error(e.message) })
             .finally(() => { if (!cancelled) setT3Loading(false) })
         return () => { cancelled = true }
-    }, [activeTab, t3Modality, t3Refresh])
+    }, [activeTab, t3Month, t3Modality, t3Refresh])
 
     // Group open classes by date
     const t3ByDate = useMemo(() => {
         const map = {}
         t3Classes.forEach(c => {
-            const key = (c.StartDatetime ?? '').slice(0, 10)
+            const key = (c.StartDatetime ?? c.startDatetime ?? '').slice(0, 10)
             if (key) (map[key] ||= []).push(c)
         })
         return map
@@ -747,7 +748,7 @@ function ParentClassesPage() {
         const hasAnyClasses   = Object.keys(t3ByDate).length > 0
 
         const renderDay = (key, dayNum) => {
-            const classes  = t3ByDate[key] ?? []
+            const classes    = t3ByDate[key] ?? []
             const isSelected = key === t3SelectedDate
             return (
                 <div
@@ -758,7 +759,7 @@ function ParentClassesPage() {
                     <span className="pc-day-num">{dayNum}</span>
                     {classes.slice(0, 2).map((c, ci) => (
                         <div key={ci} className="pc-slot-chip" style={{ background: '#ccfbf1', color: '#0f766e' }}>
-                            {fmtTime(c.StartDatetime)} {c.ModalityName}
+                            {fmtTime(c.StartDatetime ?? c.startDatetime)} {c.ModalityName ?? c.modalityName}
                         </div>
                     ))}
                     {classes.length > 2 && <div className="pc-event-more">+{classes.length - 2}</div>}
@@ -785,8 +786,8 @@ function ParentClassesPage() {
 
                 <MonthCalendar
                     month={t3Month}
-                    onPrev={() => { prevMonth(setT3Month); setT3SelectedDate(null) }}
-                    onNext={() => { nextMonth(setT3Month); setT3SelectedDate(null) }}
+                    onPrev={() => { prevMonth(setT3Month); setT3SelectedDate(null); setT3ExpandedCard(null) }}
+                    onNext={() => { nextMonth(setT3Month); setT3SelectedDate(null); setT3ExpandedCard(null) }}
                     renderDay={renderDay}
                     loading={t3Loading}
                 />
@@ -796,28 +797,59 @@ function ParentClassesPage() {
                     <div>
                         <h3 className="validate-section-heading">Aulas para {fmtDateLong(t3SelectedDate)}</h3>
                         {selectedClasses
-                            .sort((a, b) => (a.StartDatetime ?? '').localeCompare(b.StartDatetime ?? ''))
+                            .sort((a, b) => (a.StartDatetime ?? a.startDatetime ?? '').localeCompare(b.StartDatetime ?? b.startDatetime ?? ''))
                             .map((c, i) => {
-                                const isFull = (c.SpotsAvailable ?? 1) <= 0
+                                const classId        = c.ClassId        ?? c.classId        ?? i
+                                const modalityName   = c.ModalityName   ?? c.modalityName   ?? 'Aula'
+                                const coachName      = c.CoachName      ?? c.coachName
+                                const studioName     = c.StudioName     ?? c.studioName
+                                const start          = c.StartDatetime  ?? c.startDatetime
+                                const end            = c.EndDatetime    ?? c.endDatetime
+                                const spotsAvailable = c.SpotsAvailable ?? c.spotsAvailable ?? 0
+                                const maxParts       = c.MaxParticipants ?? c.maxParticipants ?? 0
+                                const enrolled       = c.EnrolledStudents ?? c.enrolledStudents ?? []
+                                const isFull         = spotsAvailable <= 0
+                                const isExpanded     = t3ExpandedCard === classId
+
                                 return (
-                                    <div key={c.ClassId ?? i} className="class-card class-card--teal">
+                                    <div key={classId} className="class-card class-card--teal">
                                         <div className="class-card-header" style={{ cursor: 'default' }}>
                                             <div style={{ flex: '1 1 auto', minWidth: 0 }}>
                                                 <div className="class-card-title-row">
-                                                    <h3 className="class-card-title">{c.ModalityName ?? 'Aula'}</h3>
+                                                    <h3 className="class-card-title">{modalityName}</h3>
                                                     <span className="class-card-capacity class-card-capacity--teal">
-                                                        Vagas {c.SpotsAvailable}/{c.MaxParticipants}
+                                                        Vagas {spotsAvailable}/{maxParts}
                                                     </span>
                                                     {isFull && <span className="status-pill status-pill--rejected">Lotado</span>}
                                                 </div>
                                                 <div className="class-card-info-grid">
                                                     <div>
                                                         <span className="label">Horário: </span>
-                                                        {fmtTime(c.StartDatetime)} – {fmtTime(c.EndDatetime)}
+                                                        {fmtTime(start)} – {fmtTime(end)}
                                                     </div>
-                                                    {c.CoachName   && <div><span className="label">Coach: </span>{c.CoachName}</div>}
-                                                    {c.StudioName  && <div><span className="label">Estúdio: </span>{c.StudioName}</div>}
+                                                    {coachName  && <div><span className="label">Coach: </span>{coachName}</div>}
+                                                    {studioName && <div><span className="label">Estúdio: </span>{studioName}</div>}
                                                 </div>
+
+                                                {/* Enrolled students dropdown */}
+                                                {enrolled.length > 0 && (
+                                                    <div style={{ marginTop: '8px' }}>
+                                                        <button
+                                                            type="button"
+                                                            className="pc-students-toggle"
+                                                            onClick={() => setT3ExpandedCard(isExpanded ? null : classId)}
+                                                        >
+                                                            {isExpanded ? '▲' : '▼'} {enrolled.length} aluno{enrolled.length !== 1 ? 's' : ''} inscrito{enrolled.length !== 1 ? 's' : ''}
+                                                        </button>
+                                                        {isExpanded && (
+                                                            <ul className="pc-students-list">
+                                                                {enrolled.map((name, ni) => (
+                                                                    <li key={ni}>{name}</li>
+                                                                ))}
+                                                            </ul>
+                                                        )}
+                                                    </div>
+                                                )}
                                             </div>
                                             <Button
                                                 variant={isFull ? 'secondary' : 'primary'}
@@ -837,7 +869,7 @@ function ParentClassesPage() {
                     <div className="validate-empty">
                         <div className="validate-empty-icon">🎭</div>
                         <h3>Sem aulas disponíveis</h3>
-                        <p>Não há aulas abertas a inscrições neste momento.</p>
+                        <p>Não há aulas abertas a inscrições neste mês.</p>
                     </div>
                 )}
 

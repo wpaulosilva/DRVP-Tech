@@ -24,10 +24,13 @@ export function getAvailableSlots({ from, to, modalityId, coachId } = {}) {
     return get(`/api/ee/classes/available-slots${qs ? `?${qs}` : ''}`)
 }
 
-export function getOpenClasses({ page = 1, pageSize = 10, modalityId } = {}) {
-    const params = new URLSearchParams({ page, pageSize })
+export function getOpenClasses({ from, to, modalityId } = {}) {
+    const params = new URLSearchParams()
+    if (from) params.set('from', from)
+    if (to)   params.set('to', to)
     if (modalityId) params.set('modalityId', modalityId)
-    return get(`/api/ee/classes/open?${params}`)
+    const qs = params.toString()
+    return get(`/api/ee/classes/open${qs ? `?${qs}` : ''}`)
 }
 
 export function getValidateClasses({ page = 1, pageSize = 10 } = {}) {
