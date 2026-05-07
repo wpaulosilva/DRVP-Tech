@@ -3,6 +3,7 @@ using DanceSchoolApp.Server.Models;
 using DanceSchoolApp.Server.Services.Inventory;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using System.Security.Claims;
 
 namespace DanceSchoolApp.Server.Controllers.Inventory
@@ -13,6 +14,7 @@ namespace DanceSchoolApp.Server.Controllers.Inventory
 
     [ApiController]
     [Route("api/requisitions")]
+    [EnableRateLimiting("api")]
     public class ItemRequisitionController : ControllerBase
     {
         private readonly ItemRequisitionService _requisitionService;
@@ -216,6 +218,7 @@ namespace DanceSchoolApp.Server.Controllers.Inventory
 
     [ApiController]
     [Route("api/item-categories")]
+    [EnableRateLimiting("api")]
     public class ItemCategoryController : ControllerBase
     {
         private readonly ItemCategoryService _categoryService;

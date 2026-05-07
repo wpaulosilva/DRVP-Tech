@@ -2,12 +2,14 @@
 using DanceSchoolApp.Server.Services.Social;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.RateLimiting;
 using System.Security.Claims;
 
 namespace DanceSchoolApp.Server.Controllers.Social
 {
     [ApiController]
     [Route("api/events")]
+    [EnableRateLimiting("api")]
     public class EventController : ControllerBase
     {
         private readonly EventService _eventService;

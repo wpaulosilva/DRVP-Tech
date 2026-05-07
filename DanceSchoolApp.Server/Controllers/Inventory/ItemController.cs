@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.RateLimiting;
 using System.Security.Claims;
 using System.IO;
 using System;
@@ -13,6 +14,7 @@ namespace DanceSchoolApp.Server.Controllers.Inventory
 {
     [ApiController]
     [Route("api/items")]
+    [EnableRateLimiting("api")]
     public class ItemController : ControllerBase
     {
         private readonly ItemService _itemService;
@@ -286,6 +288,7 @@ namespace DanceSchoolApp.Server.Controllers.Inventory
         /// <summary>Staff or item owner uploads an image file to an item.</summary>
         [HttpPost("{id:int}/images")]
         [Authorize(Roles = "staff,parent")]
+        [EnableRateLimiting("uploads")]
         public async Task<IActionResult> UploadImage(int id, [FromForm] IFormFile file)
         {
             if (file == null || file.Length == 0)

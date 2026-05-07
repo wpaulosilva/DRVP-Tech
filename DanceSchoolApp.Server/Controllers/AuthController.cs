@@ -3,6 +3,7 @@ using DanceSchoolApp.Server.DTOs;
 using DanceSchoolApp.Server.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 
@@ -28,6 +29,7 @@ namespace DanceSchoolApp.Server.Controllers
 
         //  POST /api/auth/login
         [HttpPost("login")]
+        [EnableRateLimiting("auth")]
         public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -48,6 +50,7 @@ namespace DanceSchoolApp.Server.Controllers
         // Validates the refresh token cookie, checks IsActive, rotates both cookies.
         // Called automatically by the frontend client when a request returns 401.
         [HttpPost("refresh")]
+        [EnableRateLimiting("auth")]
         public async Task<IActionResult> Refresh()
         {
             var raw = Request.Cookies[RefreshCookieName];
@@ -68,6 +71,7 @@ namespace DanceSchoolApp.Server.Controllers
         //  POST /api/auth/logout
         [HttpPost("logout")]
         [Authorize]
+        [EnableRateLimiting("api")]
         public async Task<IActionResult> Logout()
         {
             var raw = Request.Cookies[RefreshCookieName];
@@ -81,6 +85,7 @@ namespace DanceSchoolApp.Server.Controllers
 
         //  POST /api/auth/forgot-password
         [HttpPost("forgot-password")]
+        [EnableRateLimiting("auth")]
         public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest request)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -94,6 +99,7 @@ namespace DanceSchoolApp.Server.Controllers
 
         //  POST /api/auth/reset-password
         [HttpPost("reset-password")]
+        [EnableRateLimiting("auth")]
         public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest request)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -110,6 +116,7 @@ namespace DanceSchoolApp.Server.Controllers
         //  GET /api/auth/me
         [HttpGet("me")]
         [Authorize]
+        [EnableRateLimiting("api")]
         public async Task<IActionResult> Me()
         {
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;

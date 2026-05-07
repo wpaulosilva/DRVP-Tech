@@ -3,12 +3,14 @@ using DanceSchoolApp.Server.DTOs.Social;
 using DanceSchoolApp.Server.Services.Social;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.RateLimiting;
 using System.Security.Claims;
 
 namespace DanceSchoolApp.Server.Controllers.Social
 {
     [ApiController]
     [Route("api/notifications")]
+    [EnableRateLimiting("api")]
     public class NotificationController : ControllerBase
     {
         private readonly NotificationService _notificationService;

@@ -2,12 +2,14 @@
 using DanceSchoolApp.Server.Services.People;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.RateLimiting;
 using System.Security.Claims;
 
 namespace DanceSchoolApp.Server.Controllers.People
 {
     [Route("api/[controller]")]
     [ApiController]
+    [EnableRateLimiting("api")]
     public class StaffController : ControllerBase
     {
         private readonly StaffService _StaffService;

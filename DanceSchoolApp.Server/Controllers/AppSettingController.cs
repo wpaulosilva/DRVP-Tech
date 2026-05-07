@@ -2,11 +2,13 @@ using DanceSchoolApp.Server.DTOs;
 using DanceSchoolApp.Server.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace DanceSchoolApp.Server.Controllers
 {
     [ApiController]
     [Route("api/appsettings")]
+    [EnableRateLimiting("api")]
     public class AppSettingController : ControllerBase
     {
         private readonly AppSettingService _appSettingService;

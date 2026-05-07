@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.RateLimiting;
 using System.IO;
 using System;
 using System.Linq;
@@ -14,6 +15,7 @@ namespace DanceSchoolApp.Server.Controllers.People
 {
     [Route("api/[controller]es")]
     [ApiController]
+    [EnableRateLimiting("api")]
     public class CoachController : ControllerBase
     {
 
@@ -69,6 +71,7 @@ namespace DanceSchoolApp.Server.Controllers.People
 
         [HttpPost("{id}/photo")]
         [Authorize(Roles = "coach,staff")]
+        [EnableRateLimiting("uploads")]
         public async Task<IActionResult> UploadPhoto(int id, [FromForm] IFormFile file)
         {
             // A coach may only update their own photo; staff may update any.

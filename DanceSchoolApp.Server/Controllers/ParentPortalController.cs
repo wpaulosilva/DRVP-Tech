@@ -3,6 +3,7 @@ using DanceSchoolApp.Server.Services.People;
 using DanceSchoolApp.Server.Services.Scheduling;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using System.Security.Claims;
 
 namespace DanceSchoolApp.Server.Controllers
@@ -10,6 +11,7 @@ namespace DanceSchoolApp.Server.Controllers
     [ApiController]
     [Route("api/ee")]
     [Authorize(Roles = "parent")]
+    [EnableRateLimiting("api")]
     public class ParentPortalController : ControllerBase
     {
         private readonly ParentPortalService _parentService;

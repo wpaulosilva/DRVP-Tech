@@ -1,12 +1,14 @@
 using DanceSchoolApp.Server.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace DanceSchoolApp.Server.Controllers
 {
     [ApiController]
     [Route("api/admin")]
     [Authorize(Roles = "admin")]
+    [EnableRateLimiting("api")]
     public class AdminPortalController : ControllerBase
     {
         private readonly AdminPortalService _adminService;

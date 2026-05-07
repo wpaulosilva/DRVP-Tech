@@ -3,12 +3,14 @@ using DanceSchoolApp.Server.DTOs.Classes;
 using DanceSchoolApp.Server.Services.Classes;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using System.Security.Claims;
 
 namespace DanceSchoolApp.Server.Controllers.Classes
 {
     [ApiController]
     [Route("api/participants")]
+    [EnableRateLimiting("api")]
     public class ParticipantController : ControllerBase
     {
         private readonly ParticipantService _participantService;

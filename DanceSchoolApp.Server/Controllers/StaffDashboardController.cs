@@ -3,6 +3,7 @@ using DanceSchoolApp.Server.DTOs.Staff;
 using DanceSchoolApp.Server.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using System.Globalization;
 
 namespace DanceSchoolApp.Server.Controllers
@@ -10,6 +11,7 @@ namespace DanceSchoolApp.Server.Controllers
     [ApiController]
     [Route("api/staff")]
     [Authorize(Roles = "staff,admin")]
+    [EnableRateLimiting("api")]
     public class StaffDashboardController : ControllerBase
     {
         private readonly StaffDashboardService _staffService;

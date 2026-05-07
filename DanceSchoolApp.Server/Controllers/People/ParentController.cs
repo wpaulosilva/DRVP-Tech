@@ -1,12 +1,14 @@
 ﻿using DanceSchoolApp.Server.Services.People;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.RateLimiting;
 using System.Security.Claims;
 
 namespace DanceSchoolApp.Server.Controllers.People
 {
     [Route("api/[controller]s")]
     [ApiController]
+    [EnableRateLimiting("api")]
     public class ParentController : ControllerBase
     {
         private readonly ParentService _parentService;

@@ -1,6 +1,7 @@
 using DanceSchoolApp.Server.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using System.Security.Claims;
 
 namespace DanceSchoolApp.Server.Controllers
@@ -8,6 +9,7 @@ namespace DanceSchoolApp.Server.Controllers
     [ApiController]
     [Route("api/coach")]
     [Authorize(Roles = "coach")]
+    [EnableRateLimiting("api")]
     public class CoachPortalController : ControllerBase
     {
         private readonly CoachPortalService _coachPortalService;

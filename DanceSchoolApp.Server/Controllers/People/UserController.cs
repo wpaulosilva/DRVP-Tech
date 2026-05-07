@@ -3,12 +3,14 @@ using DanceSchoolApp.Server.Services.People;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using DanceSchoolApp.Server.Models;
+using Microsoft.AspNetCore.RateLimiting;
 using System.Security.Claims;
 
 namespace DanceSchoolApp.Server.Controllers.People
 {
     [ApiController]
     [Route("api/users")]
+    [EnableRateLimiting("api")]
     public class UserController : ControllerBase
     {
         private readonly UserService _userService;

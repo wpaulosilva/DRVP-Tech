@@ -2,11 +2,13 @@
 using DanceSchoolApp.Server.Services.School;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace DanceSchoolApp.Server.Controllers.School
 {
     [ApiController]
     [Route("api/studios")]
+    [EnableRateLimiting("api")]
     public class StudioController : ControllerBase
     {
         private readonly StudioService _studioService;

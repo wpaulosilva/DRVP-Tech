@@ -2,11 +2,13 @@
 using DanceSchoolApp.Server.Services.Scheduling;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace DanceSchoolApp.Server.Controllers.Scheduling
 {
     [ApiController]
     [Route("api/[Controller]")]
+    [EnableRateLimiting("api")]
     public class CoachAvailabilityController : ControllerBase
     {
         private readonly CoachAvailabilityService _availabilityService;

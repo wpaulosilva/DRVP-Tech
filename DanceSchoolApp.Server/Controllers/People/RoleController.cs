@@ -2,6 +2,7 @@
 using DanceSchoolApp.Server.Services.People;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 
 namespace DanceSchoolApp.Server.Controllers.People
@@ -9,6 +10,7 @@ namespace DanceSchoolApp.Server.Controllers.People
 
     [ApiController]
     [Route("api/[controller]s")]
+    [EnableRateLimiting("api")]
     public class RoleController : ControllerBase
     {
 

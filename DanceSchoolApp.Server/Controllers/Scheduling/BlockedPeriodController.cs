@@ -2,11 +2,13 @@
 using DanceSchoolApp.Server.Services.Scheduling;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace DanceSchoolApp.Server.Controllers.Scheduling
 {
     [ApiController]
     [Route("api/blockedperiods")]
+    [EnableRateLimiting("api")]
     public class BlockedPeriodController : ControllerBase
     {
         private readonly BlockedPeriodService _blockedPeriodService;
