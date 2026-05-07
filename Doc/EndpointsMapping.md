@@ -132,8 +132,8 @@ The header mounts once per session. It does NOT call an endpoint on every naviga
 | Tab "Requisitadas" (default) | `GET /api/staff/validate-classes?tab=requested&page=1&pageSize=15` |
 | Tab "Pendentes" | `GET /api/staff/validate-classes?tab=pending&page=1&pageSize=15` |
 | Pagination | `GET /api/staff/validate-classes?tab={tab}&page={n}` |
-| "Aceitar Aula" button (Requisitadas) | `PATCH /api/coachclasses/{id}/staff-approve` |
-| "Recusar Aula" button (Requisitadas) | `PATCH /api/coachclasses/{id}/staff-reject` body: `{ reason? }` |
+| "Aceitar Aula" button (Requisitadas) | `PATCH /api/coachclasses/{id}/staff-respond` body: `{ "approve": true }` |
+| "Recusar Aula" button (Requisitadas) | `PATCH /api/coachclasses/{id}/staff-respond` body: `{ "approve": false, "reason"?: "..." }` |
 | "Validar" button (Pendentes tab) | `PATCH /api/coachclasses/{id}/staff-validate` |
 | "Cancelar" button (Pendentes tab) | `PATCH /api/coachclasses/{id}/cancel` |
 
@@ -283,8 +283,8 @@ The header mounts once per session. It does NOT call an endpoint on every naviga
 | Tab "Pedidos de Aula" (default) | `GET /api/coach/validate?tab=requests&page=1&pageSize=10` |
 | Tab "Validações" | `GET /api/coach/validate?tab=validations&page=1&pageSize=10` |
 | Pagination | re-calls with `&page={n}` |
-| "Aceitar Aula" button | `PATCH /api/coachclasses/{id}/coach-accept` |
-| "Recusar Aula" button | `PATCH /api/coachclasses/{id}/coach-reject` body: `{ reason? }` |
+| "Aceitar Aula" button | `PATCH /api/coachclasses/{id}/coach-respond` body: `{ "accept": true }` |
+| "Recusar Aula" button | `PATCH /api/coachclasses/{id}/coach-respond` body: `{ "accept": false, "reason"?: "..." }` |
 | "Realizada" button (validations tab) | `PATCH /api/coachclasses/{id}/coach-validate` body: `{ didTeach: true }` |
 | "Não Realizada" button (validations tab) | `PATCH /api/coachclasses/{id}/coach-validate` body: `{ didTeach: false }` |
 
@@ -430,5 +430,6 @@ The header mounts once per session. It does NOT call an endpoint on every naviga
 | Staff "cancel" on coach agenda | Mockup shows "Cancelar" button in coach agenda view | `PATCH /api/coachclasses/{id}/cancel` is staff-only — this button should not appear in coach view, or only appear on Requested/StaffApproved classes where coach-reject is the right action. |
 | No `GET /api/newsposts` page in React | News posts API exists but no frontend page | Add a simple `/news` or integrate into home/dashboard. Not blocking. |
 | `GET /api/events` is staff-only; coach/parent use `/active` | Docs and frontend may incorrectly call `/api/events` | Coach and parent pages must call `GET /api/events/active` — `GET /api/events` returns all including inactive and is staff-only. |
-| `PATCH /api/coachclasses/{id}/staff-reject` not `/reject` | Wrong URL in old docs/Postman | Use `staff-reject` — `reject` would 404. |
+| Staff approve/reject merged into one endpoint | Old docs called separate `staff-approve` / `staff-reject` — both are gone | Use `PATCH /api/coachclasses/{id}/staff-respond` with body `{ "approve": bool, "reason"?: "..." }` |
+| Coach accept/reject merged into one endpoint | Old docs called separate `coach-accept` / `coach-reject` — both are gone | Use `PATCH /api/coachclasses/{id}/coach-respond` with body `{ "accept": bool, "reason"?: "..." }` |
 | `GET /api/admin/users` accepts `sortBy` and `sortDir` params | Not documented in EndpointsMapping | Add `?sortBy={field}&sortDir={asc|desc}` to the admin users table entry. |

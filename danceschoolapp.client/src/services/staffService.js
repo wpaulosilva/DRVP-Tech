@@ -6,11 +6,11 @@ export function getValidateClasses({ tab = 'requested', page = 1, pageSize = 15 
 }
 
 export function staffApprove(classId) {
-    return patch(`/api/coachclasses/${classId}/staff-approve`)
+    return patch(`/api/coachclasses/${classId}/staff-respond`, { approve: true })
 }
 
 export function staffReject(classId, reason) {
-    return patch(`/api/coachclasses/${classId}/staff-reject`, reason ? { reason } : undefined)
+    return patch(`/api/coachclasses/${classId}/staff-respond`, { approve: false, ...(reason ? { reason } : {}) })
 }
 
 export function staffValidate(classId) {
