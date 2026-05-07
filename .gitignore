@@ -336,6 +336,10 @@ __pycache__/
 CLAUDE.md
 ClaudeSessions/
 .claude
+.obsidian
+demos/
+.canvas
+graphify-out/
 
 # OpenCover UI analysis results
 OpenCover/

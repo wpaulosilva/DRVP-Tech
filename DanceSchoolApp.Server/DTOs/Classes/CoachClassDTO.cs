@@ -152,20 +152,20 @@ namespace DanceSchoolApp.Server.DTOs.Classes
                     new[] { nameof(StudentIds) });
         }
     }
-
-    // Staff-only reject request — reason is optional but useful for
-    // the notification sent back to the parent.
-    public class CoachClassRejectRequest
+    public class StaffRespondRequest
     {
-        [MaxLength(256)]
+        [Required]
+        public bool Approve { get; set; }
         public string? Reason { get; set; }
     }
 
-    public class CoachClassCoachRejectRequest
+    public class CoachRespondRequest
     {
-        [MaxLength(256)]
+        [Required]
+        public bool Accept { get; set; }
         public string? Reason { get; set; }
     }
+
 
     public class CoachValidateRequest
     {
