@@ -380,6 +380,10 @@ namespace DanceSchoolApp.Server.Services.Classes
             if (coachClass.IdCoach != coachUserId)
                 throw new UnauthorizedAccessException("You are not the coach for this class.");
 
+            if (coachClass.StartDatetime <= DateTime.Now)
+                throw new InvalidOperationException(
+                    "Não é possível aprovar ou rejeitar aulas cuja data já passou.");
+
             if (coachClass.Status != (byte)CoachClassStatus.StaffApproved)
                 throw new InvalidOperationException(
                     "Only StaffApproved classes can be responded to by the coach.");
@@ -443,7 +447,12 @@ namespace DanceSchoolApp.Server.Services.Classes
             var coachClass = await _context.CoachClasses
                 .FirstOrDefaultAsync(c => c.ClassId == classId);
 
-            if (coachClass is null) return;
+            if (coachClass is null)
+                throw new KeyNotFoundException($"Class with id {classId} was not found.");
+
+            if (coachClass.StartDatetime <= DateTime.Now)
+                throw new InvalidOperationException(
+                    "Não é possível aprovar ou rejeitar aulas cuja data já passou.");
 
             if (!approve)
             {
