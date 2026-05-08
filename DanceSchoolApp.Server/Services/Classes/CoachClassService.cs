@@ -382,7 +382,7 @@ namespace DanceSchoolApp.Server.Services.Classes
 
             if (coachClass.StartDatetime <= DateTime.Now)
                 throw new InvalidOperationException(
-                    "Não é possível aprovar ou rejeitar aulas cuja data já passou.");
+                    "It´s not possible to approve or reject classes whose date has already passed.");
 
             if (coachClass.Status != (byte)CoachClassStatus.StaffApproved)
                 throw new InvalidOperationException(
@@ -452,7 +452,7 @@ namespace DanceSchoolApp.Server.Services.Classes
 
             if (coachClass.StartDatetime <= DateTime.Now)
                 throw new InvalidOperationException(
-                    "Não é possível aprovar ou rejeitar aulas cuja data já passou.");
+                    "It´s not possible to approve or reject classes whose date has already passed.");
 
             if (!approve)
             {
