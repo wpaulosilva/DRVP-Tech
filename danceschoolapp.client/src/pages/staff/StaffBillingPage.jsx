@@ -2,9 +2,13 @@
 // GET /api/staff/billing/students?month={YYYY-MM}&page=1&pageSize=25
 // GET /api/staff/billing/coaches?month={YYYY-MM}&page=1&pageSize=25
 import React, { useEffect, useState } from 'react'
-import { getBillingStudentsAll, getBillingCoachesAll } from '../../services/billingService'
-import { get } from '../../api/client'
-import * as XLSX from 'xlsx'
+import {
+    getBillingStudentsAll,
+    getBillingCoachesAll,
+    exportBillingStudents,
+    exportBillingCoaches
+} from '../../services/billingService'
+import { get } from '../../api/client'      
 import DataTable from '../../components/common/DataTable'
 import './StaffBillingPage.css'
 
@@ -62,158 +66,12 @@ function resolveName(obj, candidateKeys = []) {
 
 function formatMoney(v) { return typeof v === 'number' ? `€${v}` : v }
 
-function downloadExcelFormatted(data, filename = 'export.xlsx', headerKeys = null, headerLabels = null) { 
-  // Ensure data is array
-  const rows = Array.isArray(data) ? data : []
-
-  // default keys and labels
-  const defaultKeys = ['Aluno', 'Nif', 'Horas Realizadas Dias', 'Horas Realizadas FimDeSemana', 'Total a Pagar']
-  const keys = Array.isArray(headerKeys) && headerKeys.length ? headerKeys : defaultKeys
-  const labels = Array.isArray(headerLabels) && headerLabels.length ? headerLabels : keys
-
-  const aoa = [labels]
-
-  // populate rows in order, coercing numbers
-  rows.forEach(r => {
-    const line = keys.map(k => {
-      const v = r[k]
-      if (v === undefined || v === null) return ''
-      if (typeof v === 'number') return v
-      if (typeof v === 'string' && v.trim() === '') return ''
-      // try to coerce numeric strings (but keep non-numeric strings as-is)
-      const cleaned = String(v).replace(/[^0-9,.-]+/g, '').replace(',', '.')
-      if (cleaned === '') return String(v)
-      const num = Number(cleaned)
-      return Number.isNaN(num) ? String(v) : num
-    })
-    aoa.push(line)
-  })
-
-  // totals row (sum numeric columns)
-  const totals = keys.map((k, idx) => {
-    if (idx === 0) return 'Total'
-    if (idx === 1) return ''
-    // sum numeric column
-    return aoa.slice(1).reduce((s, row) => s + (Number(row[idx]) || 0), 0)
-  })
-  aoa.push(totals)
-
-  const ws = XLSX.utils.aoa_to_sheet(aoa)
-
-  // auto column widths (approx)
-  ws['!cols'] = keys.map(h => ({ wch: Math.max(8, Math.min(30, String(h).length + 8)) }))
-
-  // Styling: header purple with white text, data rows white with thin border, totals light purple
-  try {
-    const headerColor = 'FF6D28D9'
-    const totalsBg = 'FFF3E8FF'
-    const range = XLSX.utils.decode_range(ws['!ref'])
-
-    // header
-    for (let C = 0; C <= range.e.c; ++C) {
-      const cellRef = XLSX.utils.encode_cell({ r: 0, c: C })
-      const cell = ws[cellRef]
-      if (!cell) continue
-      cell.s = {
-        font: { bold: true, color: { rgb: 'FFFFFFFF' } },
-        fill: { patternType: 'solid', fgColor: { rgb: headerColor } },
-        alignment: { horizontal: 'center', vertical: 'center' }
-      }
-    }
-
-    // data rows
-    for (let R = 1; R <= range.e.r; ++R) {
-      for (let C = 0; C <= range.e.c; ++C) {
-        const cellRef = XLSX.utils.encode_cell({ r: R, c: C })
-        const cell = ws[cellRef]
-        if (!cell) continue
-        cell.s = cell.s || {}
-        // totals row styling
-        if (R === range.e.r) {
-          cell.s.fill = { patternType: 'solid', fgColor: { rgb: totalsBg } }
-          cell.s.font = { bold: true }
-        } else {
-          cell.s.fill = { patternType: 'solid', fgColor: { rgb: 'FFFFFFFF' } }
-        }
-        // thin border
-        cell.s.border = {
-          top: { style: 'thin', color: { rgb: 'FFEFEFF2' } },
-          bottom: { style: 'thin', color: { rgb: 'FFEFEFF2' } },
-          left: { style: 'thin', color: { rgb: 'FFEFEFF2' } },
-          right: { style: 'thin', color: { rgb: 'FFEFEFF2' } }
-        }
-      }
-    }
-
-    // apply number formats for hours and currency
-    for (let R = 1; R <= range.e.r; ++R) {
-      const hoursWeekCell = ws[XLSX.utils.encode_cell({ r: R, c: 2 })]
-      if (hoursWeekCell && typeof hoursWeekCell.v === 'number') { hoursWeekCell.t = 'n'; hoursWeekCell.z = '0.00' }
-      const hoursWeekendCell = ws[XLSX.utils.encode_cell({ r: R, c: 3 })]
-      if (hoursWeekendCell && typeof hoursWeekendCell.v === 'number') { hoursWeekendCell.t = 'n'; hoursWeekendCell.z = '0.00' }
-      const totalCell = ws[XLSX.utils.encode_cell({ r: R, c: 4 })]
-      if (totalCell && typeof totalCell.v === 'number') { totalCell.t = 'n'; totalCell.z = '€#,##0.00' }
-    }
-  } catch {
-    // ignore styling errors
-  }
-
-  // number formats for currency/hours heuristics using keys
-  keys.forEach((h, c) => {
-    const lc = String(h).toLowerCase()
-    const isCurrency = lc.includes('total') || lc.includes('€') || lc.includes('paid') || lc.includes('receita')
-    const isHours = lc.includes('hora') || lc.includes('horas')
-    for (let r = 1; r < aoa.length; r++) {
-      const cellRef = XLSX.utils.encode_cell({ r, c })
-      const cell = ws[cellRef]
-      if (!cell) continue
-      if (isCurrency && typeof cell.v === 'number') {
-        cell.t = 'n'
-        cell.z = '€#,##0.00'
-      }
-      if (isHours && typeof cell.v === 'number') {
-        cell.t = 'n'
-        cell.z = '0"h"'
-      }
-    }
-  })
-
-  // apply totals row styling (last row)
-  const lastRowIndex = aoa.length - 1
-  try {
-    keys.forEach((h, c) => {
-      const cellRef = XLSX.utils.encode_cell({ r: lastRowIndex, c })
-      const cell = ws[cellRef]
-      if (!cell) return
-      cell.s = cell.s || {}
-      cell.s.font = { bold: true }
-      cell.s.fill = { patternType: 'solid', fgColor: { rgb: totalsBg } }
-      // currency number format for totals
-      const lc = String(h).toLowerCase()
-      if (lc.includes('total') || lc.includes('€') || lc.includes('paid') || lc.includes('receita')) {
-        cell.t = 'n'
-        cell.z = '€#,##0.00'
-        cell.s.font.color = { rgb: 'FF008000' }
-      }
-      if (lc.includes('hora')) {
-        cell.t = 'n'
-        cell.z = '0"h"'
-      }
-    })
-  } catch {
-    // ignore styling errors
-  }
-
-  const wb = XLSX.utils.book_new()
-  XLSX.utils.book_append_sheet(wb, ws, 'Faturacao')
-  XLSX.writeFile(wb, filename)
-}
 
 function StudentsTable({ month }) {
   const [rows, setRows] = useState([])
   const [search, setSearch] = useState('')
   const [weekdayRate, setWeekdayRate] = useState(36.00)
-  const [_weekendRate, set_weekendRate] = useState(43.20)
+    const [, set_weekendRate] = useState(43.20)
 
   useEffect(() => {
     let mounted = true
@@ -267,7 +125,7 @@ function StudentsTable({ month }) {
       }
     })()
     return () => { mounted = false }
-  }, [month])
+  }, [month, weekdayRate])
 
   const columns = [
     { key: 'Aluno', label: 'Aluno' },
@@ -318,7 +176,7 @@ function StudentsTable({ month }) {
         {/* status filter removed; kept layout space minimal */}
 
         <div style={{ marginLeft: 'auto' }}>
-          <button className="btn-primary" onClick={() => downloadExcelFormatted(filtered, `students-${month}.xlsx`, ['Aluno','Nif','Horas Realizadas Dias','Horas Realizadas FimDeSemana','Total a Pagar'], ['Aluno','NIF','Horas Realizadas (dias úteis)','Horas Realizadas (fins de semana)','Total a Pagar'])}>
+                  <button className="btn-primary" onClick={() => exportBillingStudents(month, search)}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" style={{ marginRight: 8 }} xmlns="http://www.w3.org/2000/svg">
               <path d="M21 15V19A2 2 0 0 1 19 21H5A2 2 0 0 1 3 19V15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
               <path d="M7 10L12 15L17 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -338,7 +196,7 @@ function CoachesTable({ month }) {
   const [rows, setRows] = useState([])
   const [search, setSearch] = useState('')
   const [weekdayRate, setWeekdayRate] = useState(36.00)
-  const [_weekendRate, _setWeekendRate] = useState(43.20)
+  const [, _setWeekendRate] = useState(43.20)
   useEffect(() => {
     let mounted = true
     void (async () => {
@@ -392,7 +250,7 @@ function CoachesTable({ month }) {
       }
     })()
     return () => { mounted = false }
-  }, [month])
+  }, [month, weekdayRate])
 
   const columns = [
     { key: 'Professor', label: 'Professor' },
@@ -427,7 +285,7 @@ function CoachesTable({ month }) {
         </div>
 
         <div style={{ marginLeft: 'auto' }}>
-          <button className="btn-primary" onClick={() => downloadExcelFormatted(filtered, `coaches-${month}.xlsx`, ['Professor','Nif','Horas Realizadas Dias','Horas Realizadas FimDeSemana','Total a Pagar'], ['Professor','NIF','Horas Realizadas (dias úteis)','Horas Realizadas (fins de semana)','Total a Receber'])}>
+                  <button className="btn-primary" onClick={() => exportBillingCoaches(month, search)}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" style={{ marginRight: 8 }} xmlns="http://www.w3.org/2000/svg">
               <path d="M21 15V19A2 2 0 0 1 19 21H5A2 2 0 0 1 3 19V15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
               <path d="M7 10L12 15L17 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
