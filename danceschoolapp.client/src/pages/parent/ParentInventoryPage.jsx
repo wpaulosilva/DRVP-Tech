@@ -1,14 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import Modal from '../../components/common/Modal'
 import Tabs from '../../components/common/Tabs'
-import { useAuth } from '../../context/useAuth'
 import {
     getSchoolInventory, getCommunityInventory,
-    getItem, createPersonalItem, updateItem, deleteItem,
-    uploadItemImage,
-    getVariants,
+    createPersonalItem,
     getCategories,
-    getRequisitions, createRequisition, cancelRequisition, returnRequisition,
+    getRequisitions, cancelRequisition, returnRequisition,
 } from '../../services/inventoryService'
 import '../../styles/Inventory.css'
 
@@ -27,7 +25,6 @@ const REQ_STATUS = {
 }
 
 const emptyItemForm = { name: '', description: '', idCategory: '', contactPhone: '', contactEmail: '', contactAddress: '' }
-const emptyLoanForm = { itemVariantId: '', quantity: 1, needFrom: '', needUntil: '', note: '' }
 
 function fmtDate(v) {
     if (!v) return '—'
@@ -40,16 +37,16 @@ function fmtPrice(v) {
 }
 
 export default function ParentInventoryPage() {
-    const { user } = useAuth()
+    const navigate = useNavigate()
 
     const [tab, setTab] = useState('school')
 
     // ── Shared filter state ───────────────────────────────────────────────────
-    const [search, setSearch]           = useState('')
-    const [searchInput, setSearchInput] = useState('')
-    const [categoryId, setCategoryId]   = useState('')
-    const [categories, setCategories]   = useState([])
-    const searchTimer                   = useRef(null)
+    const [search, setSearch]             = useState('')
+    const [searchInput, setSearchInput]   = useState('')
+    const [categoryId, setCategoryId]     = useState('')
+    const [categories, setCategories]     = useState([])
+    const searchTimer                     = useRef(null)
 
     // ── School tab ────────────────────────────────────────────────────────────
     const [schoolItems, setSchoolItems]     = useState([])
@@ -59,47 +56,26 @@ export default function ParentInventoryPage() {
     const [schoolError, setSchoolError]     = useState(null)
 
     // ── Community tab ─────────────────────────────────────────────────────────
-    const [commItems, setCommItems]       = useState([])
-    const [commTotal, setCommTotal]       = useState(0)
-    const [commPage, setCommPage]         = useState(1)
-    const [loadingComm, setLoadingComm]   = useState(false)
-    const [commListError, setCommListError] = useState(null)
-    const [maxPrice, setMaxPrice]         = useState('')
-    const [maxPriceInput, setMaxPriceInput] = useState('')
-    const priceTimer                      = useRef(null)
+    const [commItems, setCommItems]           = useState([])
+    const [commTotal, setCommTotal]           = useState(0)
+    const [commPage, setCommPage]             = useState(1)
+    const [loadingComm, setLoadingComm]       = useState(false)
+    const [commListError, setCommListError]   = useState(null)
+    const [maxPrice, setMaxPrice]             = useState('')
+    const [maxPriceInput, setMaxPriceInput]   = useState('')
+    const priceTimer                          = useRef(null)
 
     // ── My requisitions ───────────────────────────────────────────────────────
-    const [requisitions, setRequisitions]   = useState([])
-    const [loadingReqs, setLoadingReqs]     = useState(false)
-
-    // ── Loan modal ────────────────────────────────────────────────────────────
-    const [showLoan, setShowLoan]                   = useState(false)
-    const [loanCard, setLoanCard]                   = useState(null)
-    const [loanVariants, setLoanVariants]           = useState([])
-    const [loadingLoanVars, setLoadingLoanVars]     = useState(false)
-    const [loanForm, setLoanForm]                   = useState(emptyLoanForm)
-    const [loanError, setLoanError]                 = useState(null)
-    const [savingLoan, setSavingLoan]               = useState(false)
+    const [requisitions, setRequisitions] = useState([])
+    const [loadingReqs, setLoadingReqs]   = useState(false)
 
     // ── Return modal ──────────────────────────────────────────────────────────
-    const [showReturn, setShowReturn]       = useState(false)
-    const [returnTarget, setReturnTarget]   = useState(null)
-    const [returnQty, setReturnQty]         = useState(1)
-    const [returnNote, setReturnNote]       = useState('')
-    const [returnError, setReturnError]     = useState(null)
-    const [savingReturn, setSavingReturn]   = useState(false)
-
-    // ── Community item detail modal ───────────────────────────────────────────
-    const [showCommDetail, setShowCommDetail]         = useState(false)
-    const [commDetail, setCommDetail]                 = useState(null)
-    const [commDetailLoading, setCommDetailLoading]   = useState(false)
-    const [commDetailError, setCommDetailError]       = useState(null)
-    const [commEditMode, setCommEditMode]             = useState(false)
-    const [commForm, setCommForm]                     = useState(emptyItemForm)
-    const [savingComm, setSavingComm]                 = useState(false)
-    const [commImgIndex, setCommImgIndex]             = useState(0)
-    const commFileRef                                 = useRef(null)
-    const [uploadingCommImg, setUploadingCommImg]     = useState(false)
+    const [showReturn, setShowReturn]     = useState(false)
+    const [returnTarget, setReturnTarget] = useState(null)
+    const [returnQty, setReturnQty]       = useState(1)
+    const [returnNote, setReturnNote]     = useState('')
+    const [returnError, setReturnError]   = useState(null)
+    const [savingReturn, setSavingReturn] = useState(false)
 
     // ── Announce (create personal item) modal ─────────────────────────────────
     const [showAnnounce, setShowAnnounce]     = useState(false)
@@ -210,51 +186,6 @@ export default function ParentInventoryPage() {
         }, 400)
     }
 
-    // ── Open loan modal ───────────────────────────────────────────────────────
-    const openLoan = async (card) => {
-        setLoanCard(card)
-        setLoanForm(emptyLoanForm)
-        setLoanError(null)
-        setLoanVariants([])
-        setShowLoan(true)
-        setLoadingLoanVars(true)
-        try {
-            const vars = await getVariants(card.itemId)
-            const available = Array.isArray(vars)
-                ? vars.filter(v => v.isActive !== false && v.quantity > 0)
-                : []
-            setLoanVariants(available)
-        } catch {
-            setLoanError('Não foi possível carregar as variantes deste artigo.')
-        } finally {
-            setLoadingLoanVars(false)
-        }
-    }
-
-    // ── Submit loan request ───────────────────────────────────────────────────
-    const handleLoanSubmit = async (e) => {
-        e.preventDefault()
-        if (!loanForm.itemVariantId) { setLoanError('Selecione uma variante.'); return }
-        setSavingLoan(true)
-        setLoanError(null)
-        try {
-            const body = {
-                itemVariantId: Number(loanForm.itemVariantId),
-                quantity: Number(loanForm.quantity),
-                ...(loanForm.needFrom  ? { needFrom: loanForm.needFrom }   : {}),
-                ...(loanForm.needUntil ? { needUntil: loanForm.needUntil } : {}),
-                ...(loanForm.note      ? { note: loanForm.note }           : {}),
-            }
-            await createRequisition(body)
-            setShowLoan(false)
-            loadReqs()
-        } catch (e) {
-            setLoanError(e.message)
-        } finally {
-            setSavingLoan(false)
-        }
-    }
-
     // ── Cancel requisition ────────────────────────────────────────────────────
     const handleCancelReq = async (req) => {
         if (!window.confirm(`Cancelar requisição de "${req.itemName}"?`)) return
@@ -294,87 +225,6 @@ export default function ParentInventoryPage() {
         }
     }
 
-    // ── Open community item detail ─────────────────────────────────────────────
-    const openCommDetail = async (card) => {
-        setCommDetail(null)
-        setCommDetailError(null)
-        setCommEditMode(false)
-        setCommImgIndex(0)
-        setShowCommDetail(true)
-        setCommDetailLoading(true)
-        try {
-            const detail = await getItem(card.itemId)
-            setCommDetail(detail)
-            setCommForm({
-                name: detail.name ?? '',
-                description: detail.description ?? '',
-                idCategory: detail.category?.categoryId ?? '',
-                contactPhone: detail.contactPhone ?? '',
-                contactEmail: detail.contactEmail ?? '',
-                contactAddress: detail.contactAddress ?? '',
-            })
-        } catch (e) {
-            setCommDetailError(e.message)
-        } finally {
-            setCommDetailLoading(false)
-        }
-    }
-
-    // ── Save community item edit ───────────────────────────────────────────────
-    const handleSaveComm = async (e) => {
-        e.preventDefault()
-        setSavingComm(true)
-        setCommDetailError(null)
-        try {
-            const body = {}
-            if (commForm.name)          body.name = commForm.name
-            if (commForm.description)   body.description = commForm.description
-            if (commForm.idCategory)    body.idCategory = Number(commForm.idCategory)
-            if (commForm.contactPhone)  body.contactPhone = commForm.contactPhone
-            if (commForm.contactEmail)  body.contactEmail = commForm.contactEmail
-            if (commForm.contactAddress) body.contactAddress = commForm.contactAddress
-            await updateItem(commDetail.itemId, body)
-            const updated = await getItem(commDetail.itemId)
-            setCommDetail(updated)
-            setCommEditMode(false)
-            loadCommunity()
-        } catch (e) {
-            setCommDetailError(e.message)
-        } finally {
-            setSavingComm(false)
-        }
-    }
-
-    // ── Delete community item ─────────────────────────────────────────────────
-    const handleDeleteComm = async () => {
-        if (!window.confirm(`Remover anúncio "${commDetail?.name}"?`)) return
-        try {
-            await deleteItem(commDetail.itemId)
-            setShowCommDetail(false)
-            loadCommunity()
-        } catch (e) {
-            setCommDetailError(e.message)
-        }
-    }
-
-    // ── Upload image to own community item ────────────────────────────────────
-    const handleCommImgUpload = async (e) => {
-        const file = e.target.files?.[0]
-        if (!file) return
-        setUploadingCommImg(true)
-        try {
-            await uploadItemImage(commDetail.itemId, file)
-            const updated = await getItem(commDetail.itemId)
-            setCommDetail(updated)
-            loadCommunity()
-        } catch (e) {
-            setCommDetailError(e.message)
-        } finally {
-            setUploadingCommImg(false)
-            e.target.value = ''
-        }
-    }
-
     // ── Submit announce (create personal item) ────────────────────────────────
     const handleAnnounceSubmit = async (e) => {
         e.preventDefault()
@@ -390,10 +240,12 @@ export default function ParentInventoryPage() {
                 ...(announceForm.contactEmail   ? { contactEmail: announceForm.contactEmail }     : {}),
                 ...(announceForm.contactAddress ? { contactAddress: announceForm.contactAddress } : {}),
             }
-            await createPersonalItem(body)
+            const res = await createPersonalItem(body)
             setShowAnnounce(false)
             setAnnounceForm(emptyItemForm)
-            loadCommunity()
+            const newId = res?.itemId ?? res?.ItemId
+            if (newId) navigate(`/parent/inventario/${newId}`)
+            else loadCommunity()
         } catch (e) {
             setAnnounceError(e.message)
         } finally {
@@ -404,12 +256,7 @@ export default function ParentInventoryPage() {
     // ── Derived ───────────────────────────────────────────────────────────────
     const schoolPages = Math.ceil(schoolTotal / PAGE_SIZE)
     const commPages   = Math.ceil(commTotal / PAGE_SIZE)
-    const isOwnItem   = commDetail && user && commDetail.idOwner === user.userId
 
-    const selectedLoanVariant = loanVariants.find(v => v.variantId === Number(loanForm.itemVariantId))
-
-    const setLF = (k, v) => setLoanForm(f => ({ ...f, [k]: v }))
-    const setCF = (k, v) => setCommForm(f => ({ ...f, [k]: v }))
     const setAF = (k, v) => setAnnounceForm(f => ({ ...f, [k]: v }))
 
     return (
@@ -460,7 +307,7 @@ export default function ParentInventoryPage() {
                         <>
                             <div className="inv-grid">
                                 {schoolItems.map(card => (
-                                    <div key={card.itemId} className="inv-card" onClick={() => openLoan(card)}>
+                                    <div key={card.itemId} className="inv-card" onClick={() => navigate(`/parent/inventario/${card.itemId}`)}>
                                         {card.imageUrl
                                             ? <img src={card.imageUrl} alt={card.name} className="inv-card-img" />
                                             : <div className="inv-card-img-placeholder">{(card.name ?? '?')[0]}</div>
@@ -622,7 +469,7 @@ export default function ParentInventoryPage() {
                         <>
                             <div className="inv-grid">
                                 {commItems.map(card => (
-                                    <div key={card.itemId} className="inv-card" onClick={() => openCommDetail(card)}>
+                                    <div key={card.itemId} className="inv-card" onClick={() => navigate(`/parent/inventario/${card.itemId}`)}>
                                         {card.imageUrl
                                             ? <img src={card.imageUrl} alt={card.name} className="inv-card-img" />
                                             : <div className="inv-card-img-placeholder">{(card.name ?? '?')[0]}</div>
@@ -658,103 +505,6 @@ export default function ParentInventoryPage() {
                     )}
                 </>
             )}
-
-            {/* ═══════════════════════ LOAN MODAL ════════════════════════════════════════ */}
-            <Modal
-                open={showLoan}
-                title={`Pedir Empréstimo — ${loanCard?.name ?? ''}`}
-                onClose={() => setShowLoan(false)}
-            >
-                {loanCard?.imageUrl && (
-                    <img
-                        src={loanCard.imageUrl}
-                        alt={loanCard.name}
-                        style={{ width: '100%', maxHeight: 180, objectFit: 'contain', borderRadius: 10, marginBottom: 16 }}
-                    />
-                )}
-                {loadingLoanVars ? (
-                    <p className="inv-loading">A carregar variantes...</p>
-                ) : loanVariants.length === 0 ? (
-                    <div className="inv-form-error">
-                        Não existem variantes disponíveis em stock para este artigo.
-                    </div>
-                ) : (
-                    <form className="inv-modal-form" onSubmit={handleLoanSubmit}>
-                        <div className="inv-form-group">
-                            <label className="inv-form-label">Variante *</label>
-                            <select
-                                className="inv-form-select"
-                                value={loanForm.itemVariantId}
-                                onChange={e => setLF('itemVariantId', e.target.value)}
-                                required
-                            >
-                                <option value="">Selecionar variante...</option>
-                                {loanVariants.map(v => (
-                                    <option key={v.variantId} value={v.variantId}>
-                                        {[v.color, v.size].filter(Boolean).join(' / ') || `Variante #${v.variantId}`}
-                                        {' '}— {v.quantity} disponível
-                                        {v.price != null ? ` · ${fmtPrice(v.price)}` : ''}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-
-                        <div className="inv-form-group">
-                            <label className="inv-form-label">Quantidade *</label>
-                            <input
-                                className="inv-form-input"
-                                type="number"
-                                min={1}
-                                max={selectedLoanVariant?.quantity ?? 99}
-                                value={loanForm.quantity}
-                                onChange={e => setLF('quantity', e.target.value)}
-                                required
-                            />
-                        </div>
-
-                        <div className="inv-form-row-2">
-                            <div className="inv-form-group">
-                                <label className="inv-form-label">Necessário de</label>
-                                <input
-                                    className="inv-form-input"
-                                    type="date"
-                                    value={loanForm.needFrom}
-                                    onChange={e => setLF('needFrom', e.target.value)}
-                                />
-                            </div>
-                            <div className="inv-form-group">
-                                <label className="inv-form-label">Necessário até</label>
-                                <input
-                                    className="inv-form-input"
-                                    type="date"
-                                    value={loanForm.needUntil}
-                                    onChange={e => setLF('needUntil', e.target.value)}
-                                />
-                            </div>
-                        </div>
-
-                        <div className="inv-form-group">
-                            <label className="inv-form-label">Nota (opcional)</label>
-                            <textarea
-                                className="inv-form-textarea"
-                                rows={3}
-                                placeholder="Motivo, detalhes adicionais..."
-                                value={loanForm.note}
-                                onChange={e => setLF('note', e.target.value)}
-                            />
-                        </div>
-
-                        {loanError && <div className="inv-form-error">{loanError}</div>}
-
-                        <div className="modal-actions">
-                            <button type="button" className="btn btn-secondary" onClick={() => setShowLoan(false)}>Cancelar</button>
-                            <button type="submit" className="btn btn-primary" disabled={savingLoan}>
-                                {savingLoan ? 'A enviar...' : 'Pedir Empréstimo'}
-                            </button>
-                        </div>
-                    </form>
-                )}
-            </Modal>
 
             {/* ═══════════════════════ RETURN MODAL ══════════════════════════════════════ */}
             <Modal
@@ -807,172 +557,6 @@ export default function ParentInventoryPage() {
                         </div>
                     </form>
                 )}
-            </Modal>
-
-            {/* ═══════════════════ COMMUNITY ITEM DETAIL MODAL ═══════════════════════════ */}
-            <Modal
-                open={showCommDetail}
-                title={commDetail?.name ?? 'Artigo'}
-                onClose={() => { setShowCommDetail(false); setCommEditMode(false) }}
-            >
-                {commDetailLoading ? (
-                    <p className="inv-loading">A carregar...</p>
-                ) : commDetailError && !commDetail ? (
-                    <p className="inv-error">{commDetailError}</p>
-                ) : commDetail ? (
-                    <>
-                        {commDetailError && <div className="inv-form-error" style={{ marginBottom: 12 }}>{commDetailError}</div>}
-
-                        {/* Image gallery */}
-                        {commDetail.images?.length > 0 && (
-                            <div className="inv-detail-images" style={{ marginBottom: 16 }}>
-                                <img
-                                    src={commDetail.images[commImgIndex]?.imageUrl}
-                                    alt={commDetail.name}
-                                    className="inv-detail-main-img"
-                                />
-                                {commDetail.images.length > 1 && (
-                                    <div className="inv-detail-thumbs">
-                                        {commDetail.images.map((img, i) => (
-                                            <img
-                                                key={img.imageId}
-                                                src={img.imageUrl}
-                                                alt=""
-                                                className={`inv-detail-thumb${i === commImgIndex ? ' inv-detail-thumb--active' : ''}`}
-                                                onClick={() => setCommImgIndex(i)}
-                                            />
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-                        )}
-
-                        {/* Contact chips */}
-                        {(commDetail.contactPhone || commDetail.contactEmail || commDetail.contactAddress) && (
-                            <div className="inv-contact-row" style={{ marginBottom: 14 }}>
-                                {commDetail.contactPhone   && <span className="inv-contact-chip">📞 {commDetail.contactPhone}</span>}
-                                {commDetail.contactEmail   && <span className="inv-contact-chip">✉ {commDetail.contactEmail}</span>}
-                                {commDetail.contactAddress && <span className="inv-contact-chip">📍 {commDetail.contactAddress}</span>}
-                            </div>
-                        )}
-
-                        {/* Variants (read-only for community) */}
-                        {commDetail.variants?.filter(v => v.isActive !== false).length > 0 && (
-                            <div className="inv-variants-section" style={{ marginBottom: 14 }}>
-                                <p className="inv-variants-title">Variantes disponíveis</p>
-                                <table className="inv-variants-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Cor</th>
-                                            <th>Tam.</th>
-                                            <th>Qtd.</th>
-                                            <th>Preço</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {commDetail.variants
-                                            .filter(v => v.isActive !== false)
-                                            .map(v => (
-                                                <tr key={v.variantId}>
-                                                    <td>{v.color ?? '—'}</td>
-                                                    <td>{v.size ?? '—'}</td>
-                                                    <td>{v.quantity}</td>
-                                                    <td>{v.price != null ? fmtPrice(v.price) : '—'}</td>
-                                                </tr>
-                                            ))
-                                        }
-                                    </tbody>
-                                </table>
-                            </div>
-                        )}
-
-                        {/* Owner-only controls */}
-                        {isOwnItem && (
-                            commEditMode ? (
-                                <form className="inv-modal-form" onSubmit={handleSaveComm}>
-                                    <div className="inv-form-group">
-                                        <label className="inv-form-label">Nome *</label>
-                                        <input
-                                            className="inv-form-input"
-                                            value={commForm.name}
-                                            onChange={e => setCF('name', e.target.value)}
-                                            required
-                                        />
-                                    </div>
-                                    <div className="inv-form-group">
-                                        <label className="inv-form-label">Descrição</label>
-                                        <textarea
-                                            className="inv-form-textarea"
-                                            rows={3}
-                                            value={commForm.description}
-                                            onChange={e => setCF('description', e.target.value)}
-                                        />
-                                    </div>
-                                    <div className="inv-form-group">
-                                        <label className="inv-form-label">Categoria</label>
-                                        <select
-                                            className="inv-form-select"
-                                            value={commForm.idCategory}
-                                            onChange={e => setCF('idCategory', e.target.value)}
-                                        >
-                                            <option value="">Sem categoria</option>
-                                            {categories.map(c => (
-                                                <option key={c.categoryId} value={c.categoryId}>{c.catgName}</option>
-                                            ))}
-                                        </select>
-                                    </div>
-                                    <div className="inv-form-row-3">
-                                        <div className="inv-form-group">
-                                            <label className="inv-form-label">Telefone</label>
-                                            <input className="inv-form-input" value={commForm.contactPhone} onChange={e => setCF('contactPhone', e.target.value)} />
-                                        </div>
-                                        <div className="inv-form-group">
-                                            <label className="inv-form-label">Email</label>
-                                            <input className="inv-form-input" type="email" value={commForm.contactEmail} onChange={e => setCF('contactEmail', e.target.value)} />
-                                        </div>
-                                        <div className="inv-form-group">
-                                            <label className="inv-form-label">Morada</label>
-                                            <input className="inv-form-input" value={commForm.contactAddress} onChange={e => setCF('contactAddress', e.target.value)} />
-                                        </div>
-                                    </div>
-                                    <div className="modal-actions">
-                                        <button type="button" className="btn btn-secondary" onClick={() => setCommEditMode(false)}>Cancelar</button>
-                                        <button type="submit" className="btn btn-primary" disabled={savingComm}>
-                                            {savingComm ? 'A guardar...' : 'Guardar'}
-                                        </button>
-                                    </div>
-                                </form>
-                            ) : (
-                                <>
-                                    {/* Image upload */}
-                                    <div style={{ marginBottom: 12 }}>
-                                        <input
-                                            ref={commFileRef}
-                                            type="file"
-                                            accept=".jpg,.jpeg,.png"
-                                            style={{ display: 'none' }}
-                                            onChange={handleCommImgUpload}
-                                        />
-                                        <span
-                                            className="inv-upload-label"
-                                            onClick={() => commFileRef.current?.click()}
-                                        >
-                                            {uploadingCommImg ? 'A carregar...' : '+ Adicionar imagem'}
-                                        </span>
-                                    </div>
-                                    <div className="modal-actions">
-                                        <button type="button" className="btn btn-danger" onClick={handleDeleteComm}>
-                                            Remover anúncio
-                                        </button>
-                                        <button type="button" className="btn btn-primary" onClick={() => setCommEditMode(true)}>
-                                            Editar
-                                        </button>
-                                    </div>
-                                </>
-                            )
-                        )}
-                    </>
-                ) : null}
             </Modal>
 
             {/* ═══════════════════════ ANNOUNCE MODAL ════════════════════════════════════ */}

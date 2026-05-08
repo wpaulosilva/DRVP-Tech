@@ -23,6 +23,7 @@ import StaffModalitiesPage from './pages/staff/StaffModalitiesPage'
 import StaffStudiosPage from './pages/staff/StaffStudiosPage'
 import StaffEventsPage from './pages/staff/StaffEventsPage'
 import StaffInventoryPage from './pages/staff/StaffInventoryPage'
+import StaffItemDetailPage from './pages/staff/StaffItemDetailPage'
 import StaffAgendaPage from './pages/staff/StaffAgendaPage'
 import StaffBillingPage from './pages/staff/StaffBillingPage'
 import StaffBlockedPeriodsPage from './pages/staff/StaffBlockedPeriodsPage'
@@ -39,6 +40,7 @@ import ParentDashboardPage from './pages/parent/ParentDashboardPage'
 import ParentClassesPage from './pages/parent/ParentClassesPage'
 import ParentStudentsPage from './pages/parent/ParentStudentsPage'
 import ParentInventoryPage from './pages/parent/ParentInventoryPage'
+import ParentItemDetailPage from './pages/parent/ParentItemDetailPage'
 import ParentEventsPage from './pages/parent/ParentEventsPage'
 
 function App() {
@@ -85,6 +87,7 @@ function App() {
                 <Route path="/staff/estudios" element={<StaffStudiosPage />} />
                 <Route path="/staff/eventos" element={<StaffEventsPage />} />
                 <Route path="/staff/inventario" element={<StaffInventoryPage />} />
+                <Route path="/staff/inventario/:itemId" element={<StaffItemDetailPage />} />
                 <Route path="/staff/agenda" element={<StaffAgendaPage />} />
                 <Route path="/staff/faturacao" element={<StaffBillingPage />} />
                 <Route path="/staff/bloqueios" element={<StaffBlockedPeriodsPage />} />
@@ -117,6 +120,7 @@ function App() {
                 <Route path="/parent/aulas" element={<ParentClassesPage />} />
                 <Route path="/parent/estudantes" element={<ParentStudentsPage />} />
                 <Route path="/parent/inventario" element={<ParentInventoryPage />} />
+                <Route path="/parent/inventario/:itemId" element={<ParentItemDetailPage />} />
                 <Route path="/parent/eventos" element={<ParentEventsPage />} />
             </Route>
         </Routes>
