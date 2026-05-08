@@ -8,6 +8,7 @@ namespace DanceSchoolApp.Server.Controllers
 {
     [ApiController]
     [Route("api/appsettings")]
+    [Authorize(Roles = "admin")]
     [EnableRateLimiting("api")]
     public class AppSettingController : ControllerBase
     {
@@ -19,7 +20,6 @@ namespace DanceSchoolApp.Server.Controllers
         }
 
         //  GET /api/appsettings 
-        [Authorize(Roles = "staff")]
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
@@ -35,7 +35,6 @@ namespace DanceSchoolApp.Server.Controllers
         }
 
         //  PATCH /api/appsettings/{key} 
-        [Authorize(Roles = "staff")]
         [HttpPatch("{key}")]
         public async Task<IActionResult> Update(string key,
             [FromBody] AppSettingUpdateRequest request)

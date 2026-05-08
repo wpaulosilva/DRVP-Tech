@@ -186,44 +186,6 @@ namespace DanceSchoolApp.Server.Controllers
             }
         }
 
-        //  GET /api/staff/appsettings 
-        [HttpGet("appsettings")]
-        public async Task<IActionResult> GetAppSettings()
-        {
-            try
-            {
-                var result = await _appSettingService.GetAllAsync();
-                return Ok(result);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
-            }
-        }
-
-        //  PATCH /api/staff/appsettings/{key} 
-        [HttpPatch("appsettings/{key}")]
-        public async Task<IActionResult> UpdateAppSetting(
-            string key, [FromBody] AppSettingUpdateRequest request)
-        {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
-
-            try
-            {
-                await _appSettingService.UpdateAsync(key, request.Value);
-                return NoContent();
-            }
-            catch (KeyNotFoundException ex)
-            {
-                return NotFound(ex.Message);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
-            }
-        }
-
         //  Private helpers 
 
         private static bool TryParseYearMonth(string? input, out int year, out int month)

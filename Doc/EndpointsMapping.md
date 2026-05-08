@@ -83,7 +83,15 @@ The header mounts once per session. It does NOT call an endpoint on every naviga
 | Pagination arrows | `GET /api/admin/users?page={n}&pageSize=20` |
 | "Nova Conta" button → form submit | `POST /api/users` body: `{ username, email, firstRole: 1 }` |
 | Edit icon (✏) → form submit | `PATCH /api/users/{id}/personinfo` body: `{ firstName, lastName, ... }` |
-| Deactivate icon (×) | `PATCH /api/users/{id}/deactivate` |
+| Deactivate icon (×) | `PATCH /api/users/{id}/deactivate` |   
+
+### `/admin/appsettings` — Configurações (not yet in mockup sidebar, but needed for US19)
+
+| Element | Call |
+|---|---|
+| Page mount | `GET /api/auth/me` |
+| Settings form load | `GET /api/appsettings` |
+| Save a value | `PATCH /api/appsettings/{key}` body: `{ value }` |   
 
 ---
 
@@ -242,13 +250,7 @@ The header mounts once per session. It does NOT call an endpoint on every naviga
 | Pagination | re-calls with `&page={n}` |
 | "Exportar Excel" button | `GET /api/staff/billing/students/export?month={YYYY-MM}` *(deferred — not yet implemented)* |
 
-### `/staff/appsettings` — Configurações (not yet in mockup sidebar, but needed for US19)
 
-| Element | Call |
-|---|---|
-| Page mount | `GET /api/auth/me` |
-| Settings form load | `GET /api/staff/appsettings` |
-| Save a value | `PATCH /api/staff/appsettings/{key}` body: `{ value }` |
 
 ---
 
