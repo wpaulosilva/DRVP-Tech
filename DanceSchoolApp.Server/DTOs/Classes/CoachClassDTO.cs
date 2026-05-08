@@ -172,4 +172,12 @@ namespace DanceSchoolApp.Server.DTOs.Classes
         [Required]
         public bool DidTeach { get; set; }
     }
+
+    public class StaffValidateRequest
+    {
+        [Required]
+        public bool Confirmed { get; set; }
+
+        public string? Reason { get; set; }
+    }
 }

@@ -149,8 +149,8 @@ namespace DanceSchoolApp.Server.Services.Classes
             {
                 await _notificationService.SendAsync(
                     userId: classInfo.IdCoach,
-                    title: "New Student Joined",
-                    message: $"A student has joined your class on {classInfo.StartDatetime:dd/MM/yyyy HH:mm}.",
+                    title: "Novo aluno inscrito",
+                    message: $"Um aluno inscreveu-se na sua aula em {classInfo.StartDatetime:dd/MM/yyyy HH:mm}.",
                     type: NotificationType.ClassUpdate,
                     entityType: "CoachClass",
                     entityId: request.ClassId);
@@ -243,9 +243,8 @@ namespace DanceSchoolApp.Server.Services.Classes
 
         //  Private helpers 
 
-        // Once all participants have validated, move the class to Pending
-        // so staff know it is ready for final sign-off.
-        // Called automatically after each parent validation.
+        
+ 
         private async Task TryAdvanceClassToStaffReviewAsync(int classId)
         {
             var allParticipants = await _context.Participants
@@ -261,32 +260,6 @@ namespace DanceSchoolApp.Server.Services.Classes
                 .FirstOrDefaultAsync(c => c.ClassId == classId);
 
             if (coachClass is null) return;
-
-            var staffIds = await _context.Users
-                .Include(u => u.IdRoles)
-                .Where(u => u.IdRoles.Any(r => r.RoleId == 1) && u.IsActive)
-                .Select(u => u.UserId)
-                .ToListAsync();
-
-            // If the worker already expired the window and moved the class to Pending,
-            // skip the status change but notify staff that a late parent response arrived.
-            if (coachClass.Status == (byte)CoachClassStatus.Pending)
-            {
-                foreach (var staffId in staffIds)
-                {
-                    await _notificationService.SendAsync(
-                        userId: staffId,
-                        title: "Late Parent Validation Received",
-                        message: $"A parent submitted a validation for class id {classId} after the validation window closed.",
-                        type: NotificationType.Warning,
-                        entityType: "CoachClass",
-                        entityId: classId);
-                }
-                return;
-            }
-
-            // Normal path: class is still Finished — check coach has also responded
-            // before advancing to Pending for staff sign-off.
             if (coachClass.Status != (byte)CoachClassStatus.Finished)
                 return;
 
@@ -295,17 +268,6 @@ namespace DanceSchoolApp.Server.Services.Classes
 
             coachClass.Status = (byte)CoachClassStatus.Pending;
             await _context.SaveChangesAsync();
-
-            foreach (var staffId in staffIds)
-            {
-                await _notificationService.SendAsync(
-                    userId: staffId,
-                    title: "Class Ready for Validation",
-                    message: $"All participants have responded for class id {classId}. Final staff sign-off required.",
-                    type: NotificationType.ValidationRequest,
-                    entityType: "CoachClass",
-                    entityId: classId);
-            }
         }
     }
 }

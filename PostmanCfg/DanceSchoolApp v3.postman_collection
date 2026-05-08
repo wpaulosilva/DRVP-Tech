@@ -1,8 +1,8 @@
 {
   "info": {
     "_postman_id": "fc805cb2-010a-4b91-b1e9-bd4a495edb3d",
-    "name": "DanceSchoolApp v3",
-    "description": "FlowArtes / Ent'Artes Dance School API\n\n## Setup\n\n1. Select the **DanceSchoolApp** environment\n    \n2. Set `base_url` if needed (default: [https://localhost:7003](https://localhost:7003))\n    \n3. Run **POST Login** — the test script auto-saves `userId`, `roles`, and `expiresAt`\n    \n4. All requests use the shared cookie jar automatically (JWT is HttpOnly cookie)\n    \n\n## Test Users\n\n| ID | Username | Email | Password |\n|----|----------|-------|----------|\n| 9 | admin | admin@admin.com | 12345678 |\n| 8 | staff | staff@staff.com | 12345678 |\n| 10 | parent | parent@parent.com | 12345678 |\n| 11 | coach | coach@coach.com | 12345678 |\n\nLogin accepts **email OR username** + password.\n    \n\n## Variables\n\n- `base_url` — server base (change to switch between local/staging)\n    \n- `userId` — auto-set by Login\n    \n- `roles` — auto-set by Login\n    \n- `user_id`, `student_id`, `coach_id`, `class_id`, `participant_id`, `studio_id`, `modality_id`, `item_id` — set manually or auto-captured by POST scripts\n    \n\n## Enumerators\n\n### CoachClass Status\n\n| Value | Name | Description |\n|-------|------|-------------|\n| 0 | Requested | Parent created the class request |\n| 1 | Approved | Coach accepted — class is live |\n| 2 | Rejected | Rejected by staff or coach |\n| 3 | Cancelled | Cancelled (was Requested or Approved) |\n| 4 | Finished | End time passed — validation window open |\n| 5 | Validated | Staff final sign-off complete |\n| 6 | Pending | All validations done — awaiting staff |\n| 7 | StaffApproved | Staff approved, awaiting coach acceptance |\n\n### CoachClass Lifecycle Endpoints\n\n| Action | Endpoint | Body |\n|--------|----------|------|\n| Staff approve | `PATCH /api/coachclasses/{id}/staff-respond` | `{ \"approve\": true }` |\n| Staff reject | `PATCH /api/coachclasses/{id}/staff-respond` | `{ \"approve\": false, \"reason\"?: \"...\" }` |\n| Coach accept | `PATCH /api/coachclasses/{id}/coach-respond` | `{ \"accept\": true }` |\n| Coach reject | `PATCH /api/coachclasses/{id}/coach-respond` | `{ \"accept\": false, \"reason\"?: \"...\" }` |\n| Coach validate | `PATCH /api/coachclasses/{id}/coach-validate` | `{ \"didTeach\": true/false }` |\n| Staff final validate | `PATCH /api/coachclasses/{id}/staff-validate` | *(no body)* |\n| Cancel | `PATCH /api/coachclasses/{id}/cancel` | *(no body)* |\n| Finish | ⚙ **AUTOMATED** by ClassLifecycleWorker | No endpoint — polls every 5 min |\n\n### StudentAcceptance Status\n\n| Value | Name |\n|-------|------|\n| 0 | Pending |\n| 1 | Accepted |\n| 2 | Rejected |\n\n### Roles\n\n| Value | Name |\n|-------|------|\n| 0 | Admin |\n| 1 | Staff |\n| 2 | Coach |\n| 3 | Parent |\n\n### BlockedPeriod Scope\n\n| Value | Name | Description |\n|-------|------|-------------|\n| 0 | Undefined | Fallback — do not use when creating |\n| 1 | NormalClass | Regular school classes occupy studios |\n| 2 | Studio | Specific studio is blocked |\n| 3 | Coach | Specific coach is unavailable |\n| 4 | Event | School event — may block everything |\n| 5 | Holiday | School break / public holiday |\n\n> When `scope=2` (Studio), `studioId` is **required**. When `scope=3` (Coach), `coachId` is **required**.\n\n### ItemRequisition Status\n\n| Value | Name | Description |\n|-------|------|-------------|\n| 0 | Pending | Waiting for staff review |\n| 1 | Approved | Staff approved, item reserved |\n| 2 | Rejected | Staff rejected |\n| 3 | Returned | Item returned |\n| 4 | Cancelled | Cancelled by parent or staff |\n\n### CoachValidation Status (on Participant)\n\n| Value | Name | Description |\n|-------|------|-------------|\n| 0 | Pending | Parent hasn't responded yet |\n| 1 | ParentConfirmed | Parent confirmed student attended |\n| 2 | Disputed | Parent says student did not attend |",
+    "name": "DanceSchoolApp v2",
+    "description": "FlowArtes / Ent'Artes Dance School API\n\n## Setup\n\n1. Select the **DanceSchoolApp** environment\n    \n2. Set `base_url` if needed (default: [https://localhost:7003](https://localhost:7003))\n    \n3. Run **POST Login** — the test script auto-saves `userId`, `roles`, and `expiresAt`\n    \n4. All requests use the shared cookie jar automatically (JWT is HttpOnly cookie)\n    \n\n## Variables\n\n- `base_url` — server base (change to switch between local/staging)\n    \n- `userId` — auto-set by Login\n    \n- `roles` — auto-set by Login\n    \n- `user_id`, `student_id`, `coach_id`, `class_id`, `participant_id`, `studio_id`, `modality_id`, `item_id` — set manually or auto-captured by POST scripts\n    \n\n## Status values\n\n- CoachClass: 0=Requested, 1=Approved, 2=Rejected, 3=Cancelled, 4=Finished, 5=Validated, 6=Pending, 7=StaffApproved\n    \n- StudentAcceptance: 0=Pending, 1=Accepted, 2=Rejected\n    \n- Roles: 0=Admin, 1=Staff, 2=Coach, 3=Parent",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
     "_exporter_id": "53613999",
     "_collection_link": "https://go.postman.co/collection/53613999-fc805cb2-010a-4b91-b1e9-bd4a495edb3d?source=collection_link"
@@ -1295,7 +1295,7 @@
                   "response": []
                 },
                 {
-                  "name": "PATCH Staff Respond → StaffApproved (approve=true)",
+                  "name": "PATCH Staff Approve → StaffApproved",
                   "event": [
                     {
                       "listen": "test",
@@ -1310,23 +1310,9 @@
                   ],
                   "request": {
                     "method": "PATCH",
-                    "header": [
-                      {
-                        "key": "Content-Type",
-                        "value": "application/json"
-                      }
-                    ],
-                    "body": {
-                      "mode": "raw",
-                      "raw": "{\n    \"approve\": true\n}",
-                      "options": {
-                        "raw": {
-                          "language": "json"
-                        }
-                      }
-                    },
+                    "header": [],
                     "url": {
-                      "raw": "{{base_url}}/api/coachclasses/{{class_id}}/staff-respond",
+                      "raw": "{{base_url}}/api/coachclasses/{{class_id}}/staff-approve",
                       "host": [
                         "{{base_url}}"
                       ],
@@ -1334,15 +1320,15 @@
                         "api",
                         "coachclasses",
                         "{{class_id}}",
-                        "staff-respond"
+                        "staff-approve"
                       ]
                     },
-                    "description": "[staff] Transitions Requested(0) → StaffApproved(7) when approve=true, or Rejected(2) when approve=false + optional reason. Coach receives notification to accept or reject."
+                    "description": "[staff] Transitions Requested(0) → StaffApproved(7). Coach receives notification to accept or reject."
                   },
                   "response": []
                 },
                 {
-                  "name": "PATCH Coach Respond → Approved (accept=true)",
+                  "name": "PATCH Coach Accept → Approved",
                   "event": [
                     {
                       "listen": "test",
@@ -1357,23 +1343,9 @@
                   ],
                   "request": {
                     "method": "PATCH",
-                    "header": [
-                      {
-                        "key": "Content-Type",
-                        "value": "application/json"
-                      }
-                    ],
-                    "body": {
-                      "mode": "raw",
-                      "raw": "{\n    \"accept\": true\n}",
-                      "options": {
-                        "raw": {
-                          "language": "json"
-                        }
-                      }
-                    },
+                    "header": [],
                     "url": {
-                      "raw": "{{base_url}}/api/coachclasses/{{class_id}}/coach-respond",
+                      "raw": "{{base_url}}/api/coachclasses/{{class_id}}/coach-accept",
                       "host": [
                         "{{base_url}}"
                       ],
@@ -1381,15 +1353,15 @@
                         "api",
                         "coachclasses",
                         "{{class_id}}",
-                        "coach-respond"
+                        "coach-accept"
                       ]
                     },
-                    "description": "[coach] Transitions StaffApproved(7) → Approved(1) when accept=true, or Rejected(2) when accept=false + optional reason. Must be the assigned coach. Parent + all staff notified."
+                    "description": "[coach] Transitions StaffApproved(7) → Approved(1). Must be the assigned coach. Parent + all staff notified."
                   },
                   "response": []
                 },
                 {
-                  "name": "PATCH Coach Respond → Rejected (accept=false)",
+                  "name": "PATCH Coach Reject → Rejected",
                   "request": {
                     "method": "PATCH",
                     "header": [
@@ -1400,7 +1372,7 @@
                     ],
                     "body": {
                       "mode": "raw",
-                      "raw": "{\n    \"accept\": false,\n    \"reason\": \"Unavailable due to schedule conflict.\"\n}",
+                      "raw": "{\n    \"reason\": \"Unavailable due to schedule conflict.\"\n}",
                       "options": {
                         "raw": {
                           "language": "json"
@@ -1408,7 +1380,7 @@
                       }
                     },
                     "url": {
-                      "raw": "{{base_url}}/api/coachclasses/{{class_id}}/coach-respond",
+                      "raw": "{{base_url}}/api/coachclasses/{{class_id}}/coach-reject",
                       "host": [
                         "{{base_url}}"
                       ],
@@ -1416,7 +1388,7 @@
                         "api",
                         "coachclasses",
                         "{{class_id}}",
-                        "coach-respond"
+                        "coach-reject"
                       ]
                     },
                     "description": "[coach] Transitions StaffApproved(7) → Rejected(2). Must be the assigned coach. Parent + all staff notified with reason."
@@ -1424,7 +1396,7 @@
                   "response": []
                 },
                 {
-                  "name": "PATCH Staff Respond → Rejected (approve=false)",
+                  "name": "PATCH Staff Reject → Rejected",
                   "request": {
                     "method": "PATCH",
                     "header": [
@@ -1435,7 +1407,7 @@
                     ],
                     "body": {
                       "mode": "raw",
-                      "raw": "{\n    \"approve\": false,\n    \"reason\": \"Requested time conflicts with school event.\"\n}",
+                      "raw": "{\n    \"reason\": \"Requested time conflicts with school event.\"\n}",
                       "options": {
                         "raw": {
                           "language": "json"
@@ -1443,7 +1415,7 @@
                       }
                     },
                     "url": {
-                      "raw": "{{base_url}}/api/coachclasses/{{class_id}}/staff-respond",
+                      "raw": "{{base_url}}/api/coachclasses/{{class_id}}/reject",
                       "host": [
                         "{{base_url}}"
                       ],
@@ -1451,10 +1423,10 @@
                         "api",
                         "coachclasses",
                         "{{class_id}}",
-                        "staff-respond"
+                        "reject"
                       ]
                     },
-                    "description": "[staff] Transitions Requested(0) → Rejected(2). approve=false + optional reason. Parent notified."
+                    "description": "[staff] Transitions Requested(0) or StaffApproved(7) → Rejected(2). Parent notified."
                   },
                   "response": []
                 },
@@ -1480,22 +1452,35 @@
                   "response": []
                 },
                 {
-                  "name": "⚙ Finish → Finished (AUTOMATED — no endpoint)",
+                  "name": "PATCH Finish → Finished",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "exec": [
+                          "pm.test(\"Class finished\", () => pm.response.to.have.status(204));",
+                          "console.log(\"Class\", pm.collectionVariables.get(\"class_id\"), \"→ Finished(4). 48h validation window open for coach and parents.\");"
+                        ],
+                        "type": "text/javascript"
+                      }
+                    }
+                  ],
                   "request": {
-                    "method": "GET",
+                    "method": "PATCH",
                     "header": [],
                     "url": {
-                      "raw": "{{base_url}}/api/coachclasses/{{class_id}}",
+                      "raw": "{{base_url}}/api/coachclasses/{{class_id}}/finish",
                       "host": [
                         "{{base_url}}"
                       ],
                       "path": [
                         "api",
                         "coachclasses",
-                        "{{class_id}}"
+                        "{{class_id}}",
+                        "finish"
                       ]
                     },
-                    "description": "⚠ There is NO manual /finish endpoint. The ClassLifecycleWorker (polls every 5 min) automatically transitions Approved(1) → Finished(4) once the class end time passes. This request is a GET to check the class status — use it to confirm the transition happened."
+                    "description": "[staff] Transitions Approved(1) → Finished(4). Notifies coach and all parent participants to validate within 48h."
                   },
                   "response": []
                 },
@@ -1754,7 +1739,7 @@
               ]
             }
           ],
-          "description": "Coach class lifecycle:\nRequested(0) → StaffApproved(7) → Approved(1) → Finished(4) → Pending(6) → Validated(5)\n\nWorkflow:\n1. Parent POSTs a class (Requested). Studio is auto-assigned.\n2. Staff PATCH /staff-respond { approve: true } → StaffApproved. Coach notified.\n   OR Staff PATCH /staff-respond { approve: false, reason? } → Rejected.\n3. Coach PATCH /coach-respond { accept: true } → Approved. Parent + staff notified.\n   OR Coach PATCH /coach-respond { accept: false, reason? } → Rejected.\n4. Students join via Participants.\n5. ⚙ ClassLifecycleWorker auto-transitions Approved → Finished when end time passes (polls every 5 min). NO manual endpoint.\n6. Coach PATCH /coach-validate { didTeach: bool } to confirm they taught.\n7. Parent PATCH participant/{id}/parent-validate { attended: bool } to confirm attendance.\n8. Once all participants respond → class auto-moves to Pending.\n9. Staff PATCH /staff-validate → Validated."
+          "description": "Coach class lifecycle:\nRequested(0) → StaffApproved(7) → Approved(1) → Finished(4) → Pending(6) → Validated(5)\n\nWorkflow:\n1. Parent POSTs a class (Requested). Studio is auto-assigned.\n2. Staff PATCH /staff-approve → StaffApproved. Coach notified.\n3. Coach PATCH /coach-accept → Approved. Parent + staff notified.\n   OR Coach PATCH /coach-reject → Rejected.\n4. Students join via Participants.\n5. Staff PATCH /finish → Finished. 48h validation window opens.\n6. Coach PATCH /coach-validate to confirm they taught.\n7. Parent PATCH participant/{id}/validate to confirm attendance.\n8. Once all participants respond → class auto-moves to Pending.\n9. Staff PATCH /staff-validate → Validated."
         },
         {
           "name": "School",
@@ -4331,15 +4316,16 @@
                   }
                 },
                 "url": {
-                  "raw": "{{base_url}}/api/coachclasses/{{class_id}}/staff-respond",
+                  "raw": "{{base_url}}/api/coachclasses/29/staff-respond/",
                   "host": [
                     "{{base_url}}"
                   ],
                   "path": [
                     "api",
                     "coachclasses",
-                    "{{class_id}}",
-                    "staff-respond"
+                    "29",
+                    "staff-respond",
+                    ""
                   ]
                 },
                 "description": "[staff] Transitions Requested(0) → StaffApproved(7). Coach receives notification to accept or reject."
@@ -4462,7 +4448,7 @@
                 "header": [],
                 "body": {
                   "mode": "raw",
-                  "raw": "{\r\n    \"accept\": true\r\n}",
+                  "raw": "{\r\n    \"approve\": true\r\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -4916,10 +4902,19 @@
               "response": []
             },
             {
-              "name": "3.3 - Staff Validate Ok",
+              "name": "3.3 - Staff Final Validate",
               "request": {
                 "method": "PATCH",
                 "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n    \"confirmed\": true\r\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
                 "url": {
                   "raw": "{{base_url}}/api/coachclasses/{{class_id}}/staff-validate",
                   "host": [
@@ -4930,26 +4925,6 @@
                     "coachclasses",
                     "{{class_id}}",
                     "staff-validate"
-                  ]
-                }
-              },
-              "response": []
-            },
-            {
-              "name": "3.4 - Staff Cancel Class (Optional)",
-              "request": {
-                "method": "PATCH",
-                "header": [],
-                "url": {
-                  "raw": "{{base_url}}/api/coachclasses/{{class_id}}/cancel",
-                  "host": [
-                    "{{base_url}}"
-                  ],
-                  "path": [
-                    "api",
-                    "coachclasses",
-                    "{{class_id}}",
-                    "cancel"
                   ]
                 }
               },
@@ -6439,23 +6414,9 @@
               ],
               "request": {
                 "method": "PATCH",
-                "header": [
-                  {
-                    "key": "Content-Type",
-                    "value": "application/json"
-                  }
-                ],
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n    \"approve\": true\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
-                },
+                "header": [],
                 "url": {
-                  "raw": "{{base_url}}/api/coachclasses/{{class_id}}/staff-respond",
+                  "raw": "{{base_url}}/api/coachclasses/{{class_id}}/staff-approve",
                   "host": [
                     "{{base_url}}"
                   ],
@@ -6463,10 +6424,10 @@
                     "api",
                     "coachclasses",
                     "{{class_id}}",
-                    "staff-respond"
+                    "staff-approve"
                   ]
                 },
-                "description": "Step 10: Staff approves the class request (approve=true). Status → StaffApproved(7). Coach notified."
+                "description": "Step 10: Staff approves the class request. Status → StaffApproved(7). Coach notified."
               },
               "response": []
             },
@@ -6486,23 +6447,9 @@
               ],
               "request": {
                 "method": "PATCH",
-                "header": [
-                  {
-                    "key": "Content-Type",
-                    "value": "application/json"
-                  }
-                ],
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n    \"accept\": true\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
-                },
+                "header": [],
                 "url": {
-                  "raw": "{{base_url}}/api/coachclasses/{{class_id}}/coach-respond",
+                  "raw": "{{base_url}}/api/coachclasses/{{class_id}}/coach-accept",
                   "host": [
                     "{{base_url}}"
                   ],
@@ -6510,10 +6457,10 @@
                     "api",
                     "coachclasses",
                     "{{class_id}}",
-                    "coach-respond"
+                    "coach-accept"
                   ]
                 },
-                "description": "Step 11: Coach (login as coach first) accepts the class (accept=true). Status → Approved(1). Parent notified."
+                "description": "Step 11: Coach (login as coach first) accepts the class. Status → Approved(1). Parent notified."
               },
               "response": []
             },

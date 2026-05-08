@@ -293,8 +293,11 @@ namespace DanceSchoolApp.Server.Controllers.Classes
         // Staff use — final sign-off. Transitions Pending → Validated.
         [Authorize(Roles = "staff")]
         [HttpPatch("{id}/staff-validate")]
-        public async Task<IActionResult> StaffValidate(int id)
+        public async Task<IActionResult> StaffValidate(int id, [FromBody] StaffValidateRequest request)
         {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
             try
             {
                 await _coachClassService.StaffValidateAsync(id);

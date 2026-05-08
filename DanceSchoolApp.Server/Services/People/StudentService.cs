@@ -221,8 +221,8 @@ namespace DanceSchoolApp.Server.Services.People
 
             await _notificationService.SendAsync(
                 userId: student.ParentUserId,
-                title: "Student Accepted",
-                message: $"Your student has been accepted and can now join classes.",
+                title: "Aluno Admitido",
+                message: $"O seu educando foi aceite e já pode participar nas aulas.",
                 type: NotificationType.Success,
                 entityType: "Student",
                 entityId: studentId);
@@ -242,10 +242,10 @@ namespace DanceSchoolApp.Server.Services.People
 
             await _notificationService.SendAsync(
                 userId: student.ParentUserId,
-                title: "Student Data Requires Correction",
+                title: "Dados do Aluno Requerem Correção",
                 message: reason is not null
-                    ? $"Your student registration was not accepted. Reason: {reason}. Please update the student information."
-                    : "Your student registration was not accepted. Please review and update the student information.",
+                    ? $"O registo do seu educando não foi aceite. Motivo: {reason}. Por favor, atualize as informações do aluno."
+                    : "O registo do seu educando não foi aceite. Por favor, reveja e atualize as informações do aluno.",
                 type: NotificationType.Warning,
                 entityType: "Student",
                 entityId: studentId);
