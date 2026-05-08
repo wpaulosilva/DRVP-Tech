@@ -13,9 +13,11 @@ namespace DanceSchoolApp.Server.Controllers.People
     public class StaffController : ControllerBase
     {
         private readonly StaffService _StaffService;
-        public StaffController(StaffService StaffService)
+        private readonly IWebHostEnvironment _env;
+        public StaffController(StaffService StaffService, IWebHostEnvironment env)
         {
             _StaffService = StaffService;
+            _env = env;
         }
 
         //  GET /api/staff/me 
@@ -51,6 +53,10 @@ namespace DanceSchoolApp.Server.Controllers.People
     [FromQuery] string? sortBy = "",
     [FromQuery] string? sortDir = "asc")
         {
+            // Development-only endpoint: staff listing is internal; frontend uses /api/staff/me and specific staff pages
+            if (!_env.IsDevelopment())
+                return StatusCode(StatusCodes.Status403Forbidden, "This endpoint is available only in development.");
+
             try
             {
                 var result = await _StaffService.GetStaffsAsync(
@@ -73,6 +79,10 @@ namespace DanceSchoolApp.Server.Controllers.People
         [HttpGet("{id}")]
         public async Task<IActionResult> GetStaff(int id)
         {
+            // Development-only endpoint: only allowed in Development environment
+            if (!_env.IsDevelopment())
+                return StatusCode(StatusCodes.Status403Forbidden, "This endpoint is available only in development.");
+
             try
             {
                 var result = await _StaffService.GetStaffAsync(id);

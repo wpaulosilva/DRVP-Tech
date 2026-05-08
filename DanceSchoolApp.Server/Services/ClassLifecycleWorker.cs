@@ -108,8 +108,8 @@ namespace DanceSchoolApp.Server.Services
             {
                 await notifications.SendAsync(
                     userId: cls.IdCoach,
-                    title: "Class Validation Required",
-                    message: $"Please confirm you taught the class on {cls.StartDatetime:dd/MM/yyyy HH:mm}. You have 48 hours to respond.",
+                    title: "Validação de Aula Necessária",
+                    message: $"Por favor, confirme que lecionou a aula de {cls.StartDatetime:dd/MM/yyyy HH:mm}. Tem 48 horas para responder.",
                     type: NotificationType.ValidationRequest,
                     entityType: "CoachClass",
                     entityId: cls.ClassId);
@@ -122,8 +122,8 @@ namespace DanceSchoolApp.Server.Services
                 {
                     await notifications.SendAsync(
                         userId: parentId,
-                        title: "Class Validation Required",
-                        message: $"Please confirm attendance for the class on {cls.StartDatetime:dd/MM/yyyy HH:mm}. You have 48 hours to respond.",
+                        title: "Validação de Aula Necessária",
+                        message: $"Por favor, confirme a presença na aula de {cls.StartDatetime:dd/MM/yyyy HH:mm}. Tem 48 horas para responder.",
                         type: NotificationType.ValidationRequest,
                         entityType: "CoachClass",
                         entityId: cls.ClassId);
@@ -209,9 +209,9 @@ namespace DanceSchoolApp.Server.Services
                 {
                     await notifications.SendAsync(
                         userId: staffId,
-                        title: "Validation Window Expired",
-                        message: $"The 48-hour validation window for class id {cls.ClassId} " +
-                                 $"(scheduled {cls.StartDatetime:dd/MM/yyyy HH:mm}) has expired." +
+                        title: "Janela de Validação Expirada",
+                        message: $"A janela de validação de 48 horas para a aula ID {cls.ClassId}" +
+                                 $"(agendada para {cls.StartDatetime:dd/MM/yyyy HH:mm}) expirou." +
                                  nonRespondersSummary,
                         type: NotificationType.Warning,
                         entityType: "CoachClass",

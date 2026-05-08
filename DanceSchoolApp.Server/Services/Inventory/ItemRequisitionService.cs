@@ -166,10 +166,10 @@ namespace DanceSchoolApp.Server.Services.Inventory
             {
                 await _notificationService.SendAsync(
                     userId: requisition.IdParent,
-                    title: "Requisition Approved",
+                    title: "Requisição Aprovada",
                     message: request.ExpectedReturnDate.HasValue
-                        ? $"Your requisition for '{requisition.ItemVariant.IdItemNavigation.Name}' has been approved. Please return it by {request.ExpectedReturnDate.Value:dd/MM/yyyy}."
-                        : $"Your requisition for '{requisition.ItemVariant.IdItemNavigation.Name}' has been approved.",
+                        ? $"A sua requisição de '{requisition.ItemVariant.IdItemNavigation.Name}' foi aprovada. Por favor, devolva até {request.ExpectedReturnDate.Value:dd/MM/yyyy}."
+                        : $"A sua requisição de '{requisition.ItemVariant.IdItemNavigation.Name}' foi aprovada.",
                     type: NotificationType.Success,
                     entityType: "ItemRequisition",
                     entityId: requisition.RequisitionId);
@@ -178,8 +178,8 @@ namespace DanceSchoolApp.Server.Services.Inventory
             {
                 await _notificationService.SendAsync(
                     userId: requisition.IdParent,
-                    title: "Requisition Rejected",
-                    message: $"Your requisition for '{requisition.ItemVariant.IdItemNavigation.Name}' was not approved.",
+                    title: "Requisição Rejeitada",
+                    message: $"A sua requisição de '{requisition.ItemVariant.IdItemNavigation.Name}' não foi aprovada.",
                     type: NotificationType.Warning,
                     entityType: "ItemRequisition",
                     entityId: requisition.RequisitionId);

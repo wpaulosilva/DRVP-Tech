@@ -162,7 +162,7 @@ namespace DanceSchoolApp.Server.DTOs.Classes
     public class CoachRespondRequest
     {
         [Required]
-        public bool Accept { get; set; }
+        public bool Approve { get; set; }
         public string? Reason { get; set; }
     }
 
@@ -171,5 +171,13 @@ namespace DanceSchoolApp.Server.DTOs.Classes
     {
         [Required]
         public bool DidTeach { get; set; }
+    }
+
+    public class StaffValidateRequest
+    {
+        [Required]
+        public bool Confirmed { get; set; }
+
+        public string? Reason { get; set; }
     }
 }
