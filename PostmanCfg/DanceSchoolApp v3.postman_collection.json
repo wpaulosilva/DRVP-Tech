@@ -3029,34 +3029,98 @@
               "item": [
                 {
                   "name": "GET Item Categories",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "exec": [
+                          "pm.test(\"Status 200\", () => pm.response.to.have.status(200));"
+                        ],
+                        "type": "text/javascript"
+                      }
+                    }
+                  ],
                   "request": {
                     "method": "GET",
                     "header": [],
                     "url": {
-                      "raw": ""
-                    }
+                      "raw": "{{base_url}}/api/item-categories",
+                      "host": [
+                        "{{base_url}}"
+                      ],
+                      "path": [
+                        "api",
+                        "item-categories"
+                      ]
+                    },
+                    "description": "[staff,parent] Returns all active item categories. Used to populate category filter dropdowns."
                   },
                   "response": []
                 },
                 {
-                  "name": "GET Item Categories by Id",
+                  "name": "GET Item Category by Id",
                   "request": {
                     "method": "GET",
                     "header": [],
                     "url": {
-                      "raw": ""
-                    }
+                      "raw": "{{base_url}}/api/item-categories/{{item_category_id}}",
+                      "host": [
+                        "{{base_url}}"
+                      ],
+                      "path": [
+                        "api",
+                        "item-categories",
+                        "{{item_category_id}}"
+                      ]
+                    },
+                    "description": "[staff,parent] Returns a single category by ID."
                   },
                   "response": []
                 },
                 {
-                  "name": "POST Item Categories",
-                  "request": {
-                    "method": "GET",
-                    "header": [],
-                    "url": {
-                      "raw": ""
+                  "name": "POST Item Category",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "exec": [
+                          "pm.test(\"Category created\", () => pm.response.to.have.status(201));",
+                          "if (pm.response.code === 201) {",
+                          "    pm.collectionVariables.set(\"item_category_id\", pm.response.json().itemCategoryId);",
+                          "}"
+                        ],
+                        "type": "text/javascript"
+                      }
                     }
+                  ],
+                  "request": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n    \"name\": \"Calçado\",\n    \"description\": \"Sapatos e sapatilhas de dança\"\n}",
+                      "options": {
+                        "raw": {
+                          "language": "json"
+                        }
+                      }
+                    },
+                    "url": {
+                      "raw": "{{base_url}}/api/item-categories",
+                      "host": [
+                        "{{base_url}}"
+                      ],
+                      "path": [
+                        "api",
+                        "item-categories"
+                      ]
+                    },
+                    "description": "[staff] Creates a new item category."
                   },
                   "response": []
                 }
@@ -3071,7 +3135,7 @@
                     "method": "GET",
                     "header": [],
                     "url": {
-                      "raw": "{{base_url}}/api/items?page=1&pageSize=10",
+                      "raw": "{{base_url}}/api/items?page=1&pageSize=12",
                       "host": [
                         "{{base_url}}"
                       ],
@@ -3086,10 +3150,26 @@
                         },
                         {
                           "key": "pageSize",
-                          "value": "10"
+                          "value": "12"
+                        },
+                        {
+                          "key": "fromSchool",
+                          "value": "true",
+                          "disabled": true
+                        },
+                        {
+                          "key": "categoryId",
+                          "value": "1",
+                          "disabled": true
+                        },
+                        {
+                          "key": "search",
+                          "value": "",
+                          "disabled": true
                         }
                       ]
-                    }
+                    },
+                    "description": "[staff] Returns all items paginated. Filter with fromSchool=true|false, categoryId, search."
                   },
                   "response": []
                 },
@@ -3108,50 +3188,74 @@
                         "items",
                         "{{item_id}}"
                       ]
-                    }
+                    },
+                    "description": "[staff,parent] Returns a single item with images, variants, and category embedded."
                   },
                   "response": []
                 },
                 {
-                  "name": "GET Item School",
+                  "name": "GET Items School",
                   "request": {
                     "method": "GET",
                     "header": [],
                     "url": {
-                      "raw": ""
-                    }
-                  },
-                  "response": []
-                },
-                {
-                  "name": "GET Item Community",
-                  "request": {
-                    "method": "GET",
-                    "header": [],
-                    "url": {
-                      "raw": ""
-                    }
-                  },
-                  "response": []
-                },
-                {
-                  "name": "GET Item by Categories",
-                  "request": {
-                    "method": "GET",
-                    "header": [],
-                    "url": {
-                      "raw": "{{base_url}}/api/items/{source}/category/1",
+                      "raw": "{{base_url}}/api/items?fromSchool=true&page=1&pageSize=12",
                       "host": [
                         "{{base_url}}"
                       ],
                       "path": [
                         "api",
-                        "items",
-                        "{source}",
-                        "category",
-                        "1"
+                        "items"
+                      ],
+                      "query": [
+                        {
+                          "key": "fromSchool",
+                          "value": "true"
+                        },
+                        {
+                          "key": "page",
+                          "value": "1"
+                        },
+                        {
+                          "key": "pageSize",
+                          "value": "12"
+                        }
                       ]
-                    }
+                    },
+                    "description": "[staff] Returns school-owned items. Used by staff inventory Escolar tab."
+                  },
+                  "response": []
+                },
+                {
+                  "name": "GET Items Community",
+                  "request": {
+                    "method": "GET",
+                    "header": [],
+                    "url": {
+                      "raw": "{{base_url}}/api/items?fromSchool=false&page=1&pageSize=12",
+                      "host": [
+                        "{{base_url}}"
+                      ],
+                      "path": [
+                        "api",
+                        "items"
+                      ],
+                      "query": [
+                        {
+                          "key": "fromSchool",
+                          "value": "false"
+                        },
+                        {
+                          "key": "page",
+                          "value": "1"
+                        },
+                        {
+                          "key": "pageSize",
+                          "value": "12"
+                        }
+                      ]
+                    },
+                    "description": "[staff,parent] Returns community-listed items. Filter with categoryId, search, maxPrice."
                   },
                   "response": []
                 },
@@ -3162,8 +3266,10 @@
                       "listen": "test",
                       "script": {
                         "exec": [
+                          "pm.test(\"Item created\", () => pm.response.to.have.status(201));",
                           "if (pm.response.code === 201) {",
                           "    pm.collectionVariables.set(\"item_id\", pm.response.json().itemId);",
+                          "    console.log(\"Created item_id:\", pm.response.json().itemId);",
                           "}"
                         ],
                         "type": "text/javascript"
@@ -3180,7 +3286,7 @@
                     ],
                     "body": {
                       "mode": "raw",
-                      "raw": "{\n    \"name\": \"Ballet Shoes\",\n    \"description\": \"Pink satin ballet shoes\",\n    \"idCategory\": 1,\n    \"fromSchool\": true\n}",
+                      "raw": "{\n    \"name\": \"Sapatilhas de Ballet\",\n    \"description\": \"Sapatilhas de cetim cor-de-rosa\",\n    \"idCategory\": {{item_category_id}},\n    \"contactPhone\": \"+351912345678\",\n    \"contactEmail\": \"escola@entartes.pt\"\n}",
                       "options": {
                         "raw": {
                           "language": "json"
@@ -3188,16 +3294,17 @@
                       }
                     },
                     "url": {
-                      "raw": "{{base_url}}/api/items",
+                      "raw": "{{base_url}}/api/items/school",
                       "host": [
                         "{{base_url}}"
                       ],
                       "path": [
                         "api",
-                        "items"
+                        "items",
+                        "school"
                       ]
                     },
-                    "description": "[staff]"
+                    "description": "[staff] Creates a school-owned item. No variants yet — add via POST /api/items/{id}/variants."
                   },
                   "response": []
                 },
@@ -3208,8 +3315,10 @@
                       "listen": "test",
                       "script": {
                         "exec": [
+                          "pm.test(\"Personal item created\", () => pm.response.to.have.status(201));",
                           "if (pm.response.code === 201) {",
                           "    pm.collectionVariables.set(\"item_id\", pm.response.json().itemId);",
+                          "    console.log(\"Created item_id:\", pm.response.json().itemId);",
                           "}"
                         ],
                         "type": "text/javascript"
@@ -3226,7 +3335,7 @@
                     ],
                     "body": {
                       "mode": "raw",
-                      "raw": "{\n    \"name\": \"Ballet Shoes\",\n    \"description\": \"Pink satin ballet shoes\",\n    \"idCategory\": 1,\n    \"fromSchool\": true\n}",
+                      "raw": "{\n    \"name\": \"Sapatilhas usadas tamanho 36\",\n    \"description\": \"Em bom estado, usadas 2 vezes\",\n    \"idCategory\": {{item_category_id}},\n    \"contactPhone\": \"+351961234567\",\n    \"contactEmail\": \"parent@example.com\"\n}",
                       "options": {
                         "raw": {
                           "language": "json"
@@ -3234,38 +3343,93 @@
                       }
                     },
                     "url": {
-                      "raw": "{{base_url}}/api/items",
+                      "raw": "{{base_url}}/api/items/personal",
                       "host": [
                         "{{base_url}}"
                       ],
                       "path": [
                         "api",
-                        "items"
+                        "items",
+                        "personal"
                       ]
                     },
-                    "description": "[staff]"
+                    "description": "[parent] Creates a community (personal) item listing. idOwner is set server-side from JWT."
                   },
                   "response": []
                 },
                 {
                   "name": "PATCH Edit Item",
-                  "request": {
-                    "method": "GET",
-                    "header": [],
-                    "url": {
-                      "raw": ""
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "exec": [
+                          "pm.test(\"Status 204\", () => pm.response.to.have.status(204));"
+                        ],
+                        "type": "text/javascript"
+                      }
                     }
+                  ],
+                  "request": {
+                    "method": "PATCH",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n    \"name\": \"Nome Atualizado\",\n    \"description\": \"Descrição atualizada\",\n    \"contactPhone\": \"+351912345678\"\n}",
+                      "options": {
+                        "raw": {
+                          "language": "json"
+                        }
+                      }
+                    },
+                    "url": {
+                      "raw": "{{base_url}}/api/items/{{item_id}}",
+                      "host": [
+                        "{{base_url}}"
+                      ],
+                      "path": [
+                        "api",
+                        "items",
+                        "{{item_id}}"
+                      ]
+                    },
+                    "description": "[staff,parent(owner)] All fields optional. Parent can only edit own community items — server returns 403 otherwise."
                   },
                   "response": []
                 },
                 {
                   "name": "DELETE Deactivate Item",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "exec": [
+                          "pm.test(\"Status 204\", () => pm.response.to.have.status(204));"
+                        ],
+                        "type": "text/javascript"
+                      }
+                    }
+                  ],
                   "request": {
-                    "method": "GET",
+                    "method": "DELETE",
                     "header": [],
                     "url": {
-                      "raw": ""
-                    }
+                      "raw": "{{base_url}}/api/items/{{item_id}}",
+                      "host": [
+                        "{{base_url}}"
+                      ],
+                      "path": [
+                        "api",
+                        "items",
+                        "{{item_id}}"
+                      ]
+                    },
+                    "description": "[staff,parent(owner)] Soft-deletes the item. Parent can only deactivate own community items."
                   },
                   "response": []
                 }
@@ -3275,13 +3439,23 @@
               "name": "Item Variant",
               "item": [
                 {
-                  "name": "GET Item Variant",
+                  "name": "GET Item Variants",
                   "request": {
                     "method": "GET",
                     "header": [],
                     "url": {
-                      "raw": ""
-                    }
+                      "raw": "{{base_url}}/api/items/{{item_id}}/variants",
+                      "host": [
+                        "{{base_url}}"
+                      ],
+                      "path": [
+                        "api",
+                        "items",
+                        "{{item_id}}",
+                        "variants"
+                      ]
+                    },
+                    "description": "[staff,parent] Returns all variants for an item."
                   },
                   "response": []
                 },
@@ -3292,13 +3466,13 @@
                       "listen": "test",
                       "script": {
                         "exec": [
+                          "pm.test(\"Variant created\", () => pm.response.to.have.status(201));",
                           "if (pm.response.code === 201) {",
-                          "    pm.collectionVariables.set(\"item_id\", pm.response.json().itemId);",
+                          "    pm.collectionVariables.set(\"item_variant_id\", pm.response.json().itemVariantId);",
+                          "    console.log(\"Created item_variant_id:\", pm.response.json().itemVariantId);",
                           "}"
                         ],
-                        "type": "text/javascript",
-                        "packages": {},
-                        "requests": {}
+                        "type": "text/javascript"
                       }
                     }
                   ],
@@ -3320,18 +3494,18 @@
                       }
                     },
                     "url": {
-                      "raw": "{{base_url}}/api/items/4/variants",
+                      "raw": "{{base_url}}/api/items/{{item_id}}/variants",
                       "host": [
                         "{{base_url}}"
                       ],
                       "path": [
                         "api",
                         "items",
-                        "4",
+                        "{{item_id}}",
                         "variants"
                       ]
                     },
-                    "description": "[staff]"
+                    "description": "[staff,parent(owner)] Adds a variant to an item. quantity required; color, size, price optional."
                   },
                   "response": []
                 },
@@ -3342,21 +3516,23 @@
                       "listen": "test",
                       "script": {
                         "exec": [
-                          "pm.test(\"Coach accepted\", () => pm.response.to.have.status(204));",
-                          "console.log(\"Class\", pm.collectionVariables.get(\"class_id\"), \"→ Approved(1). Parent + staff notified.\");"
+                          "pm.test(\"Status 204\", () => pm.response.to.have.status(204));"
                         ],
-                        "type": "text/javascript",
-                        "packages": {},
-                        "requests": {}
+                        "type": "text/javascript"
                       }
                     }
                   ],
                   "request": {
                     "method": "PATCH",
-                    "header": [],
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      }
+                    ],
                     "body": {
                       "mode": "raw",
-                      "raw": "{\r\n  \"color\": \"Rosa\",\r\n  \"size\": \"M\",\r\n  \"quantity\": 5,\r\n  \"price\": 16.50\r\n}",
+                      "raw": "{\n  \"color\": \"Rosa\",\n  \"size\": \"M\",\n  \"quantity\": 5,\n  \"price\": 16.50,\n  \"isActive\": true\n}",
                       "options": {
                         "raw": {
                           "language": "json"
@@ -3364,30 +3540,52 @@
                       }
                     },
                     "url": {
-                      "raw": "{{base_url}}/api/items/2/variants/1",
+                      "raw": "{{base_url}}/api/items/{{item_id}}/variants/{{item_variant_id}}",
                       "host": [
                         "{{base_url}}"
                       ],
                       "path": [
                         "api",
                         "items",
-                        "2",
+                        "{{item_id}}",
                         "variants",
-                        "1"
+                        "{{item_variant_id}}"
                       ]
                     },
-                    "description": "[coach] Transitions StaffApproved(7) → Approved(1). Must be the assigned coach. Parent + all staff notified."
+                    "description": "[staff,parent(owner)] All fields optional. Set isActive=false to deactivate a variant (hides it from the loan form)."
                   },
                   "response": []
                 },
                 {
-                  "name": "DELETE Deactivate Item Variant",
+                  "name": "DELETE Item Variant",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "exec": [
+                          "pm.test(\"Status 204\", () => pm.response.to.have.status(204));"
+                        ],
+                        "type": "text/javascript"
+                      }
+                    }
+                  ],
                   "request": {
-                    "method": "GET",
+                    "method": "DELETE",
                     "header": [],
                     "url": {
-                      "raw": ""
-                    }
+                      "raw": "{{base_url}}/api/items/{{item_id}}/variants/{{item_variant_id}}",
+                      "host": [
+                        "{{base_url}}"
+                      ],
+                      "path": [
+                        "api",
+                        "items",
+                        "{{item_id}}",
+                        "variants",
+                        "{{item_variant_id}}"
+                      ]
+                    },
+                    "description": "[staff,parent(owner)] Hard-deletes a variant. Returns 409 if there are active requisitions using this variant."
                   },
                   "response": []
                 }
@@ -3402,15 +3600,16 @@
                     "method": "GET",
                     "header": [],
                     "url": {
-                      "raw": "{{base_url}}/api/itemrequisitions",
+                      "raw": "{{base_url}}/api/requisitions",
                       "host": [
                         "{{base_url}}"
                       ],
                       "path": [
                         "api",
-                        "itemrequisitions"
+                        "requisitions"
                       ]
-                    }
+                    },
+                    "description": "[staff] Returns all requisitions. [parent] Returns own requisitions only."
                   },
                   "response": []
                 },
@@ -3420,7 +3619,7 @@
                     "method": "GET",
                     "header": [],
                     "url": {
-                      "raw": "{{base_url}}/api/requisitions/parent/20",
+                      "raw": "{{base_url}}/api/requisitions/parent/{{parent_id}}",
                       "host": [
                         "{{base_url}}"
                       ],
@@ -3428,10 +3627,10 @@
                         "api",
                         "requisitions",
                         "parent",
-                        "20"
+                        "{{parent_id}}"
                       ]
                     },
-                    "description": "[staff,parent] Parent can only see own requisitions."
+                    "description": "[staff,parent] Staff can query any parent. Parent can only see own requisitions."
                   },
                   "response": []
                 },
@@ -3442,13 +3641,13 @@
                       "listen": "test",
                       "script": {
                         "exec": [
+                          "pm.test(\"Requisition created\", () => pm.response.to.have.status(201));",
                           "if (pm.response.code === 201) {",
                           "    pm.collectionVariables.set(\"requisition_id\", pm.response.json().requisitionId);",
+                          "    console.log(\"Created requisition_id:\", pm.response.json().requisitionId);",
                           "}"
                         ],
-                        "type": "text/javascript",
-                        "packages": {},
-                        "requests": {}
+                        "type": "text/javascript"
                       }
                     }
                   ],
@@ -3462,7 +3661,7 @@
                     ],
                     "body": {
                       "mode": "raw",
-                      "raw": "{\n    \"itemVariantId\": 4,\n    \"quantity\": 1,\n    \"needFrom\": \"2026-04-26\",\n    \"needUntil\": \"2026-04-30\"\n}",
+                      "raw": "{\n    \"itemVariantId\": {{item_variant_id}},\n    \"quantity\": 1,\n    \"needFrom\": \"2026-06-01\",\n    \"needUntil\": \"2026-06-15\",\n    \"note\": \"Para o espetáculo de ballet\"\n}",
                       "options": {
                         "raw": {
                           "language": "json"
@@ -3479,12 +3678,23 @@
                         "requisitions"
                       ]
                     },
-                    "description": "[parent] Parent requests an item for a usage window. needFrom/needUntil = requested dates. Staff sets expectedReturnDate at review."
+                    "description": "[parent] Creates a loan request for a school item variant. needFrom/needUntil = requested dates. Staff sets expectedReturnDate at review. Status starts at Pending(0)."
                   },
                   "response": []
                 },
                 {
-                  "name": "PATCH Requisition Validation",
+                  "name": "PATCH Requisition Review",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "exec": [
+                          "pm.test(\"Status 204\", () => pm.response.to.have.status(204));"
+                        ],
+                        "type": "text/javascript"
+                      }
+                    }
+                  ],
                   "request": {
                     "method": "PATCH",
                     "header": [
@@ -3495,7 +3705,7 @@
                     ],
                     "body": {
                       "mode": "raw",
-                      "raw": "{\n    \"Approve\": true,\n    \"expectedReturnDate\": \"2026-05-21\"\n}",
+                      "raw": "{\n    \"approve\": true,\n    \"expectedReturnDate\": \"2026-06-20\",\n    \"note\": null\n}",
                       "options": {
                         "raw": {
                           "language": "json"
@@ -3503,23 +3713,34 @@
                       }
                     },
                     "url": {
-                      "raw": "{{base_url}}/api/requisitions/11/review",
+                      "raw": "{{base_url}}/api/requisitions/{{requisition_id}}/review",
                       "host": [
                         "{{base_url}}"
                       ],
                       "path": [
                         "api",
                         "requisitions",
-                        "11",
+                        "{{requisition_id}}",
                         "review"
                       ]
                     },
-                    "description": "[staff] Staff sets expectedReturnDate when approving."
+                    "description": "[staff] Approve (approve=true) or reject (approve=false) a Pending requisition. expectedReturnDate required when approving. Status → Approved(1) or Rejected(2)."
                   },
                   "response": []
                 },
                 {
                   "name": "PATCH Requisition Return",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "exec": [
+                          "pm.test(\"Status 204\", () => pm.response.to.have.status(204));"
+                        ],
+                        "type": "text/javascript"
+                      }
+                    }
+                  ],
                   "request": {
                     "method": "PATCH",
                     "header": [
@@ -3538,18 +3759,18 @@
                       }
                     },
                     "url": {
-                      "raw": "{{base_url}}/api/requisitions/11/return",
+                      "raw": "{{base_url}}/api/requisitions/{{requisition_id}}/return",
                       "host": [
                         "{{base_url}}"
                       ],
                       "path": [
                         "api",
                         "requisitions",
-                        "11",
+                        "{{requisition_id}}",
                         "return"
                       ]
                     },
-                    "description": "[staff] note field stores defect description if item returned damaged."
+                    "description": "[staff] Records item return. note field stores defect description if item returned damaged. Status → Returned(3)."
                   },
                   "response": []
                 }
@@ -3560,6 +3781,20 @@
               "item": [
                 {
                   "name": "POST Item Image",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "exec": [
+                          "pm.test(\"Image uploaded\", () => pm.response.to.have.status(200));",
+                          "if (pm.response.code === 200) {",
+                          "    pm.collectionVariables.set(\"item_image_id\", pm.response.json().imageId);",
+                          "}"
+                        ],
+                        "type": "text/javascript"
+                      }
+                    }
+                  ],
                   "request": {
                     "method": "POST",
                     "header": [],
@@ -3567,25 +3802,59 @@
                       "mode": "formdata",
                       "formdata": [
                         {
-                          "key": "File",
+                          "key": "file",
                           "type": "file",
-                          "uuid": "f1ea9588-113f-4169-a088-fb94e007443f",
-                          "value": null
+                          "src": "/path/to/image.jpg",
+                          "description": "Image file (jpg, png, webp)"
                         }
                       ]
                     },
                     "url": {
-                      "raw": "{{base_url}}/api/items/3/image",
+                      "raw": "{{base_url}}/api/items/{{item_id}}/images",
                       "host": [
                         "{{base_url}}"
                       ],
                       "path": [
                         "api",
                         "items",
-                        "3",
-                        "image"
+                        "{{item_id}}",
+                        "images"
                       ]
+                    },
+                    "description": "[staff,parent(owner)] Uploads an image for an item. Multipart/form-data with field 'file'. Returns the saved image URL and ID."
+                  },
+                  "response": []
+                },
+                {
+                  "name": "DELETE Item Image",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "exec": [
+                          "pm.test(\"Status 204\", () => pm.response.to.have.status(204));"
+                        ],
+                        "type": "text/javascript"
+                      }
                     }
+                  ],
+                  "request": {
+                    "method": "DELETE",
+                    "header": [],
+                    "url": {
+                      "raw": "{{base_url}}/api/items/{{item_id}}/images/{{item_image_id}}",
+                      "host": [
+                        "{{base_url}}"
+                      ],
+                      "path": [
+                        "api",
+                        "items",
+                        "{{item_id}}",
+                        "images",
+                        "{{item_image_id}}"
+                      ]
+                    },
+                    "description": "[staff,parent(owner)] Removes an image from an item. Hard-delete."
                   },
                   "response": []
                 }
@@ -6860,6 +7129,14 @@
     },
     {
       "key": "item_variant_id",
+      "value": "1"
+    },
+    {
+      "key": "item_image_id",
+      "value": "1"
+    },
+    {
+      "key": "item_category_id",
       "value": "1"
     },
     {

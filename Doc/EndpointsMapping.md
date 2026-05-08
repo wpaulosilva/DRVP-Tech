@@ -186,7 +186,7 @@ The header mounts once per session. It does NOT call an endpoint on every naviga
 
 > Note: Mockup shows event "type" tags (Espetáculo, Reunião, etc.) but there is no `event_type` column in the DB. The mockup itself flagged this as wrong — do not implement until the field is added.
 
-### `/staff/inventory` — Inventário (3-tab page: Escolar, Comunidade, Requisições)
+### `/staff/inventario` — Inventário (lista: tabs Escolar, Comunidade, Requisições)
 
 | Element | Call |
 |---|---|
@@ -195,19 +195,30 @@ The header mounts once per session. It does NOT call an endpoint on every naviga
 | Item grid (Comunidade tab) | `GET /api/items?fromSchool=false&page=1&pageSize=12` |
 | Category filter | `GET /api/item-categories` (populate dropdown) then re-call with `&categoryId={id}` |
 | Search | re-call with `&search={query}` |
-| Item card click → detail view | `GET /api/items/{id}` (returns images, variants, category) |
-| "Novo Item Escolar" → form submit | `POST /api/items/school` body: `{ name, description?, idCategory?, contactPhone?, contactEmail?, contactAddress? }` |
+| Pagination | re-call with `&page={n}&pageSize=12` |
+| Item card click → detail page | navigate to `/staff/inventario/:itemId` (no API call on list page) |
+| "Novo Item Escolar" → form submit | `POST /api/items/school` body: `{ name, description?, idCategory?, contactPhone?, contactEmail?, contactAddress? }` → navigates to new item's detail page |
+| Requisition list (Requisições tab) | `GET /api/requisitions` (staff sees all) |
+| Approve/reject requisition | `PATCH /api/requisitions/{id}/review` body: `{ approve, expectedReturnDate?, note? }` |
+| Record return | `PATCH /api/requisitions/{id}/return` body: `{ returnQuantity, note? }` |
+
+### `/staff/inventario/:itemId` — Detalhe do Item (staff)
+
+| Element | Call |
+|---|---|
+| Page mount | `GET /api/items/{id}` (returns item with images, category, variants embedded) |
+| Variants list | `GET /api/items/{id}/variants` |
+| Category dropdown (edit form) | `GET /api/item-categories` |
 | Edit item metadata | `PATCH /api/items/{id}` body: `{ name?, description?, idCategory?, contactPhone?, contactEmail?, contactAddress? }` |
 | Deactivate item (soft-delete) | `DELETE /api/items/{id}` |
-| Add image to item | `POST /api/items/{id}/images` body: `{ imageUrl }` |
-| Remove image from item | `DELETE /api/items/{id}/images/{imageId}` |
-| List variants | `GET /api/items/{id}/variants` |
+| Add image | `POST /api/items/{id}/images` multipart/form-data, field: `file` |
+| Remove image | `DELETE /api/items/{id}/images/{imageId}` |
 | Add variant | `POST /api/items/{id}/variants` body: `{ color?, size?, quantity, price? }` |
 | Edit variant (incl. activate/deactivate) | `PATCH /api/items/{id}/variants/{variantId}` body: `{ color?, size?, quantity?, price?, isActive? }` |
 | Delete variant (hard-delete, fails if active requisitions) | `DELETE /api/items/{id}/variants/{variantId}` |
-| Requisition list (Requisições tab) | `GET /api/requisitions` (staff sees all) |
-| Approve/reject requisition | `PATCH /api/requisitions/{id}/review` body: `{ approve, expectedReturnDate?, note? }` |
-| Record return | `PATCH /api/requisitions/{id}/return` body: `{ returnQuantity }` |
+| Requisitions for this item (inline list) | `GET /api/requisitions` → filtered client-side by `itemId` |
+| Approve/reject requisition (inline modal) | `PATCH /api/requisitions/{id}/review` body: `{ approve, expectedReturnDate?, note? }` |
+| Record return (inline modal) | `PATCH /api/requisitions/{id}/return` body: `{ returnQuantity, note? }` |
 
 ### `/staff/blocked-periods` — Bloqueios
 
@@ -374,7 +385,7 @@ The header mounts once per session. It does NOT call an endpoint on every naviga
 | "Editar" → modal → form submit | `PUT /api/students/{id}` body: `{ firstName, lastName, birthDate, phone, address, nif }` |
 | "Remover" button | `PATCH /api/students/{id}/deactivate` |
 
-### `/ee/inventory` — Inventário (2-tab page)
+### `/ee/inventario` — Inventário (lista: tabs Escolar, Comunidade)
 
 #### Tab: Escolar
 
@@ -384,9 +395,9 @@ The header mounts once per session. It does NOT call an endpoint on every naviga
 | Category filter dropdown | `GET /api/item-categories` (populate) then re-call with `&categoryId={id}` |
 | Search box | re-call with `&search={query}` |
 | Pagination | `GET /api/ee/inventory/school?page={n}` |
-| Item card click → item detail page | `GET /api/items/{id}` |
-| "Pedir Empréstimo" on item detail | `POST /api/requisitions` body: `{ itemVariantId, quantity, needFrom?, needUntil?, note? }` |
-| My requisitions | `GET /api/requisitions` (parent sees own only) |
+| Item card click → detail page | navigate to `/ee/inventario/:itemId` (no API call on list page) |
+| My Requisitions (section below grid) | `GET /api/requisitions` (parent sees own only) |
+| Return requisition | `PATCH /api/requisitions/{id}/return` body: `{ returnQuantity }` |
 
 #### Tab: Comunidade
 
@@ -397,19 +408,43 @@ The header mounts once per session. It does NOT call an endpoint on every naviga
 | Max price filter | re-call with `&maxPrice={value}` |
 | Search | re-call with `&search={query}` |
 | Pagination | `GET /api/ee/inventory/community?page={n}` |
-| "Ligar/Contactar" button | No API call — shows `contactPhone`/`contactEmail` from item card data |
-| "Anunciar Item" → form submit | `POST /api/items/personal` body: `{ name, description?, contactPhone?, contactEmail?, contactAddress?, idCategory? }` |
-| "Itens Publicados" badge count | use `totalCount` from the community inventory response, filtered by `idOwner = me` |
-| **Own item management (owner only):** | |
-| Edit own community item | `PATCH /api/items/{id}` body: `{ name?, description?, ... }` (ownership checked server-side) |
-| Deactivate own community item | `DELETE /api/items/{id}` (ownership checked server-side) |
-| Add image to own item | `POST /api/items/{id}/images` body: `{ imageUrl }` |
-| Remove image from own item | `DELETE /api/items/{id}/images/{imageId}` |
-| Add variant to own item | `POST /api/items/{id}/variants` body: `{ color?, size?, quantity, price? }` |
-| Edit variant on own item | `PATCH /api/items/{id}/variants/{variantId}` body: `{ color?, size?, quantity?, price?, isActive? }` |
-| Delete variant on own item | `DELETE /api/items/{id}/variants/{variantId}` |
+| Item card click → detail page | navigate to `/ee/inventario/:itemId` (no API call on list page) |
+| "Anunciar Item" → form submit | `POST /api/items/personal` body: `{ name, description?, contactPhone?, contactEmail?, contactAddress?, idCategory? }` → navigates to new item's detail page |
 
-> Note: Parents can only manage community items they own (`IdOwner` matches their user ID). The API returns 403 Forbidden if a parent tries to modify another user's item or a school item. Staff can manage all items regardless.
+### `/ee/inventario/:itemId` — Detalhe do Item (parent)
+
+Three access modes determined client-side by `item.fromSchool` and `item.idOwner === user.userId`:
+
+#### Mode A — School item (read-only + loan form)
+
+| Element | Call |
+|---|---|
+| Page mount | `GET /api/items/{id}` |
+| Variants for loan dropdown | embedded in `GET /api/items/{id}` response |
+| "Pedir Empréstimo" → form submit | `POST /api/requisitions` body: `{ itemVariantId, quantity, needFrom?, needUntil?, note? }` |
+
+#### Mode B — Community item, not owner (read-only + contact info)
+
+| Element | Call |
+|---|---|
+| Page mount | `GET /api/items/{id}` |
+| Contact info display | no API call — `contactPhone`/`contactEmail` from loaded item |
+
+#### Mode C — Community item, owner (full management)
+
+| Element | Call |
+|---|---|
+| Page mount | `GET /api/items/{id}` + `GET /api/items/{id}/variants` |
+| Category dropdown (edit form) | `GET /api/item-categories` |
+| Edit item metadata | `PATCH /api/items/{id}` body: `{ name?, description?, contactPhone?, contactEmail?, contactAddress?, idCategory? }` |
+| Deactivate own item | `DELETE /api/items/{id}` |
+| Add image | `POST /api/items/{id}/images` multipart/form-data, field: `file` |
+| Remove image | `DELETE /api/items/{id}/images/{imageId}` |
+| Add variant | `POST /api/items/{id}/variants` body: `{ color?, size?, quantity, price? }` |
+| Edit variant (incl. activate/deactivate) | `PATCH /api/items/{id}/variants/{variantId}` body: `{ color?, size?, quantity?, price?, isActive? }` |
+| Delete variant | `DELETE /api/items/{id}/variants/{variantId}` |
+
+> Note: The API returns 403 Forbidden if a parent tries to modify another user's item or a school item. Mode is checked client-side for UX; the server enforces ownership.
 
 ### `/ee/events` — Eventos (read-only)
 
