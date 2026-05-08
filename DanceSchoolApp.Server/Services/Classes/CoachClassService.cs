@@ -410,8 +410,8 @@ namespace DanceSchoolApp.Server.Services.Classes
                     userId: coachClass.CreatedBy,
                     title: "Aula rejeitada pelo professor",
                     message: reason is not null
-                        ? $"O seu pedido de aula foi rejeitado pelo professor. Razão: {reason}"
-                        : "O seu pedido de aula foi rejeitado pelo professor.",
+                        ? $"O seu pedido de aula a {coachClass.StartDatetime:dd/MM/yyyy HH:mm} foi rejeitado pelo professor. Razão: {reason}"
+                        : $"O seu pedido de aula a {coachClass.StartDatetime:dd/MM/yyyy HH:mm} foi rejeitado pelo professor.",
                     type: NotificationType.Warning,
                     entityType: "CoachClass",
                     entityId: classId);

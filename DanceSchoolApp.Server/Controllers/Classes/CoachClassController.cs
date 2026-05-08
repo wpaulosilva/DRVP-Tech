@@ -233,6 +233,8 @@ namespace DanceSchoolApp.Server.Controllers.Classes
 
             try
             {
+                if (request?.Accept is null)
+                    return BadRequest("O campo accept não chegou corretamente.");
                 await _coachClassService.CoachRespondAsync(id, GetUserId(), request.Accept, request.Reason);
                 return NoContent();
             }

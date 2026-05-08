@@ -39,6 +39,7 @@ namespace DanceSchoolApp.Server.DTOs.Inventory
         public DateOnly? CreatedAt { get; set; }
         public ItemCategorySummaryResponse? Category { get; set; }
         public List<ItemImageResponse> Images { get; set; } = new();
+        public int VariantCount { get; set; }
     }
 
     public class ItemDetailResponse
@@ -186,11 +187,14 @@ namespace DanceSchoolApp.Server.DTOs.Inventory
     public class ItemRequisitionListResponse
     {
         public int RequisitionId { get; set; }
+        public int ItemId { get; set; }
         public int ItemVariantId { get; set; }
         public string? ItemName { get; set; }
+        public string? ItemImageUrl { get; set; }
         public string? VariantColor { get; set; }
         public string? VariantSize { get; set; }
         public int IdParent { get; set; }
+        public string? ParentName { get; set; }
         public int Quantity { get; set; }
         public DateTime RequestedAt { get; set; }
         public DateTime? NeedFrom { get; set; }

@@ -311,7 +311,7 @@ namespace DanceSchoolApp.Server.Services
                 .Include(i => i.IdCategoryNavigation)
                 .Include(i => i.IdOwnerNavigation)
                     .ThenInclude(u => u!.PersonInfo)
-                .Where(i => i.IsActive && !i.FromSchool);
+                .Where(i => i.IsActive && !i.FromSchool && i.ItemVariants.Any(v => v.IsActive == true));
 
             if (categoryId.HasValue)
                 baseQuery = baseQuery.Where(i => i.IdCategory == categoryId.Value);

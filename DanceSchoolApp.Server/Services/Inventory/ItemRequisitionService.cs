@@ -27,20 +27,37 @@ namespace DanceSchoolApp.Server.Services.Inventory
             _notificationService = notificationService;
         }
 
-        //  Queries 
+        //  Queries
 
         /// <summary>Returns all requisitions (staff view).</summary>
         public async Task<List<ItemRequisitionListResponse>> GetAllAsync()
         {
-            return await BuildQuery().ToListAsync();
+            var reqs = await _context.ItemRequisitions
+                .Include(r => r.ItemVariant)
+                    .ThenInclude(v => v.IdItemNavigation)
+                        .ThenInclude(i => i.ItemImages)
+                .Include(r => r.IdParentNavigation)
+                    .ThenInclude(u => u.PersonInfo)
+                .OrderByDescending(r => r.RequestedAt)
+                .ToListAsync();
+
+            return reqs.Select(MapToList).ToList();
         }
 
         /// <summary>Returns only the requisitions that belong to a given parent user.</summary>
         public async Task<List<ItemRequisitionListResponse>> GetByParentAsync(int parentUserId)
         {
-            return await BuildQuery()
+            var reqs = await _context.ItemRequisitions
+                .Include(r => r.ItemVariant)
+                    .ThenInclude(v => v.IdItemNavigation)
+                        .ThenInclude(i => i.ItemImages)
+                .Include(r => r.IdParentNavigation)
+                    .ThenInclude(u => u.PersonInfo)
                 .Where(r => r.IdParent == parentUserId)
+                .OrderByDescending(r => r.RequestedAt)
                 .ToListAsync();
+
+            return reqs.Select(MapToList).ToList();
         }
 
         public async Task<ItemRequisitionDetailResponse> GetByIdAsync(int id)
@@ -214,30 +231,33 @@ namespace DanceSchoolApp.Server.Services.Inventory
             await _context.SaveChangesAsync();
         }
 
-        //  Helpers 
+        //  Helpers
 
-        private IQueryable<ItemRequisitionListResponse> BuildQuery()
+        private static ItemRequisitionListResponse MapToList(ItemRequisition r)
         {
-            return _context.ItemRequisitions
-                .Include(r => r.ItemVariant)
-                    .ThenInclude(v => v.IdItemNavigation)
-                .Select(r => new ItemRequisitionListResponse
-                {
-                    RequisitionId = r.RequisitionId,
-                    ItemVariantId = r.ItemVariantId,
-                    ItemName = r.ItemVariant.IdItemNavigation.Name,
-                    VariantColor = r.ItemVariant.Color,
-                    VariantSize = r.ItemVariant.Size,
-                    IdParent = r.IdParent,
-                    Quantity = r.Quantity,
-                    RequestedAt = r.RequestedAt,
-                    NeedFrom = r.NeedFrom,
-                    NeedUntil = r.NeedUntil,
-                    ExpectedReturnDate = r.ExpectedReturnDate,
-                    ReturnedAt = r.ReturnedAt,
-                    Status = r.Status,
-                    Note = r.Note
-                });
+            var p = r.IdParentNavigation?.PersonInfo;
+            return new ItemRequisitionListResponse
+            {
+                RequisitionId = r.RequisitionId,
+                ItemId        = r.ItemVariant.IdItemNavigation.ItemId,
+                ItemVariantId = r.ItemVariantId,
+                ItemName      = r.ItemVariant.IdItemNavigation.Name,
+                ItemImageUrl  = r.ItemVariant.IdItemNavigation.ItemImages.FirstOrDefault()?.ImageUrl,
+                VariantColor  = r.ItemVariant.Color,
+                VariantSize   = r.ItemVariant.Size,
+                IdParent      = r.IdParent,
+                ParentName    = p is not null
+                    ? $"{p.FirstName} {p.LastName}".Trim()
+                    : r.IdParentNavigation?.Username,
+                Quantity          = r.Quantity,
+                RequestedAt       = r.RequestedAt,
+                NeedFrom          = r.NeedFrom,
+                NeedUntil         = r.NeedUntil,
+                ExpectedReturnDate = r.ExpectedReturnDate,
+                ReturnedAt        = r.ReturnedAt,
+                Status            = r.Status,
+                Note              = r.Note
+            };
         }
 
         private static ItemRequisitionDetailResponse MapToDetail(ItemRequisition r) => new()

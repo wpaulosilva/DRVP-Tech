@@ -288,16 +288,6 @@ function StaffBlockedPeriodsPage() {
         }
     }
 
-    const getCoachName = (id) => {
-        const c = coaches.find((c) => (c.coachId ?? c.CoachId ?? c.id ?? c.Id) === id)
-        return c ? (c.name ?? c.Name ?? `#${id}`) : `#${id}`
-    }
-
-    const getStudioName = (id) => {
-        const s = studios.find((s) => (s.studioId ?? s.id ?? s.Id) === id)
-        return s ? (s.name ?? s.Name ?? `#${id}`) : `#${id}`
-    }
-
     // Shared form fields rendered in both create & edit modals
     const renderFormFields = () => (
         <>

@@ -72,3 +72,8 @@ export function patch(url, body) {
 export function del(url) {
     return request(url, { method: 'DELETE' })
 }
+
+// Multipart file upload — browser sets Content-Type with boundary automatically
+export function upload(url, formData) {
+    return request(url, { method: 'POST', body: formData })
+}
