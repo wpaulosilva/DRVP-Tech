@@ -15,10 +15,12 @@ namespace DanceSchoolApp.Server.Controllers.People
     {
 
         private readonly RoleService _roleService;
+        private readonly IWebHostEnvironment _env;
 
-        public RoleController(RoleService roleService)
+        public RoleController(RoleService roleService, IWebHostEnvironment env)
         {
             _roleService = roleService;
+            _env = env;
         }
 
         //  GET /api/roles 
@@ -26,6 +28,10 @@ namespace DanceSchoolApp.Server.Controllers.People
         [HttpGet]
         public async Task<IActionResult> GetRoles()
         {
+            // Development-only endpoint: list of roles is for internal use
+            if (!_env.IsDevelopment())
+                return StatusCode(StatusCodes.Status403Forbidden, "This endpoint is available only in development.");
+
             try
             {
                 var result = await _roleService.GetRolesAsync();
@@ -46,6 +52,10 @@ namespace DanceSchoolApp.Server.Controllers.People
         [HttpGet("{id}")]
         public async Task<IActionResult> GetRole(byte id)
         {
+            // Development-only endpoint: specific role fetch used for debugging
+            if (!_env.IsDevelopment())
+                return StatusCode(StatusCodes.Status403Forbidden, "This endpoint is available only in development.");
+
             try
             {
                 var result = await _roleService.GetRoleAsync(id);
@@ -68,17 +78,18 @@ namespace DanceSchoolApp.Server.Controllers.People
         [HttpPost]
         public async Task<IActionResult> CreateRole([FromBody] RoleCreateRequest request)
         {
-            return StatusCode(StatusCodes.Status403Forbidden, "Role creation is disabled. Roles are managed at the system level.");
+            // Development-only endpoint: disabled in Production
+            if (!_env.IsDevelopment())
+                return StatusCode(StatusCodes.Status403Forbidden, "Role creation is disabled. Roles are managed at the system level.");
 
-            // Unreachable until admin auth guard is added:
-            // if (!ModelState.IsValid) return BadRequest(ModelState);
-            // try
-            // {
-            //     await _roleService.CreateRoleAsync(request);
-            //     return CreatedAtAction(nameof(GetRole), new { id = request.RoleId }, null);
-            // }
-            // catch (InvalidOperationException ex) { return Conflict(ex.Message); }
-            // catch (Exception ex) { return StatusCode(500, ex.Message); }
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+            try
+            {
+                await _roleService.CreateRoleAsync(request);
+                return CreatedAtAction(nameof(GetRole), new { id = request.RoleId }, null);
+            }
+            catch (InvalidOperationException ex) { return Conflict(ex.Message); }
+            catch (Exception ex) { return StatusCode(500, ex.Message); }
         }
 
         //  POST /api/roles/assign 
@@ -86,6 +97,10 @@ namespace DanceSchoolApp.Server.Controllers.People
         [HttpPost("assign")]
         public async Task<IActionResult> AssignRole([FromBody] RoleAssignRequest request)
         {
+            // Development-only endpoint: role assignment via API is for internal/testing use
+            if (!_env.IsDevelopment())
+                return StatusCode(StatusCodes.Status403Forbidden, "This endpoint is available only in development.");
+
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
@@ -113,6 +128,10 @@ namespace DanceSchoolApp.Server.Controllers.People
         [HttpDelete("remove")]
         public async Task<IActionResult> RemoveRole([FromBody] RoleAssignRequest request)
         {
+            // Development-only endpoint: role removal via API is for internal/testing use
+            if (!_env.IsDevelopment())
+                return StatusCode(StatusCodes.Status403Forbidden, "This endpoint is available only in development.");
+
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 

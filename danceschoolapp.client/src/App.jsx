@@ -25,6 +25,7 @@ import StaffEventsPage from './pages/staff/StaffEventsPage'
 import StaffInventoryPage from './pages/staff/StaffInventoryPage'
 import StaffAgendaPage from './pages/staff/StaffAgendaPage'
 import StaffBillingPage from './pages/staff/StaffBillingPage'
+import StaffBlockedPeriodsPage from './pages/staff/StaffBlockedPeriodsPage'
 
 // Coach
 import CoachDashboardPage from './pages/coach/CoachDashboardPage'
@@ -86,6 +87,7 @@ function App() {
                 <Route path="/staff/inventario" element={<StaffInventoryPage />} />
                 <Route path="/staff/agenda" element={<StaffAgendaPage />} />
                 <Route path="/staff/faturacao" element={<StaffBillingPage />} />
+                <Route path="/staff/bloqueios" element={<StaffBlockedPeriodsPage />} />
             </Route>
 
             {/* COACH */}

@@ -140,6 +140,7 @@ namespace DanceSchoolApp.Server.Services
 
             var dbQuery = _context.CoachClasses
                 .Include(c => c.IdModalityNavigation)
+                .Include(c => c.IdStudioNavigation)
                 .Include(c => c.IdCoachNavigation)
                     .ThenInclude(coach => coach.CoachNavigation)
                         .ThenInclude(u => u.PersonInfo)
@@ -169,6 +170,7 @@ namespace DanceSchoolApp.Server.Services
                 {
                     ClassId               = c.ClassId,
                     ModalityName          = c.IdModalityNavigation.Name,
+                    StudioName            = c.IdStudioNavigation?.Name,
                     StartDatetime         = c.StartDatetime,
                     EndDatetime           = c.EndDatetime,
                     MaxParticipants       = c.MaxParticipants,
