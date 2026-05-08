@@ -1,3 +1,4 @@
+using ClosedXML.Excel;
 using DanceSchoolApp.Server.Data;
 using DanceSchoolApp.Server.DTOs.Billing;
 using DanceSchoolApp.Server.DTOs.Classes;
@@ -17,10 +18,6 @@ namespace DanceSchoolApp.Server.Services
             _appSettings = appSettings;
         }
 
-        //  Student billing 
-        // Sums hours and revenue per student across all Validated classes in the
-        // requested month. Summary reflects the full month; search + paging apply
-        // only to the Items list.
 
         public async Task<PagedBillingStudentResponse> GetStudentBillingAsync(
             int year, int month, string? search, int page, int pageSize)
@@ -30,8 +27,7 @@ namespace DanceSchoolApp.Server.Services
             decimal weekendRate = await _appSettings.GetDecimalAsync(
                 "class_price_weekend", 43.50m);
 
-            // One query: validated classes in the month, with every participant's
-            // student record eagerly loaded.
+          
             var classes = await _context.CoachClasses
                 .Include(c => c.Participants)
                     .ThenInclude(p => p.IdStudentNavigation)
@@ -42,7 +38,7 @@ namespace DanceSchoolApp.Server.Services
                     c.StartDatetime.Month == month)
                 .ToListAsync();
 
-            // Aggregate per-student in-memory so the rate branch stays in C#.
+    
             var studentTotals = new Dictionary<int, (string Name, decimal HoursWeekday, decimal HoursWeekend, decimal Amount)>();
 
             foreach (var cls in classes)
@@ -244,6 +240,167 @@ namespace DanceSchoolApp.Server.Services
                 Page       = page,
                 PageSize   = pageSize
             };
+        }
+
+        public async Task<byte[]> ExportStudentBillingAsync(
+           int year, int month, string? search)
+        {
+            // Reuse existing logic — fetch all rows (no paging).
+            var result = await GetStudentBillingAsync(
+                year, month, search, page: 1, pageSize: int.MaxValue);
+
+            using var wb = new XLWorkbook();
+            var ws = wb.Worksheets.Add("Faturação Alunos");
+
+            // Title row
+            ws.Cell(1, 1).Value = $"Faturação de Alunos — {year}-{month:D2}";
+            ws.Range(1, 1, 1, 6).Merge();
+            ws.Cell(1, 1).Style
+                .Font.SetBold(true)
+                .Font.SetFontSize(13)
+                .Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
+
+            // Summary row
+            ws.Cell(2, 1).Value = $"Total alunos: {result.Summary.TotalStudents}";
+            ws.Cell(2, 3).Value = $"Total horas: {result.Summary.TotalHours:F2}";
+            ws.Cell(2, 5).Value = "Total receita:";
+            ws.Cell(2, 6).Value = result.Summary.TotalRevenue;
+            ws.Cell(2, 6).Style.NumberFormat.Format = "#,##0.00 €";
+            ws.Range(2, 1, 2, 6).Style.Font.SetItalic(true);
+
+            // Header row
+            ws.Cell(4, 1).Value = "Nome";
+            ws.Cell(4, 2).Value = "NIF";
+            ws.Cell(4, 3).Value = "Horas Semana";
+            ws.Cell(4, 4).Value = "Horas Fim de Semana";
+            ws.Cell(4, 5).Value = "Total Horas";
+            ws.Cell(4, 6).Value = "Total (€)";
+
+            ws.Range(4, 1, 4, 6).Style
+                .Font.SetBold(true)
+                .Fill.SetBackgroundColor(XLColor.FromHtml("#2D3748"))
+                .Font.SetFontColor(XLColor.White)
+                .Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
+
+            // Data rows
+            int row = 5;
+            foreach (var item in result.Items)
+            {
+                ws.Cell(row, 1).Value = item.StudentName;
+                ws.Cell(row, 2).Value = item.Nif ?? "";
+                ws.Cell(row, 3).Value = item.HoursWeekday;
+                ws.Cell(row, 4).Value = item.HoursWeekend;
+                ws.Cell(row, 5).Value = item.HoursCompleted;
+                ws.Cell(row, 6).Value = item.TotalAmount;
+                ws.Cell(row, 6).Style.NumberFormat.Format = "#,##0.00 €";
+
+                // Alternate row shading for readability.
+                if (row % 2 == 0)
+                    ws.Range(row, 1, row, 6).Style
+                        .Fill.SetBackgroundColor(XLColor.FromHtml("#F7FAFC"));
+
+                row++;
+            }
+
+            // Totals row
+            ws.Cell(row, 1).Value = "TOTAL";
+            ws.Cell(row, 5).FormulaA1 = $"=SUM(E5:E{row - 1})";
+            ws.Cell(row, 6).FormulaA1 = $"=SUM(F5:F{row - 1})";
+            ws.Cell(row, 6).Style.NumberFormat.Format = "#,##0.00 €";
+            ws.Range(row, 1, row, 6).Style
+                .Font.SetBold(true)
+                .Fill.SetBackgroundColor(XLColor.FromHtml("#EDF2F7"));
+
+            ws.Columns().AdjustToContents();
+            ws.Column(4).Width = Math.Max(ws.Column(4).Width, 18);
+
+            using var stream = new MemoryStream();
+            wb.SaveAs(stream);
+            return stream.ToArray();
+        }
+
+        //  Coach billing export 
+        // Returns a .xlsx byte array with all validated coach billing rows for
+        // the requested month. Search filter is applied before building the sheet.
+
+        public async Task<byte[]> ExportCoachBillingAsync(
+            int year, int month, string? search)
+        {
+            // Reuse existing logic — fetch all rows (no paging).
+            var result = await GetCoachBillingAsync(
+                year, month, search, page: 1, pageSize: int.MaxValue);
+
+            using var wb = new XLWorkbook();
+            var ws = wb.Worksheets.Add("Faturação Coaches");
+
+            // Title row
+            ws.Cell(1, 1).Value = $"Faturação de Coaches — {year}-{month:D2}";
+            ws.Range(1, 1, 1, 7).Merge();
+            ws.Cell(1, 1).Style
+                .Font.SetBold(true)
+                .Font.SetFontSize(13)
+                .Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
+
+            // Summary row
+            ws.Cell(2, 1).Value = $"Total coaches: {result.Summary.TotalCoaches}";
+            ws.Cell(2, 3).Value = $"Total horas: {result.Summary.TotalHours:F2}";
+            ws.Cell(2, 6).Value = "Total despesa:";
+            ws.Cell(2, 7).Value = result.Summary.TotalExpense;
+            ws.Cell(2, 7).Style.NumberFormat.Format = "#,##0.00 €";
+            ws.Range(2, 1, 2, 7).Style.Font.SetItalic(true);
+
+            // Header row
+            ws.Cell(4, 1).Value = "Nome";
+            ws.Cell(4, 2).Value = "NIF";
+            ws.Cell(4, 3).Value = "Modalidades";
+            ws.Cell(4, 4).Value = "Horas Semana";
+            ws.Cell(4, 5).Value = "Horas Fim de Semana";
+            ws.Cell(4, 6).Value = "Total Horas";
+            ws.Cell(4, 7).Value = "Total (€)";
+
+            ws.Range(4, 1, 4, 7).Style
+                .Font.SetBold(true)
+                .Fill.SetBackgroundColor(XLColor.FromHtml("#2D3748"))
+                .Font.SetFontColor(XLColor.White)
+                .Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
+
+            // Data rows
+            int row = 5;
+            foreach (var item in result.Items)
+            {
+                ws.Cell(row, 1).Value = item.CoachName;
+                ws.Cell(row, 2).Value = item.Nif ?? "";
+                ws.Cell(row, 3).Value = string.Join(", ", item.Modalities);
+                ws.Cell(row, 4).Value = item.HoursWeekday;
+                ws.Cell(row, 5).Value = item.HoursWeekend;
+                ws.Cell(row, 6).Value = item.HoursTaught;
+                ws.Cell(row, 7).Value = item.TotalAmount;
+                ws.Cell(row, 7).Style.NumberFormat.Format = "#,##0.00 €";
+
+                // Alternate row shading for readability.
+                if (row % 2 == 0)
+                    ws.Range(row, 1, row, 7).Style
+                        .Fill.SetBackgroundColor(XLColor.FromHtml("#F7FAFC"));
+
+                row++;
+            }
+
+            // Totals row
+            ws.Cell(row, 1).Value = "TOTAL";
+            ws.Cell(row, 6).FormulaA1 = $"=SUM(F5:F{row - 1})";
+            ws.Cell(row, 7).FormulaA1 = $"=SUM(G5:G{row - 1})";
+            ws.Cell(row, 7).Style.NumberFormat.Format = "#,##0.00 €";
+            ws.Range(row, 1, row, 7).Style
+                .Font.SetBold(true)
+                .Fill.SetBackgroundColor(XLColor.FromHtml("#EDF2F7"));
+
+            ws.Columns().AdjustToContents();
+            ws.Column(3).Width = Math.Max(ws.Column(3).Width, 20);
+            ws.Column(5).Width = Math.Max(ws.Column(5).Width, 18);
+
+            using var stream = new MemoryStream();
+            wb.SaveAs(stream);
+            return stream.ToArray();
         }
 
         //  Private helpers 

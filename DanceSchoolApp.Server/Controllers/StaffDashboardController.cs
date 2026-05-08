@@ -186,6 +186,41 @@ namespace DanceSchoolApp.Server.Controllers
             }
         }
 
+        [HttpGet("billing/students/export")]
+        public async Task<IActionResult> ExportBillingStudents(
+            [FromQuery] string month,
+            [FromQuery] string? search = null)
+        {
+            if (!TryParseYearMonth(month, out int year, out int monthInt))
+                return BadRequest("Invalid month format. Expected YYYY-MM.");
+
+            var fileBytes = await _billingService.ExportStudentBillingAsync(year, monthInt, search);
+
+            return File(
+                fileBytes,
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                $"billing_students_{year}-{monthInt:D2}.xlsx"
+            );
+        }
+
+        [HttpGet("billing/coaches/export")]
+        public async Task<IActionResult> ExportBillingCoaches(
+            [FromQuery] string month,
+            [FromQuery] string? search = null)
+        {
+            if (!TryParseYearMonth(month, out int year, out int monthInt))
+                return BadRequest("Invalid month format. Expected YYYY-MM.");
+
+            var fileBytes = await _billingService.ExportCoachBillingAsync(year, monthInt, search);
+
+            return File(
+                fileBytes,
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                $"billing_coaches_{year}-{monthInt:D2}.xlsx"
+            );
+        }
+
+
         //  Private helpers 
 
         private static bool TryParseYearMonth(string? input, out int year, out int month)
