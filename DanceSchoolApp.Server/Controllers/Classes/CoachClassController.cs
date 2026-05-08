@@ -300,7 +300,7 @@ namespace DanceSchoolApp.Server.Controllers.Classes
 
             try
             {
-                await _coachClassService.StaffValidateAsync(id);
+                await _coachClassService.StaffValidateAsync(id, request.Confirmed, request.Reason);
                 return NoContent();
             }
             catch (KeyNotFoundException ex) { return NotFound(ex.Message); }
