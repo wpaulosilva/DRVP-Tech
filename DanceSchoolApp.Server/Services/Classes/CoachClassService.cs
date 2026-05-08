@@ -369,7 +369,7 @@ namespace DanceSchoolApp.Server.Services.Classes
         }
 
        
-        public async Task CoachRespondAsync(int classId, int coachUserId, bool approve, string? reason)
+        public async Task CoachRespondAsync(int classId, int coachUserId, bool accept, string? reason)
         {
             var coachClass = await _context.CoachClasses
                 .FirstOrDefaultAsync(c => c.ClassId == classId);
@@ -384,13 +384,13 @@ namespace DanceSchoolApp.Server.Services.Classes
                 throw new InvalidOperationException(
                     "Only StaffApproved classes can be responded to by the coach.");
 
-            coachClass.Status = approve
+            coachClass.Status = accept
                 ? (byte)CoachClassStatus.Approved
                 : (byte)CoachClassStatus.Rejected;
 
             await _context.SaveChangesAsync();
 
-            if (approve)
+            if (accept)
             {
                 await _notificationService.SendAsync(
                     userId: coachClass.CreatedBy,

@@ -162,7 +162,7 @@ namespace DanceSchoolApp.Server.DTOs.Classes
     public class CoachRespondRequest
     {
         [Required]
-        public bool Approve { get; set; }
+        public bool Accept { get; set; }
         public string? Reason { get; set; }
     }
 
