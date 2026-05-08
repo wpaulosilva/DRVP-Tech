@@ -17,7 +17,8 @@ namespace DanceSchoolApp.Server.Services.Inventory
 
         //  Item Queries 
 
-        public async Task<PagedResult<ItemListResponse>> GetItemsAsync(bool? fromSchool, PagedQuery query)
+        public async Task<PagedResult<ItemListResponse>> GetItemsAsync(
+            bool? fromSchool, PagedQuery query, int? categoryId = null)
         {
             var dbQuery = _context.Items
                 .Include(i => i.IdCategoryNavigation)
@@ -27,6 +28,15 @@ namespace DanceSchoolApp.Server.Services.Inventory
 
             if (fromSchool.HasValue)
                 dbQuery = dbQuery.Where(i => i.FromSchool == fromSchool.Value);
+
+            if (!string.IsNullOrWhiteSpace(query.Search))
+            {
+                var term = query.Search.Trim().ToLower();
+                dbQuery = dbQuery.Where(i => i.Name.ToLower().Contains(term));
+            }
+
+            if (categoryId.HasValue)
+                dbQuery = dbQuery.Where(i => i.IdCategory == categoryId.Value);
 
             var total = await dbQuery.CountAsync();
 
@@ -52,7 +62,8 @@ namespace DanceSchoolApp.Server.Services.Inventory
                     {
                         ImageId = img.ImageId,
                         ImageUrl = img.ImageUrl
-                    }).ToList()
+                    }).ToList(),
+                    VariantCount = i.ItemVariants.Count(v => v.IsActive == true)
                 })
                 .ToListAsync();
 
@@ -121,7 +132,8 @@ namespace DanceSchoolApp.Server.Services.Inventory
                     {
                         ImageId = img.ImageId,
                         ImageUrl = img.ImageUrl
-                    }).ToList()
+                    }).ToList(),
+                    VariantCount = i.ItemVariants.Count(v => v.IsActive == true)
                 })
                 .ToListAsync();
 
@@ -134,7 +146,7 @@ namespace DanceSchoolApp.Server.Services.Inventory
             };
         }
 
-        //  Item Commands 
+        //  Item Commands
 
         public async Task<int> CreateItemAsync(ItemCreateRequest request, int ownerUserId, bool fromSchool)
         {

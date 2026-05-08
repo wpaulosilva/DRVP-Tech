@@ -68,16 +68,17 @@ namespace DanceSchoolApp.Server.Controllers.Inventory
         // ITEMS
         // ═══════════════════════════════════════════════════════════════════════
 
-        //  GET /api/items 
+        //  GET /api/items
         [HttpGet]
         [Authorize]
         public async Task<IActionResult> GetItems(
             [FromQuery] bool? fromSchool = null,
-            [FromQuery] PagedQuery? query = null)
+            [FromQuery] PagedQuery? query = null,
+            [FromQuery] int? categoryId = null)
         {
             try
             {
-                var result = await _itemService.GetItemsAsync(fromSchool, query ?? new PagedQuery());
+                var result = await _itemService.GetItemsAsync(fromSchool, query ?? new PagedQuery(), categoryId);
 
                 if (result.TotalCount == 0)
                     return NoContent();

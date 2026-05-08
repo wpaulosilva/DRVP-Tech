@@ -104,9 +104,9 @@ function downloadExcelFormatted(data, filename = 'export.xlsx', headerKeys = nul
   ws['!cols'] = keys.map(h => ({ wch: Math.max(8, Math.min(30, String(h).length + 8)) }))
 
   // Styling: header purple with white text, data rows white with thin border, totals light purple
+  const headerColor = 'FF6D28D9'
+  const totalsBg = 'FFF3E8FF'
   try {
-    const headerColor = 'FF6D28D9'
-    const totalsBg = 'FFF3E8FF'
     const range = XLSX.utils.decode_range(ws['!ref'])
 
     // header
