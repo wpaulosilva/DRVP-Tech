@@ -369,7 +369,7 @@ namespace DanceSchoolApp.Server.Services.Classes
         }
 
        
-        public async Task CoachRespondAsync(int classId, int coachUserId, bool approve, string? reason)
+        public async Task CoachRespondAsync(int classId, int coachUserId, bool accept, string? reason)
         {
             var coachClass = await _context.CoachClasses
                 .FirstOrDefaultAsync(c => c.ClassId == classId);
@@ -380,17 +380,21 @@ namespace DanceSchoolApp.Server.Services.Classes
             if (coachClass.IdCoach != coachUserId)
                 throw new UnauthorizedAccessException("You are not the coach for this class.");
 
+            if (coachClass.StartDatetime <= DateTime.Now)
+                throw new InvalidOperationException(
+                    "It´s not possible to approve or reject classes whose date has already passed.");
+
             if (coachClass.Status != (byte)CoachClassStatus.StaffApproved)
                 throw new InvalidOperationException(
                     "Only StaffApproved classes can be responded to by the coach.");
 
-            coachClass.Status = approve
+            coachClass.Status = accept
                 ? (byte)CoachClassStatus.Approved
                 : (byte)CoachClassStatus.Rejected;
 
             await _context.SaveChangesAsync();
 
-            if (approve)
+            if (accept)
             {
                 await _notificationService.SendAsync(
                     userId: coachClass.CreatedBy,
@@ -443,7 +447,12 @@ namespace DanceSchoolApp.Server.Services.Classes
             var coachClass = await _context.CoachClasses
                 .FirstOrDefaultAsync(c => c.ClassId == classId);
 
-            if (coachClass is null) return;
+            if (coachClass is null)
+                throw new KeyNotFoundException($"Class with id {classId} was not found.");
+
+            if (coachClass.StartDatetime <= DateTime.Now)
+                throw new InvalidOperationException(
+                    "It´s not possible to approve or reject classes whose date has already passed.");
 
             if (!approve)
             {
