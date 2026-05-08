@@ -369,7 +369,7 @@ namespace DanceSchoolApp.Server.Services.Classes
         }
 
        
-        public async Task CoachRespondAsync(int classId, int coachUserId, bool accept, string? reason)
+        public async Task CoachRespondAsync(int classId, int coachUserId, bool approve, string? reason)
         {
             var coachClass = await _context.CoachClasses
                 .FirstOrDefaultAsync(c => c.ClassId == classId);
@@ -384,13 +384,13 @@ namespace DanceSchoolApp.Server.Services.Classes
                 throw new InvalidOperationException(
                     "Only StaffApproved classes can be responded to by the coach.");
 
-            coachClass.Status = accept
+            coachClass.Status = approve
                 ? (byte)CoachClassStatus.Approved
                 : (byte)CoachClassStatus.Rejected;
 
             await _context.SaveChangesAsync();
 
-            if (accept)
+            if (approve)
             {
                 await _notificationService.SendAsync(
                     userId: coachClass.CreatedBy,
@@ -406,8 +406,8 @@ namespace DanceSchoolApp.Server.Services.Classes
                     userId: coachClass.CreatedBy,
                     title: "Aula rejeitada pelo professor",
                     message: reason is not null
-                        ? $"O seu pedido de aula foi rejeitado pelo professor. Razão: {reason}"
-                        : "O seu pedido de aula foi rejeitado pelo professor.",
+                        ? $"O seu pedido de aula a {coachClass.StartDatetime:dd/MM/yyyy HH:mm} foi rejeitado pelo professor. Razão: {reason}"
+                        : $"O seu pedido de aula a {coachClass.StartDatetime:dd/MM/yyyy HH:mm} foi rejeitado pelo professor.",
                     type: NotificationType.Warning,
                     entityType: "CoachClass",
                     entityId: classId);

@@ -233,7 +233,9 @@ namespace DanceSchoolApp.Server.Controllers.Classes
 
             try
             {
-                await _coachClassService.CoachRespondAsync(id, GetUserId(), request.Accept, request.Reason);
+                if (request?.Approve is null)
+                    return BadRequest("O campo approve não chegou corretamente.");
+                await _coachClassService.CoachRespondAsync(id, GetUserId(), request.Approve, request.Reason);
                 return NoContent();
             }
             catch (KeyNotFoundException ex) { return NotFound(ex.Message); }
