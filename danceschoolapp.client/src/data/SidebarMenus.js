@@ -15,6 +15,7 @@ export const sidebarMenus = {
         { label: 'Inventário', to: '/staff/inventario' },
         { label: 'Agenda Global', to: '/staff/agenda' },
         { label: 'Faturação', to: '/staff/faturacao' },
+        { label: 'Bloqueios', to: '/staff/bloqueios' },
     ],
 
     coach: [

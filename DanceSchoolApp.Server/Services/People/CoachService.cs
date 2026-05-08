@@ -54,25 +54,29 @@ namespace DanceSchoolApp.Server.Services.People
 
         public async Task<List<CoachListResponse>> GetCoachsAsync()
         {
-            return await _context.Users
+            var users = await _context.Users
                 .Include(u => u.PersonInfo)
                 .Include(u => u.IdRoles)
                 .Include(u => u.Coach)
                 .Where(u => u.IdRoles.Any(r => r.RoleId == Roles.Coach))
-                .Select(r => new CoachListResponse
-                {
-                    CoachId = r.UserId,
-                    Biography = r.Coach == null ? null : r.Coach.Biography,
-                    PhotoUrl = r.Coach == null ? null : r.Coach.PhotoUrl,
-                    IsActive = r.IsActive,
-                    PersonInfo = r.PersonInfo == null ? null : new PersonListResponse
-                    {
-                        PersonId = r.PersonInfo.PersonId,
-                        FirstName = r.PersonInfo.FirstName,
-                        LastName = r.PersonInfo.LastName
-                    }
-                })
                 .ToListAsync();
+
+            return users.Select(r => new CoachListResponse
+            {
+                CoachId   = r.UserId,
+                Name      = r.PersonInfo is not null
+                    ? $"{r.PersonInfo.FirstName} {r.PersonInfo.LastName}".Trim()
+                    : r.Username,
+                Biography = r.Coach?.Biography,
+                PhotoUrl  = r.Coach?.PhotoUrl,
+                IsActive  = r.IsActive,
+                PersonInfo = r.PersonInfo is null ? null : new PersonListResponse
+                {
+                    PersonId  = r.PersonInfo.PersonId,
+                    FirstName = r.PersonInfo.FirstName,
+                    LastName  = r.PersonInfo.LastName
+                }
+            }).ToList();
         }
 
         public async Task<CoachMeResponse> GetCoachMeAsync(int userId)

@@ -47,6 +47,7 @@ namespace DanceSchoolApp.Server.DTOs.Staff
     {
         public int ClassId { get; set; }
         public string ModalityName { get; set; } = null!;
+        public string? StudioName { get; set; }
         public DateTime StartDatetime { get; set; }
         public DateTime EndDatetime { get; set; }
         public int DurationMinutes { get; set; }

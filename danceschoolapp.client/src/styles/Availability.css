@@ -1,0 +1,334 @@
+/* ===== COACH AVAILABILITY PAGE ===== */
+
+.av-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.av-subtitle {
+    color: #6b7280;
+    font-size: 0.95rem;
+    margin: 4px 0 0;
+}
+
+/* Date filter bar */
+.av-filter-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    padding: 14px 20px;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+    margin-bottom: 20px;
+}
+
+.av-filter-label {
+    font-size: 0.9rem;
+    color: #374151;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.av-filter-hint {
+    font-size: 0.78rem;
+    color: #9ca3af;
+}
+
+/* Shared date/time inputs */
+.av-date-input,
+.av-time-input {
+    padding: 8px 12px;
+    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    color: #374151;
+    background: #fff;
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.av-date-input:focus,
+.av-time-input:focus {
+    border-color: #7c3aed;
+    box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.08);
+}
+
+/* Weekly grid card (desktop) */
+.av-grid-card {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+    padding: 20px;
+    margin-bottom: 20px;
+    overflow-x: auto;
+}
+
+.av-grid-header {
+    display: grid;
+    margin-bottom: 4px;
+    min-width: 680px;
+}
+
+.av-grid-day-label {
+    text-align: center;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #6b7280;
+    padding: 8px 0;
+    border-bottom: 1px solid #e5e7eb;
+    letter-spacing: 0.03em;
+}
+
+.av-grid-body {
+    display: grid;
+    min-width: 680px;
+    position: relative;
+}
+
+.av-hours-col {
+    position: relative;
+    flex-shrink: 0;
+}
+
+.av-hour-label {
+    position: absolute;
+    right: 6px;
+    font-size: 0.68rem;
+    color: #9ca3af;
+    white-space: nowrap;
+    line-height: 1;
+}
+
+.av-day-col {
+    position: relative;
+    border-left: 1px solid #f1f5f9;
+}
+
+.av-day-col:hover {
+    background: rgba(237, 233, 254, 0.06);
+}
+
+.av-hour-line {
+    position: absolute;
+    left: 0;
+    right: 0;
+    border-top: 1px solid #f1f5f9;
+}
+
+/* Availability block (clickable) */
+.av-block {
+    position: absolute;
+    left: 4px;
+    right: 4px;
+    background: #ede9fe;
+    border: 1px solid #c4b5fd;
+    border-radius: 8px;
+    padding: 5px 8px;
+    text-align: left;
+    cursor: pointer;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    transition: background 0.15s ease, box-shadow 0.15s ease;
+}
+
+.av-block:hover {
+    background: #ddd6fe;
+    box-shadow: 0 2px 8px rgba(109, 40, 217, 0.18);
+}
+
+.av-block-time {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #5b21b6;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.av-block-validity {
+    font-size: 0.63rem;
+    color: #7c3aed;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.av-grid-hint {
+    font-size: 0.78rem;
+    color: #9ca3af;
+    margin-top: 12px;
+}
+
+/* Desktop only / mobile list */
+.av-desktop-only {
+    display: block;
+}
+
+.av-mobile-list {
+    display: none;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+@media (max-width: 1023px) {
+    .av-desktop-only {
+        display: none;
+    }
+
+    .av-mobile-list {
+        display: flex;
+    }
+}
+
+/* Mobile day cards */
+.av-mobile-day-card {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+    padding: 16px;
+}
+
+.av-mobile-day-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0 0 12px;
+}
+
+.av-mobile-block {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 14px;
+    background: #ede9fe;
+    border: 1px solid #c4b5fd;
+    border-radius: 12px;
+    margin-bottom: 8px;
+}
+
+.av-mobile-block-time {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #5b21b6;
+    margin: 0;
+}
+
+.av-mobile-block-validity {
+    font-size: 0.78rem;
+    color: #7c3aed;
+    margin: 2px 0 0;
+}
+
+.av-mobile-actions {
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+/* Empty state */
+.av-empty {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+    padding: 40px 24px;
+    text-align: center;
+    color: #6b7280;
+    font-size: 0.95rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+}
+
+/* Loading / error */
+.av-loading,
+.av-error {
+    color: #6b7280;
+    font-size: 0.95rem;
+    margin: 24px 0;
+}
+
+.av-error {
+    color: #dc2626;
+}
+
+/* Modal form */
+.av-modal-form {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.av-form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.av-form-label {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: #475569;
+}
+
+.av-form-row-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+@media (max-width: 480px) {
+    .av-form-row-2 {
+        grid-template-columns: 1fr;
+    }
+}
+
+.av-select {
+    padding: 8px 12px;
+    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    color: #374151;
+    background: #fff;
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    width: 100%;
+}
+
+.av-select:focus {
+    border-color: #7c3aed;
+    box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.08);
+}
+
+.av-form-hint {
+    font-size: 0.78rem;
+    color: #9ca3af;
+    margin: 0;
+    line-height: 1.5;
+}
+
+.av-form-error {
+    padding: 10px 14px;
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: 10px;
+    font-size: 0.88rem;
+    color: #dc2626;
+    line-height: 1.4;
+}
+
+/* Small button variant */
+.btn-sm {
+    padding: 5px 12px;
+    font-size: 0.82rem;
+}
