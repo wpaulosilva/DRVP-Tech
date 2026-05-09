@@ -21,10 +21,19 @@ export function cancelClass(classId) {
     return patch(`/api/coachclasses/${classId}/cancel`)
 }
 
+export function getAgenda({ from, to, studioId } = {}) {
+    const params = new URLSearchParams()
+    if (from) params.set('from', from)
+    if (to) params.set('to', to)
+    if (studioId) params.set('studioId', studioId)
+    return get(`/api/staff/agenda?${params}`)
+}
+
 export default {
     getValidateClasses,
     staffApprove,
     staffReject,
     staffValidate,
     cancelClass,
+    getAgenda,
 }
