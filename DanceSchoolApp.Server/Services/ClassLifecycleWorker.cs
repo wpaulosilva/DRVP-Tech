@@ -12,7 +12,7 @@ using Microsoft.Extensions.Logging;
 namespace DanceSchoolApp.Server.Services
 {
     /// <summary>
-    /// Background worker that runs every 5 minutes and handles two automated
+    /// Background worker that runs every 5 minutes and handles three automated
     /// lifecycle transitions:
     ///
     ///   1. Approved → Finished: any Approved class whose EndDatetime has passed
@@ -25,7 +25,12 @@ namespace DanceSchoolApp.Server.Services
     ///      automatically advanced to Pending, even if some parties did not
     ///      respond. Staff are notified. This enforces the window deadline.
     ///
-    /// Cancelled classes are never touched by either rule.
+    ///   3. Requested | StaffApproved → Cancelled: any class that never reached
+    ///      Approved and whose StartDatetime has already passed is cancelled.
+    ///      Staff are notified. This cleans up stale approval requests that
+    ///      outlived their effective date.
+    ///
+    /// Cancelled classes are never touched by any rule.
     /// </summary>
     public sealed class ClassLifecycleWorker : BackgroundService
     {
@@ -73,6 +78,7 @@ namespace DanceSchoolApp.Server.Services
 
             await AutoFinishApprovedClassesAsync(db, notifications, now, ct);
             await AutoAdvanceExpiredFinishedClassesAsync(db, notifications, appSettings, now, ct);
+            await AutoCancelStaleUnapprovedClassesAsync(db, notifications, now, ct);
         }
 
         //  Rule 1: Approved → Finished 
@@ -220,6 +226,57 @@ namespace DanceSchoolApp.Server.Services
             }
 
             await db.SaveChangesAsync(ct);
+        }
+
+        //  Rule 3: Requested | StaffApproved → Cancelled (stale, never reached Approved)
+        // Any class still waiting for approval whose StartDatetime has already passed
+        // is auto-cancelled. Staff are notified so the calendar stays clean.
+        private static async Task AutoCancelStaleUnapprovedClassesAsync(
+            AppDbContext db,
+            NotificationService notifications,
+            DateTime now,
+            CancellationToken ct)
+        {
+            var staleStatuses = new byte[]
+            {
+                (byte)CoachClassStatus.Requested,
+                (byte)CoachClassStatus.StaffApproved
+            };
+
+            var classes = await db.CoachClasses
+                .Where(c =>
+                    staleStatuses.Contains(c.Status) &&
+                    c.StartDatetime < now)
+                .ToListAsync(ct);
+
+            if (classes.Count == 0) return;
+
+            foreach (var cls in classes)
+                cls.Status = (byte)CoachClassStatus.Cancelled;
+
+            // Persist before sending notifications — a notification failure must never
+            // leave stale classes visible in the staff/coach dashboards.
+            await db.SaveChangesAsync(ct);
+
+            var staffIds = await db.Users
+                .Include(u => u.IdRoles)
+                .Where(u => u.IdRoles.Any(r => r.RoleId == 1) && u.IsActive)
+                .Select(u => u.UserId)
+                .ToListAsync(ct);
+
+            foreach (var cls in classes)
+            {
+                foreach (var staffId in staffIds)
+                {
+                    await notifications.SendAsync(
+                        userId: staffId,
+                        title: "Aula Cancelada Automaticamente",
+                        message: $"A aula ID {cls.ClassId} (agendada para {cls.StartDatetime:dd/MM/yyyy HH:mm}) foi cancelada automaticamente — a data efetiva passou sem aprovação completa.",
+                        type: NotificationType.Warning,
+                        entityType: "CoachClass",
+                        entityId: cls.ClassId);
+                }
+            }
         }
     }
 }
