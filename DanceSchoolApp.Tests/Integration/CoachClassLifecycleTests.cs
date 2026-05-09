@@ -215,7 +215,8 @@ public class CoachClassLifecycleTests : IClassFixture<CustomWebApplicationFactor
         //  Step 7 — Staff final sign-off (Pending → Validated) 
         staffJwt = await LoginAndGetCookie("staff_lc");
         var staffValidateResp = await _client.SendAsync(
-            MakeRequest(HttpMethod.Patch, $"/api/coachclasses/{classId}/staff-validate", staffJwt));
+            MakeRequest(HttpMethod.Patch, $"/api/coachclasses/{classId}/staff-validate", staffJwt,
+                new { confirmed = true, reason = (string?)null }));
 
         staffValidateResp.StatusCode.Should().Be(HttpStatusCode.NoContent,
             because: "staff-validate on a Pending class must return 204");

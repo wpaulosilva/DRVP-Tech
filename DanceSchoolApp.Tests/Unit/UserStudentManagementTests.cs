@@ -250,7 +250,8 @@ public class UserStudentManagementTests
         var updateRequest = new StudentUpdateRequest
         {
             FirstName = "UpdatedName",
-            LastName  = "UpdatedLast"
+            LastName  = "UpdatedLast",
+            Nif       = "123456789"
         };
 
         // Act

@@ -196,7 +196,7 @@ public class CoachClassValidationTests
         var service = CreateService(db);
 
         // Act
-        await service.StaffValidateAsync(cls.ClassId);
+        await service.StaffValidateAsync(cls.ClassId, confirmed: true, reason: null);
 
         // Assert
         var updated = db.CoachClasses.Find(cls.ClassId)!;
@@ -214,7 +214,7 @@ public class CoachClassValidationTests
         var service = CreateService(db);
 
         // Act
-        Func<Task> act = () => service.StaffValidateAsync(cls.ClassId);
+        Func<Task> act = () => service.StaffValidateAsync(cls.ClassId, confirmed: true, reason: null);
 
         // Assert
         await act.Should().ThrowAsync<InvalidOperationException>(
