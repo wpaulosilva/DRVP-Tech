@@ -5,7 +5,6 @@ using System.Security.Claims;
 using System.Threading.RateLimiting;
 using DanceSchoolApp.Server.Data;
 using DanceSchoolApp.Server.Services;
-using DanceSchoolApp.Server.Services.Scheduling;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.SqlServer;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -27,10 +26,8 @@ foreach (var service in serviceTypes)
 }
 
 builder.Services.AddHostedService<ClassLifecycleWorker>();
-builder.Services.AddHostedService<HolidaySyncWorker>();
 
 //  HttpClient Factory for external API calls
-builder.Services.AddHttpClient();
 builder.Services.AddControllers();
 
 
