@@ -1,5 +1,6 @@
 import { get } from '@/api/client'
 // See EndpointsMapping.md for full API reference
+// See EndpointsMapping.md for full API reference
 
 export function getCoachesForParent() {
     return get('/api/ee/coaches')
@@ -15,4 +16,8 @@ export function getCoachMe() {
 
 export function getCoachDashboard() {
     return get('/api/coach/dashboard')
-}   
+}
+
+export function getCoachesAvailable() {
+    return get('/api/coaches/available')
+}
