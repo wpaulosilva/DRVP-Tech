@@ -597,6 +597,17 @@ namespace DanceSchoolApp.Server.Services.Classes
                 : (byte)CoachValidationStatus.Denied;
             coachClass.CoachValidatedAt = DateTime.Now;
             await _context.SaveChangesAsync();
+
+            // If all participants have already responded, advance immediately to Pending
+            // so staff can do the final sign-off — mirrors the path where the parent validates last.
+            bool allResponded = coachClass.Participants
+                .All(p => p.ValidationStatus != (byte)ParticipantValidationStatus.Pending);
+
+            if (allResponded)
+            {
+                coachClass.Status = (byte)CoachClassStatus.Pending;
+                await _context.SaveChangesAsync();
+            }
         }
 
      
