@@ -228,7 +228,7 @@ function StaffStudiosPage() {
 
     const openCreate = () => { setEditId(null); setFormOpen(true) }
     const openEdit = (id) => { setEditId(id); setFormOpen(true) }
-    const closeForm = () => setFormOpen(false)
+    const closeForm = () => { setFormOpen(false); setEditId(null) }
 
     const handleSaved = () => {
         setFormOpen(false)

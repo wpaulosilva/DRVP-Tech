@@ -205,7 +205,7 @@ function ModalityFormModal({ open, modalityId, editModality, coachMap, allCoache
                     <button type="button" className="btn btn-secondary" onClick={onClose}>
                         Cancelar
                     </button>
-                    <button type="submit" className="btn btn-primary" disabled={saving}>
+                    <button type="submit" className="btn btn-primary" disabled={saving || assignLoading}>
                         {saving ? 'A guardar...' : 'Guardar'}
                     </button>
                 </div>
