@@ -254,7 +254,18 @@ function StudentsTable({ month }) {
         {/* status filter removed; kept layout space minimal */}
 
         <div style={{ marginLeft: 'auto' }}>
-          <button className="btn-primary" onClick={() => downloadExcelFormatted(filtered, `students-${month}.xlsx`, ['Aluno','Nif','Horas Realizadas Dias','Horas Realizadas FimDeSemana','Total a Pagar'], ['Aluno','NIF','Horas Realizadas (dias úteis)','Horas Realizadas (fins de semana)','Total a Pagar'])}>
+                  <button className="btn-primary" onClick={async () => {
+                      const params = new URLSearchParams({ month })
+                      if (search) params.append('search', search)
+                      const res = await fetch(`/api/staff/billing/students/export?${params}`)
+                      const blob = await res.blob()
+                      const url = URL.createObjectURL(blob)
+                      const a = document.createElement('a')
+                      a.href = url
+                      a.download = `billing_students_${month}.xlsx`
+                      a.click()
+                      URL.revokeObjectURL(url)
+                  }}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" style={{ marginRight: 8 }} xmlns="http://www.w3.org/2000/svg">
               <path d="M21 15V19A2 2 0 0 1 19 21H5A2 2 0 0 1 3 19V15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
               <path d="M7 10L12 15L17 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -363,7 +374,18 @@ function CoachesTable({ month }) {
         </div>
 
         <div style={{ marginLeft: 'auto' }}>
-          <button className="btn-primary" onClick={() => downloadExcelFormatted(filtered, `coaches-${month}.xlsx`, ['Professor','Nif','Horas Realizadas Dias','Horas Realizadas FimDeSemana','Total a Pagar'], ['Professor','NIF','Horas Realizadas (dias úteis)','Horas Realizadas (fins de semana)','Total a Receber'])}>
+                  <button className="btn-primary" onClick={async () => {
+                      const params = new URLSearchParams({ month })
+                      if (search) params.append('search', search)
+                      const res = await fetch(`/api/staff/billing/coaches/export?${params}`)
+                      const blob = await res.blob()
+                      const url = URL.createObjectURL(blob)
+                      const a = document.createElement('a')
+                      a.href = url
+                      a.download = `billing_coaches_${month}.xlsx`
+                      a.click()
+                      URL.revokeObjectURL(url)
+                  }}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" style={{ marginRight: 8 }} xmlns="http://www.w3.org/2000/svg">
               <path d="M21 15V19A2 2 0 0 1 19 21H5A2 2 0 0 1 3 19V15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
               <path d="M7 10L12 15L17 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
