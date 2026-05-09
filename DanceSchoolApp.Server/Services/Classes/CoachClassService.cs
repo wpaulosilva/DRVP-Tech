@@ -355,9 +355,10 @@ namespace DanceSchoolApp.Server.Services.Classes
 
             _context.CoachClasses.Add(coachClass);
 
-            // Save first to get ClassId, then add participants.
-            // Both operations are inside the same EF change tracker so if
-            // SaveChangesAsync fails the whole thing rolls back.
+            // Explicit transaction: first save generates ClassId, second save inserts
+            // participants. Without this, a failure on the second save would leave an
+            // orphan CoachClass with no participants.
+            using var tx = await _context.Database.BeginTransactionAsync();
             await _context.SaveChangesAsync();
 
             foreach (var studentId in request.StudentIds)
@@ -372,6 +373,7 @@ namespace DanceSchoolApp.Server.Services.Classes
             }
 
             await _context.SaveChangesAsync();
+            await tx.CommitAsync();
 
             return coachClass.ClassId;
         }
@@ -445,13 +447,7 @@ namespace DanceSchoolApp.Server.Services.Classes
 
         public async Task StaffRespondAsync(int classId, bool approve, string? reason)
         {
-            await TransitionStatusAsync(
-                classId,
-                allowedFrom: new[] { CoachClassStatus.Requested },
-                newStatus: approve ? CoachClassStatus.StaffApproved : CoachClassStatus.Rejected,
-                errorMessage: "Only a Requested class can be responded to by staff."
-            );
-
+            // 1. Fetch first — validate existence and date before mutating anything
             var coachClass = await _context.CoachClasses
                 .FirstOrDefaultAsync(c => c.ClassId == classId);
 
@@ -461,6 +457,14 @@ namespace DanceSchoolApp.Server.Services.Classes
             if (coachClass.StartDatetime <= DateTime.Now)
                 throw new InvalidOperationException(
                     "It´s not possible to approve or reject classes whose date has already passed.");
+
+            // 2. Transition the status
+            await TransitionStatusAsync(
+                classId,
+                allowedFrom: new[] { CoachClassStatus.Requested },
+                newStatus: approve ? CoachClassStatus.StaffApproved : CoachClassStatus.Rejected,
+                errorMessage: "Only a Requested class can be responded to by staff."
+            );
 
             if (!approve)
             {

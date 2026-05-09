@@ -4,7 +4,6 @@
 import React, { useEffect, useState } from 'react'
 import { getBillingStudentsAll, getBillingCoachesAll } from '../../services/billingService'
 import { get } from '../../api/client'
-// exceljs loaded lazily to keep initial bundle small
 import DataTable from '../../components/common/DataTable'
 import './StaffBillingPage.css'
 
@@ -61,89 +60,6 @@ function resolveName(obj, candidateKeys = []) {
 }
 
 function formatMoney(v) { return typeof v === 'number' ? `€${v}` : v }
-
-async function downloadExcelFormatted(data, filename = 'export.xlsx', headerKeys = null, headerLabels = null) {
-  const ExcelJS = (await import('exceljs')).default
-  const rows = Array.isArray(data) ? data : []
-  const defaultKeys = ['Aluno', 'Nif', 'Horas Realizadas Dias', 'Horas Realizadas FimDeSemana', 'Total a Pagar']
-  const keys = Array.isArray(headerKeys) && headerKeys.length ? headerKeys : defaultKeys
-  const labels = Array.isArray(headerLabels) && headerLabels.length ? headerLabels : keys
-
-  const coerce = (v) => {
-    if (v === undefined || v === null) return ''
-    if (typeof v === 'number') return v
-    if (typeof v === 'string' && v.trim() === '') return ''
-    const cleaned = String(v).replace(/[^0-9,.-]+/g, '').replace(',', '.')
-    if (cleaned === '') return String(v)
-    const num = Number(cleaned)
-    return Number.isNaN(num) ? String(v) : num
-  }
-
-  const workbook = new ExcelJS.Workbook()
-  const ws = workbook.addWorksheet('Faturacao')
-
-  ws.columns = keys.map(h => ({ width: Math.max(10, Math.min(32, String(h).length + 8)) }))
-
-  // Header row
-  const headerRow = ws.addRow(labels)
-  headerRow.eachCell(cell => {
-    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF6D28D9' } }
-    cell.font = { bold: true, color: { argb: 'FFFFFFFF' } }
-    cell.alignment = { horizontal: 'center', vertical: 'middle' }
-  })
-
-  const thinBorder = { style: 'thin', color: { argb: 'FFEFEFF2' } }
-  const totals = keys.map((_, i) => (i < 2 ? null : 0))
-
-  // Data rows
-  rows.forEach(r => {
-    const line = keys.map((k, i) => {
-      const v = coerce(r[k])
-      if (typeof v === 'number' && i >= 2) totals[i] += v
-      return v
-    })
-    const row = ws.addRow(line)
-    row.eachCell({ includeEmpty: false }, (cell, colNum) => {
-      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFFFF' } }
-      cell.border = { top: thinBorder, bottom: thinBorder, left: thinBorder, right: thinBorder }
-      const h = String(keys[colNum - 1] ?? '').toLowerCase()
-      if (typeof cell.value === 'number') {
-        if (h.includes('total') || h.includes('pagar') || h.includes('receber')) cell.numFmt = '€#,##0.00'
-        else if (h.includes('hora')) cell.numFmt = '0"h"'
-      }
-    })
-  })
-
-  // Totals row
-  const totalsValues = totals.map((v, i) => i === 0 ? 'Total' : i === 1 ? '' : (v ?? ''))
-  const totalsRow = ws.addRow(totalsValues)
-  totalsRow.eachCell({ includeEmpty: false }, (cell, colNum) => {
-    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF3E8FF' } }
-    const h = String(keys[colNum - 1] ?? '').toLowerCase()
-    if (typeof cell.value === 'number') {
-      if (h.includes('total') || h.includes('pagar') || h.includes('receber')) {
-        cell.numFmt = '€#,##0.00'
-        cell.font = { bold: true, color: { argb: 'FF008000' } }
-      } else if (h.includes('hora')) {
-        cell.numFmt = '0"h"'
-        cell.font = { bold: true }
-      } else {
-        cell.font = { bold: true }
-      }
-    } else {
-      cell.font = { bold: true }
-    }
-  })
-
-  const buffer = await workbook.xlsx.writeBuffer()
-  const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = filename
-  a.click()
-  URL.revokeObjectURL(url)
-}
 
 function StudentsTable({ month }) {
   const [rows, setRows] = useState([])
@@ -257,7 +173,7 @@ function StudentsTable({ month }) {
                   <button className="btn-primary" onClick={async () => {
                       const params = new URLSearchParams({ month })
                       if (search) params.append('search', search)
-                      const res = await fetch(`/api/staff/billing/students/export?${params}`)
+                      const res = await fetch(`/api/staff/billing/students/export?${params}`, { credentials: 'include' })
                       const blob = await res.blob()
                       const url = URL.createObjectURL(blob)
                       const a = document.createElement('a')
@@ -377,7 +293,7 @@ function CoachesTable({ month }) {
                   <button className="btn-primary" onClick={async () => {
                       const params = new URLSearchParams({ month })
                       if (search) params.append('search', search)
-                      const res = await fetch(`/api/staff/billing/coaches/export?${params}`)
+                      const res = await fetch(`/api/staff/billing/coaches/export?${params}`, { credentials: 'include' })
                       const blob = await res.blob()
                       const url = URL.createObjectURL(blob)
                       const a = document.createElement('a')

@@ -39,8 +39,9 @@ builder.Services.AddEndpointsApiExplorer();
 
 
 //  Database 
-var conn = Environment.GetEnvironmentVariable("DanceSchoolApp_DB");
-if (conn == null) Console.WriteLine($"{YELLOW}Warning{NORMAL} - DanceSchoolApp_DB environment variable is not set.!");
+var conn = Environment.GetEnvironmentVariable("DanceSchoolApp_DB")
+    ?? throw new InvalidOperationException(
+        "Required environment variable 'DanceSchoolApp_DB' is not set.");
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(conn));
