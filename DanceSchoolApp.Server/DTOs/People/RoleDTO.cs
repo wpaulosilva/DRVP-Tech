@@ -56,7 +56,7 @@ namespace DanceSchoolApp.Server.DTOs.People
     public class RoleSummaryResponse
     {
         public byte RoleId { get; set; }
-        public string RoleName { get; set; }
+        public string RoleName { get; set; } = null!;
     }
 
     //  Requests 

@@ -55,7 +55,7 @@ namespace DanceSchoolApp.Server.DTOs.People
         [Required]
 
         [MaxLength(9)]
-        public string Nif { get; set; }
+        public required string Nif { get; set; }
     }
 
     public class StudentUpdateRequest
@@ -77,7 +77,7 @@ namespace DanceSchoolApp.Server.DTOs.People
         public string? Address { get; set; }
         [Required]
         [MaxLength(9)]
-        public string Nif { get; set; }
+        public required string Nif { get; set; }
     }
 
     public class StudentAcceptanceRejectRequest
