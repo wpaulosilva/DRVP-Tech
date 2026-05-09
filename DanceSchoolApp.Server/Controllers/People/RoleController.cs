@@ -1,4 +1,4 @@
-﻿using DanceSchoolApp.Server.DTOs.People;
+using DanceSchoolApp.Server.DTOs.People;
 using DanceSchoolApp.Server.Services.People;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -43,7 +43,7 @@ namespace DanceSchoolApp.Server.Controllers.People
             }
             catch (Exception ex)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+                return StatusCode(StatusCodes.Status500InternalServerError, "An unexpected error occurred.");
             }
         }
 
@@ -67,7 +67,7 @@ namespace DanceSchoolApp.Server.Controllers.People
             }
             catch (Exception ex)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+                return StatusCode(StatusCodes.Status500InternalServerError, "An unexpected error occurred.");
             }
         }
 
@@ -89,7 +89,7 @@ namespace DanceSchoolApp.Server.Controllers.People
                 return CreatedAtAction(nameof(GetRole), new { id = request.RoleId }, null);
             }
             catch (InvalidOperationException ex) { return Conflict(ex.Message); }
-            catch (Exception ex) { return StatusCode(500, ex.Message); }
+            catch (Exception ex) { return StatusCode(500, "An unexpected error occurred."); }
         }
 
         //  POST /api/roles/assign 
@@ -119,7 +119,7 @@ namespace DanceSchoolApp.Server.Controllers.People
             }
             catch (Exception ex)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+                return StatusCode(StatusCodes.Status500InternalServerError, "An unexpected error occurred.");
             }
         }
 
@@ -146,7 +146,7 @@ namespace DanceSchoolApp.Server.Controllers.People
             }
             catch (Exception ex)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+                return StatusCode(StatusCodes.Status500InternalServerError, "An unexpected error occurred.");
             }
         }
     }

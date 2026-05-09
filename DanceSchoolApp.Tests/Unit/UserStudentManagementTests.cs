@@ -27,7 +27,8 @@ public class UserStudentManagementTests
             emailService:   null!,    // inside try-catch — NullReferenceException is caught
             authService:    null!,    // inside try-catch — NullReferenceException is caught
             coachService:   new CoachService(db),
-            logger:         NullLogger<UserService>.Instance);
+            logger:         NullLogger<UserService>.Instance,
+            config:         null!);   // FrontendBaseUrl only needed by email path, which is null! above
 
     private static StudentService CreateStudentService(AppDbContext db) =>
         new StudentService(db, new NotificationService(db));

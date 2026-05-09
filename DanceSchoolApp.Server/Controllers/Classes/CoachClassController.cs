@@ -1,4 +1,4 @@
-﻿using DanceSchoolApp.Server.DTOs;
+using DanceSchoolApp.Server.DTOs;
 using DanceSchoolApp.Server.DTOs.Classes;
 using DanceSchoolApp.Server.Services.Classes;
 using Microsoft.AspNetCore.Mvc;
@@ -37,11 +37,12 @@ namespace DanceSchoolApp.Server.Controllers.Classes
             }
             catch (Exception ex)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+                return StatusCode(StatusCodes.Status500InternalServerError, "An unexpected error occurred.");
             }
         }
 
-        //  GET /api/coachclasses/{id} 
+        //  GET /api/coachclasses/{id}
+        // Staff: unrestricted. Coach: own classes only. Parent: enrolled students only.
         [Authorize]
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
@@ -49,15 +50,29 @@ namespace DanceSchoolApp.Server.Controllers.Classes
             try
             {
                 var result = await _coachClassService.GetByIdAsync(id);
+
+                if (!IsStaff())
+                {
+                    var callerId = GetUserId();
+                    bool allowed = false;
+
+                    if (User.IsInRole("coach"))
+                        allowed = result.CoachId == callerId;
+                    else if (User.IsInRole("parent"))
+                        allowed = await _coachClassService.IsParentOfClassAsync(callerId, id);
+
+                    if (!allowed) return Forbid();
+                }
+
                 return Ok(result);
             }
             catch (KeyNotFoundException ex)
             {
                 return NotFound(ex.Message);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+                return StatusCode(StatusCodes.Status500InternalServerError, "An unexpected error occurred.");
             }
         }
 
@@ -78,7 +93,7 @@ namespace DanceSchoolApp.Server.Controllers.Classes
             }
             catch (Exception ex)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+                return StatusCode(StatusCodes.Status500InternalServerError, "An unexpected error occurred.");
             }
         }
 
@@ -107,7 +122,7 @@ namespace DanceSchoolApp.Server.Controllers.Classes
             }
             catch (Exception ex)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+                return StatusCode(StatusCodes.Status500InternalServerError, "An unexpected error occurred.");
             }
         }
 
@@ -135,7 +150,7 @@ namespace DanceSchoolApp.Server.Controllers.Classes
             }
             catch (Exception ex)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+                return StatusCode(StatusCodes.Status500InternalServerError, "An unexpected error occurred.");
             }
         }
 
@@ -163,7 +178,7 @@ namespace DanceSchoolApp.Server.Controllers.Classes
             }
             catch (Exception ex)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+                return StatusCode(StatusCodes.Status500InternalServerError, "An unexpected error occurred.");
             }
         }
 
@@ -193,7 +208,7 @@ namespace DanceSchoolApp.Server.Controllers.Classes
             }
             catch (Exception ex)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+                return StatusCode(StatusCodes.Status500InternalServerError, "An unexpected error occurred.");
             }
         }
 
@@ -219,7 +234,7 @@ namespace DanceSchoolApp.Server.Controllers.Classes
             }
             catch (KeyNotFoundException ex) { return NotFound(ex.Message); }
             catch (InvalidOperationException ex) { return Conflict(ex.Message); }
-            catch (Exception ex) { return StatusCode(500, ex.Message); }
+            catch (Exception ex) { return StatusCode(500, "An unexpected error occurred."); }
         }
 
         //  PATCH /api/coachclasses/{id}/coach-respond 
@@ -241,7 +256,7 @@ namespace DanceSchoolApp.Server.Controllers.Classes
             catch (KeyNotFoundException ex) { return NotFound(ex.Message); }
             catch (UnauthorizedAccessException) { return Forbid(); }
             catch (InvalidOperationException ex) { return Conflict(ex.Message); }
-            catch (Exception ex) { return StatusCode(500, ex.Message); }
+            catch (Exception ex) { return StatusCode(500, "An unexpected error occurred."); }
         }
 
         //  PATCH /api/coachclasses/{id}/cancel 
@@ -265,7 +280,7 @@ namespace DanceSchoolApp.Server.Controllers.Classes
             }
             catch (Exception ex)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+                return StatusCode(StatusCodes.Status500InternalServerError, "An unexpected error occurred.");
             }
         }
 
@@ -288,7 +303,7 @@ namespace DanceSchoolApp.Server.Controllers.Classes
             catch (KeyNotFoundException ex) { return NotFound(ex.Message); }
             catch (UnauthorizedAccessException ex) { return Forbid(ex.Message); }
             catch (InvalidOperationException ex) { return Conflict(ex.Message); }
-            catch (Exception ex) { return StatusCode(500, ex.Message); }
+            catch (Exception ex) { return StatusCode(500, "An unexpected error occurred."); }
         }
 
         //  PATCH /api/coachclasses/{id}/staff-validate 
@@ -307,7 +322,7 @@ namespace DanceSchoolApp.Server.Controllers.Classes
             }
             catch (KeyNotFoundException ex) { return NotFound(ex.Message); }
             catch (InvalidOperationException ex) { return Conflict(ex.Message); }
-            catch (Exception ex) { return StatusCode(500, ex.Message); }
+            catch (Exception ex) { return StatusCode(500, "An unexpected error occurred."); }
         }
     }
 }

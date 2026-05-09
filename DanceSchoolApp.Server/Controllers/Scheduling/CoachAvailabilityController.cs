@@ -1,4 +1,4 @@
-﻿using DanceSchoolApp.Server.DTOs.Scheduling;
+using DanceSchoolApp.Server.DTOs.Scheduling;
 using DanceSchoolApp.Server.Services.Scheduling;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
@@ -34,7 +34,7 @@ namespace DanceSchoolApp.Server.Controllers.Scheduling
             }
             catch (Exception ex)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+                return StatusCode(StatusCodes.Status500InternalServerError, "An unexpected error occurred.");
             }
         }
 
@@ -54,7 +54,7 @@ namespace DanceSchoolApp.Server.Controllers.Scheduling
             }
             catch (Exception ex)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+                return StatusCode(StatusCodes.Status500InternalServerError, "An unexpected error occurred.");
             }
         }
 
@@ -81,7 +81,7 @@ namespace DanceSchoolApp.Server.Controllers.Scheduling
             }
             catch (Exception ex)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+                return StatusCode(StatusCodes.Status500InternalServerError, "An unexpected error occurred.");
             }
         }
 
@@ -112,7 +112,7 @@ namespace DanceSchoolApp.Server.Controllers.Scheduling
             }
             catch (Exception ex)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+                return StatusCode(StatusCodes.Status500InternalServerError, "An unexpected error occurred.");
             }
         }
 
@@ -143,7 +143,7 @@ namespace DanceSchoolApp.Server.Controllers.Scheduling
             }
             catch (Exception ex)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+                return StatusCode(StatusCodes.Status500InternalServerError, "An unexpected error occurred.");
             }
         }
 
@@ -165,7 +165,7 @@ namespace DanceSchoolApp.Server.Controllers.Scheduling
             }
             catch (Exception ex)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+                return StatusCode(StatusCodes.Status500InternalServerError, "An unexpected error occurred.");
             }
         }
     }

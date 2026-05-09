@@ -15,14 +15,16 @@ namespace DanceSchoolApp.Server.Services.People
         private readonly AuthService _authService;
         private readonly CoachService _coachService;
         private readonly ILogger<UserService> _logger;
+        private readonly IConfiguration _config;
 
-        public UserService(AppDbContext context, EmailService emailService, AuthService authService, CoachService coachService, ILogger<UserService> logger)
+        public UserService(AppDbContext context, EmailService emailService, AuthService authService, CoachService coachService, ILogger<UserService> logger, IConfiguration config)
         {
             _context = context;
             _emailService = emailService;
             _authService = authService;
             _coachService = coachService;
             _logger = logger;
+            _config = config;
         }
 
    
@@ -172,8 +174,10 @@ namespace DanceSchoolApp.Server.Services.People
             try
             {
                 string roleName = role?.RoleName ?? "Utilizador";
-                string resetToken = _authService.GeneratePasswordResetToken(user.UserId, user.Email!);
-                string resetLink = $"https://localhost:5173/reset-password?token={resetToken}";
+                string resetToken   = _authService.GeneratePasswordResetToken(user.UserId, user.Email!);
+                string frontendBase = _config["App:FrontendBaseUrl"]
+                    ?? throw new InvalidOperationException("App:FrontendBaseUrl is not configured.");
+                string resetLink = $"{frontendBase}/reset-password?token={resetToken}";
                 await _emailService.SendWelcomeEmailAsync(user.Email, roleName, generatedPassword,resetLink);
             }
             catch (Exception ex)

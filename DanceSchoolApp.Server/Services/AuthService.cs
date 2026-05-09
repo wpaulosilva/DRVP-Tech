@@ -17,11 +17,13 @@ namespace DanceSchoolApp.Server.Services
 
         private readonly AppDbContext _context;
         private readonly EmailService _emailService;
+        private readonly IConfiguration _config;
 
-        public AuthService(AppDbContext context, EmailService emailService)
+        public AuthService(AppDbContext context, EmailService emailService, IConfiguration config)
         {
             _context = context;
             _emailService = emailService;
+            _config = config;
         }
 
         public async Task<(string AccessToken, string RawRefreshToken, LoginResponse Response)> LoginAsync(
@@ -95,8 +97,10 @@ namespace DanceSchoolApp.Server.Services
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
             if (user is null) return;
 
-            var token     = GeneratePasswordResetToken(user.UserId, user.Email!);
-            var resetLink = $"https://localhost:5173/reset-password?token={token}";
+            var token       = GeneratePasswordResetToken(user.UserId, user.Email!);
+            var frontendBase = _config["App:FrontendBaseUrl"]
+                ?? throw new InvalidOperationException("App:FrontendBaseUrl is not configured.");
+            var resetLink = $"{frontendBase}/reset-password?token={token}";
             await _emailService.SendPasswordResetEmailAsync(user.Email!, resetLink);
         }
 

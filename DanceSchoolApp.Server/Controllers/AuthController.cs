@@ -43,7 +43,7 @@ namespace DanceSchoolApp.Server.Controllers
             }
             catch (ArgumentException ex)          { return BadRequest(ex.Message); }
             catch (UnauthorizedAccessException ex) { return Unauthorized(ex.Message); }
-            catch (Exception ex)                   { return StatusCode(500, ex.Message); }
+            catch (Exception ex)                   { return StatusCode(500, "An unexpected error occurred."); }
         }
 
         //  POST /api/auth/refresh
@@ -65,7 +65,7 @@ namespace DanceSchoolApp.Server.Controllers
                 return Ok(response);
             }
             catch (UnauthorizedAccessException ex) { return Unauthorized(ex.Message); }
-            catch (Exception ex)                   { return StatusCode(500, ex.Message); }
+            catch (Exception ex)                   { return StatusCode(500, "An unexpected error occurred."); }
         }
 
         //  POST /api/auth/logout
@@ -94,7 +94,7 @@ namespace DanceSchoolApp.Server.Controllers
                 await _authService.SendPasswordResetAsync(request.Email);
                 return Ok("If that email is registered, a reset link has been sent.");
             }
-            catch (Exception ex) { return StatusCode(500, ex.Message); }
+            catch (Exception ex) { return StatusCode(500, "An unexpected error occurred."); }
         }
 
         //  POST /api/auth/reset-password
@@ -110,7 +110,7 @@ namespace DanceSchoolApp.Server.Controllers
             }
             catch (UnauthorizedAccessException ex) { return Unauthorized(ex.Message); }
             catch (KeyNotFoundException ex)        { return NotFound(ex.Message); }
-            catch (Exception ex)                   { return StatusCode(500, ex.Message); }
+            catch (Exception ex)                   { return StatusCode(500, "An unexpected error occurred."); }
         }
 
         //  GET /api/auth/me

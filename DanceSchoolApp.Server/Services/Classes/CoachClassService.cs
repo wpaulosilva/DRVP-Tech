@@ -162,6 +162,14 @@ namespace DanceSchoolApp.Server.Services.Classes
                 .ToListAsync();
         }
 
+        public async Task<bool> IsParentOfClassAsync(int parentUserId, int classId)
+        {
+            return await _context.Participants
+                .Include(p => p.IdStudentNavigation)
+                .AnyAsync(p => p.IdCoachClass == classId
+                            && p.IdStudentNavigation.ParentUserId == parentUserId);
+        }
+
         public async Task<List<CoachClassListResponse>> GetByParentAsync(int parentUserId)
         {
             bool parentExists = await _context.Users

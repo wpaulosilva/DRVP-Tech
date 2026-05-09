@@ -4,7 +4,7 @@
 import React, { useEffect, useState } from 'react'
 import { getBillingStudentsAll, getBillingCoachesAll } from '../../services/billingService'
 import { get } from '../../api/client'
-import * as XLSX from 'xlsx'
+// exceljs loaded lazily to keep initial bundle small
 import DataTable from '../../components/common/DataTable'
 import './StaffBillingPage.css'
 
@@ -62,151 +62,87 @@ function resolveName(obj, candidateKeys = []) {
 
 function formatMoney(v) { return typeof v === 'number' ? `€${v}` : v }
 
-function downloadExcelFormatted(data, filename = 'export.xlsx', headerKeys = null, headerLabels = null) { 
-  // Ensure data is array
+async function downloadExcelFormatted(data, filename = 'export.xlsx', headerKeys = null, headerLabels = null) {
+  const ExcelJS = (await import('exceljs')).default
   const rows = Array.isArray(data) ? data : []
-
-  // default keys and labels
   const defaultKeys = ['Aluno', 'Nif', 'Horas Realizadas Dias', 'Horas Realizadas FimDeSemana', 'Total a Pagar']
   const keys = Array.isArray(headerKeys) && headerKeys.length ? headerKeys : defaultKeys
   const labels = Array.isArray(headerLabels) && headerLabels.length ? headerLabels : keys
 
-  const aoa = [labels]
+  const coerce = (v) => {
+    if (v === undefined || v === null) return ''
+    if (typeof v === 'number') return v
+    if (typeof v === 'string' && v.trim() === '') return ''
+    const cleaned = String(v).replace(/[^0-9,.-]+/g, '').replace(',', '.')
+    if (cleaned === '') return String(v)
+    const num = Number(cleaned)
+    return Number.isNaN(num) ? String(v) : num
+  }
 
-  // populate rows in order, coercing numbers
+  const workbook = new ExcelJS.Workbook()
+  const ws = workbook.addWorksheet('Faturacao')
+
+  ws.columns = keys.map(h => ({ width: Math.max(10, Math.min(32, String(h).length + 8)) }))
+
+  // Header row
+  const headerRow = ws.addRow(labels)
+  headerRow.eachCell(cell => {
+    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF6D28D9' } }
+    cell.font = { bold: true, color: { argb: 'FFFFFFFF' } }
+    cell.alignment = { horizontal: 'center', vertical: 'middle' }
+  })
+
+  const thinBorder = { style: 'thin', color: { argb: 'FFEFEFF2' } }
+  const totals = keys.map((_, i) => (i < 2 ? null : 0))
+
+  // Data rows
   rows.forEach(r => {
-    const line = keys.map(k => {
-      const v = r[k]
-      if (v === undefined || v === null) return ''
-      if (typeof v === 'number') return v
-      if (typeof v === 'string' && v.trim() === '') return ''
-      // try to coerce numeric strings (but keep non-numeric strings as-is)
-      const cleaned = String(v).replace(/[^0-9,.-]+/g, '').replace(',', '.')
-      if (cleaned === '') return String(v)
-      const num = Number(cleaned)
-      return Number.isNaN(num) ? String(v) : num
+    const line = keys.map((k, i) => {
+      const v = coerce(r[k])
+      if (typeof v === 'number' && i >= 2) totals[i] += v
+      return v
     })
-    aoa.push(line)
-  })
-
-  // totals row (sum numeric columns)
-  const totals = keys.map((k, idx) => {
-    if (idx === 0) return 'Total'
-    if (idx === 1) return ''
-    // sum numeric column
-    return aoa.slice(1).reduce((s, row) => s + (Number(row[idx]) || 0), 0)
-  })
-  aoa.push(totals)
-
-  const ws = XLSX.utils.aoa_to_sheet(aoa)
-
-  // auto column widths (approx)
-  ws['!cols'] = keys.map(h => ({ wch: Math.max(8, Math.min(30, String(h).length + 8)) }))
-
-  // Styling: header purple with white text, data rows white with thin border, totals light purple
-  const headerColor = 'FF6D28D9'
-  const totalsBg = 'FFF3E8FF'
-  try {
-    const range = XLSX.utils.decode_range(ws['!ref'])
-
-    // header
-    for (let C = 0; C <= range.e.c; ++C) {
-      const cellRef = XLSX.utils.encode_cell({ r: 0, c: C })
-      const cell = ws[cellRef]
-      if (!cell) continue
-      cell.s = {
-        font: { bold: true, color: { rgb: 'FFFFFFFF' } },
-        fill: { patternType: 'solid', fgColor: { rgb: headerColor } },
-        alignment: { horizontal: 'center', vertical: 'center' }
-      }
-    }
-
-    // data rows
-    for (let R = 1; R <= range.e.r; ++R) {
-      for (let C = 0; C <= range.e.c; ++C) {
-        const cellRef = XLSX.utils.encode_cell({ r: R, c: C })
-        const cell = ws[cellRef]
-        if (!cell) continue
-        cell.s = cell.s || {}
-        // totals row styling
-        if (R === range.e.r) {
-          cell.s.fill = { patternType: 'solid', fgColor: { rgb: totalsBg } }
-          cell.s.font = { bold: true }
-        } else {
-          cell.s.fill = { patternType: 'solid', fgColor: { rgb: 'FFFFFFFF' } }
-        }
-        // thin border
-        cell.s.border = {
-          top: { style: 'thin', color: { rgb: 'FFEFEFF2' } },
-          bottom: { style: 'thin', color: { rgb: 'FFEFEFF2' } },
-          left: { style: 'thin', color: { rgb: 'FFEFEFF2' } },
-          right: { style: 'thin', color: { rgb: 'FFEFEFF2' } }
-        }
-      }
-    }
-
-    // apply number formats for hours and currency
-    for (let R = 1; R <= range.e.r; ++R) {
-      const hoursWeekCell = ws[XLSX.utils.encode_cell({ r: R, c: 2 })]
-      if (hoursWeekCell && typeof hoursWeekCell.v === 'number') { hoursWeekCell.t = 'n'; hoursWeekCell.z = '0.00' }
-      const hoursWeekendCell = ws[XLSX.utils.encode_cell({ r: R, c: 3 })]
-      if (hoursWeekendCell && typeof hoursWeekendCell.v === 'number') { hoursWeekendCell.t = 'n'; hoursWeekendCell.z = '0.00' }
-      const totalCell = ws[XLSX.utils.encode_cell({ r: R, c: 4 })]
-      if (totalCell && typeof totalCell.v === 'number') { totalCell.t = 'n'; totalCell.z = '€#,##0.00' }
-    }
-  } catch {
-    // ignore styling errors
-  }
-
-  // number formats for currency/hours heuristics using keys
-  keys.forEach((h, c) => {
-    const lc = String(h).toLowerCase()
-    const isCurrency = lc.includes('total') || lc.includes('€') || lc.includes('paid') || lc.includes('receita')
-    const isHours = lc.includes('hora') || lc.includes('horas')
-    for (let r = 1; r < aoa.length; r++) {
-      const cellRef = XLSX.utils.encode_cell({ r, c })
-      const cell = ws[cellRef]
-      if (!cell) continue
-      if (isCurrency && typeof cell.v === 'number') {
-        cell.t = 'n'
-        cell.z = '€#,##0.00'
-      }
-      if (isHours && typeof cell.v === 'number') {
-        cell.t = 'n'
-        cell.z = '0"h"'
-      }
-    }
-  })
-
-  // apply totals row styling (last row)
-  const lastRowIndex = aoa.length - 1
-  try {
-    keys.forEach((h, c) => {
-      const cellRef = XLSX.utils.encode_cell({ r: lastRowIndex, c })
-      const cell = ws[cellRef]
-      if (!cell) return
-      cell.s = cell.s || {}
-      cell.s.font = { bold: true }
-      cell.s.fill = { patternType: 'solid', fgColor: { rgb: totalsBg } }
-      // currency number format for totals
-      const lc = String(h).toLowerCase()
-      if (lc.includes('total') || lc.includes('€') || lc.includes('paid') || lc.includes('receita')) {
-        cell.t = 'n'
-        cell.z = '€#,##0.00'
-        cell.s.font.color = { rgb: 'FF008000' }
-      }
-      if (lc.includes('hora')) {
-        cell.t = 'n'
-        cell.z = '0"h"'
+    const row = ws.addRow(line)
+    row.eachCell({ includeEmpty: false }, (cell, colNum) => {
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFFFF' } }
+      cell.border = { top: thinBorder, bottom: thinBorder, left: thinBorder, right: thinBorder }
+      const h = String(keys[colNum - 1] ?? '').toLowerCase()
+      if (typeof cell.value === 'number') {
+        if (h.includes('total') || h.includes('pagar') || h.includes('receber')) cell.numFmt = '€#,##0.00'
+        else if (h.includes('hora')) cell.numFmt = '0"h"'
       }
     })
-  } catch {
-    // ignore styling errors
-  }
+  })
 
-  const wb = XLSX.utils.book_new()
-  XLSX.utils.book_append_sheet(wb, ws, 'Faturacao')
-  XLSX.writeFile(wb, filename)
+  // Totals row
+  const totalsValues = totals.map((v, i) => i === 0 ? 'Total' : i === 1 ? '' : (v ?? ''))
+  const totalsRow = ws.addRow(totalsValues)
+  totalsRow.eachCell({ includeEmpty: false }, (cell, colNum) => {
+    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF3E8FF' } }
+    const h = String(keys[colNum - 1] ?? '').toLowerCase()
+    if (typeof cell.value === 'number') {
+      if (h.includes('total') || h.includes('pagar') || h.includes('receber')) {
+        cell.numFmt = '€#,##0.00'
+        cell.font = { bold: true, color: { argb: 'FF008000' } }
+      } else if (h.includes('hora')) {
+        cell.numFmt = '0"h"'
+        cell.font = { bold: true }
+      } else {
+        cell.font = { bold: true }
+      }
+    } else {
+      cell.font = { bold: true }
+    }
+  })
+
+  const buffer = await workbook.xlsx.writeBuffer()
+  const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = filename
+  a.click()
+  URL.revokeObjectURL(url)
 }
 
 function StudentsTable({ month }) {

@@ -1,4 +1,4 @@
-﻿using DanceSchoolApp.Server.DTOs;
+using DanceSchoolApp.Server.DTOs;
 using DanceSchoolApp.Server.Services.People;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -42,7 +42,7 @@ namespace DanceSchoolApp.Server.Controllers.People
             }
             catch (Exception ex)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+                return StatusCode(StatusCodes.Status500InternalServerError, "An unexpected error occurred.");
             }
         }
 
@@ -62,7 +62,7 @@ namespace DanceSchoolApp.Server.Controllers.People
             }
             catch (Exception ex)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+                return StatusCode(StatusCodes.Status500InternalServerError, "An unexpected error occurred.");
             }
         }
 
@@ -81,10 +81,26 @@ namespace DanceSchoolApp.Server.Controllers.People
             if (file == null || file.Length == 0)
                 return BadRequest("No file provided.");
 
+            if (file.Length > 5_000_000)
+                return BadRequest("File exceeds the 5 MB limit.");
+
             var permitted = new[] { ".jpg", ".jpeg", ".png" };
             var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
             if (string.IsNullOrEmpty(ext) || !permitted.Contains(ext))
                 return BadRequest("Invalid file type.");
+
+            // Validate magic bytes — extension alone can be spoofed.
+            using var ms = new MemoryStream();
+            await file.CopyToAsync(ms);
+            ms.Position = 0;
+            var header = new byte[4];
+            _ = await ms.ReadAsync(header);
+
+            bool isJpeg = header[0] == 0xFF && header[1] == 0xD8;
+            bool isPng  = header[0] == 0x89 && header[1] == 0x50
+                       && header[2] == 0x4E && header[3] == 0x47;
+            if (!isJpeg && !isPng)
+                return BadRequest("File content does not match the declared image type.");
 
             var env = HttpContext.RequestServices.GetRequiredService<IWebHostEnvironment>();
             var webroot = env.WebRootPath ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
@@ -94,9 +110,10 @@ namespace DanceSchoolApp.Server.Controllers.People
             var fileName = $"{Guid.NewGuid()}{ext}";
             var filePath = Path.Combine(coachFolder, fileName);
 
+            ms.Position = 0;
             using (var stream = System.IO.File.Create(filePath))
             {
-                await file.CopyToAsync(stream);
+                await ms.CopyToAsync(stream);
             }
 
             var relativePath = $"/uploads/coach/{fileName}";
@@ -131,7 +148,7 @@ namespace DanceSchoolApp.Server.Controllers.People
             }
             catch (Exception ex)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+                return StatusCode(StatusCodes.Status500InternalServerError, "An unexpected error occurred.");
             }
         }
 
@@ -151,7 +168,7 @@ namespace DanceSchoolApp.Server.Controllers.People
             }
             catch (Exception ex)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+                return StatusCode(StatusCodes.Status500InternalServerError, "An unexpected error occurred.");
             }
         }
        

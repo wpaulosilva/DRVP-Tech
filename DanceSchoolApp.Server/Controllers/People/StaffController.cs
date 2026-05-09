@@ -1,4 +1,4 @@
-﻿using DanceSchoolApp.Server.DTOs;
+using DanceSchoolApp.Server.DTOs;
 using DanceSchoolApp.Server.Services.People;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
@@ -36,7 +36,7 @@ namespace DanceSchoolApp.Server.Controllers.People
             }
             catch (Exception ex)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+                return StatusCode(StatusCodes.Status500InternalServerError, "An unexpected error occurred.");
             }
         }
 
@@ -71,7 +71,7 @@ namespace DanceSchoolApp.Server.Controllers.People
             }
             catch (Exception ex)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+                return StatusCode(StatusCodes.Status500InternalServerError, "An unexpected error occurred.");
             }
         }
         //  GET /api/staff/{id} 
@@ -94,7 +94,7 @@ namespace DanceSchoolApp.Server.Controllers.People
             }
             catch (Exception ex)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+                return StatusCode(StatusCodes.Status500InternalServerError, "An unexpected error occurred.");
             }
         }
     }

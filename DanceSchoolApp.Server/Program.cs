@@ -163,6 +163,15 @@ if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
 }
+
+// Global exception handler — prevents internal exception messages from leaking to clients.
+app.UseExceptionHandler(err => err.Run(async ctx =>
+{
+    ctx.Response.StatusCode  = StatusCodes.Status500InternalServerError;
+    ctx.Response.ContentType = "application/json";
+    await ctx.Response.WriteAsJsonAsync(new { error = "An unexpected error occurred." });
+}));
+
 app.UseHttpsRedirection();
 
 app.UseCors("AllowFrontend");
