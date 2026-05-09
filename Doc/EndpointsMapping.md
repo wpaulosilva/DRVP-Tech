@@ -142,8 +142,8 @@ The header mounts once per session. It does NOT call an endpoint on every naviga
 | Pagination | `GET /api/staff/validate-classes?tab={tab}&page={n}` |
 | "Aceitar Aula" button (Requisitadas) | `PATCH /api/coachclasses/{id}/staff-respond` body: `{ "approve": true }` |
 | "Recusar Aula" button (Requisitadas) | `PATCH /api/coachclasses/{id}/staff-respond` body: `{ "approve": false, "reason"?: "..." }` |
-| "Validar" button (Pendentes tab) | `PATCH /api/coachclasses/{id}/staff-validate` |
-| "Cancelar" button (Pendentes tab) | `PATCH /api/coachclasses/{id}/cancel` |
+| "Validar" button (Pendentes tab) | `PATCH /api/coachclasses/{id}/staff-validate` body: `{ "confirmed": true }` |
+| "Cancelar" button (Pendentes tab) | `PATCH /api/coachclasses/{id}/staff-validate` body: `{ "confirmed": false }` |
 
 
 ### `/staff/modalities` — Modalidades

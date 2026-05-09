@@ -631,13 +631,15 @@ function ParentClassesPage() {
         const selectedSlots = t2SelectedDate ? (t2SlotsByDate[t2SelectedDate] ?? []) : []
         const hasAnySlots = Object.keys(t2SlotsByDate).length > 0
 
+        const todayIso = isoDate(new Date())
+
         const renderDay = (key, dayNum) => {
-            const slots = t2SlotsByDate[key] ?? []
+            const slots = key < todayIso ? [] : (t2SlotsByDate[key] ?? [])
             const isSelected = key === t2SelectedDate
             return (
                 <div
                     key={key}
-                    className={`pc-day-cell${slots.length ? ' pc-day-cell--has-slot' : ''}${isSelected ? ' pc-day-cell--selected' : ''}`}
+                    className={`pc-day-cell${slots.length ? ' pc-day-cell--has-slot' : ''}${isSelected ? ' pc-day-cell--selected' : ''}${key < todayIso ? ' pc-day-cell--past' : ''}`}
                     onClick={() => slots.length && setT2SelectedDate(isSelected ? null : key)}
                 >
                     <span className="pc-day-num">{dayNum}</span>

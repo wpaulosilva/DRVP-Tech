@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import ClassValidationCard from '../../components/common/ClassValidationCard'
 import Modal from '../../components/common/Modal'
-import { getValidateClasses, staffApprove, staffReject, staffValidate, cancelClass } from '../../services/staffService'
+import { getValidateClasses, staffApprove, staffReject, staffValidate } from '../../services/staffService'
 import '../../styles/ValidateClasses.css'
 
 function StaffValidateClassesPage() {
@@ -77,7 +77,7 @@ function StaffValidateClassesPage() {
 
     const handleCancel = async (id) => {
         try {
-            await cancelClass(id)
+            await staffValidate(id, false)
             fetchData()
         } catch (e) { console.error(e) }
     }

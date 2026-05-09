@@ -13,8 +13,8 @@ export function staffReject(classId, reason) {
     return patch(`/api/coachclasses/${classId}/staff-respond`, { approve: false, ...(reason ? { reason } : {}) })
 }
 
-export function staffValidate(classId) {
-    return patch(`/api/coachclasses/${classId}/staff-validate`)
+export function staffValidate(classId, confirmed = true) {
+    return patch(`/api/coachclasses/${classId}/staff-validate`, { confirmed })
 }
 
 export function cancelClass(classId) {
