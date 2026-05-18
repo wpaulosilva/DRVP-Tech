@@ -61,20 +61,22 @@ export default function NotificationButton() {
             width: 44,
             height: 44,
             borderRadius: 10,
-            background: '#fff',
-            boxShadow: '0 6px 18px rgba(2,6,23,0.06)',
+            background: 'var(--surface)',
+            border: '1px solid var(--border)',
+            boxShadow: 'var(--shadow-sm)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            border: 'none',
             cursor: 'pointer',
             position: 'relative',
+            color: 'var(--text-2)',
+            transition: 'background 0.15s',
           }}
         >
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M15 17H9" stroke="#6B6B6B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            <path d="M12 22a2.5 2.5 0 0 0 2.5-2.5h-5A2.5 2.5 0 0 0 12 22z" stroke="#6B6B6B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            <path d="M18 8a6 6 0 1 0-12 0c0 7-3 8-3 8h18s-3-1-3-8" stroke="#6B6B6B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M15 17H9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M12 22a2.5 2.5 0 0 0 2.5-2.5h-5A2.5 2.5 0 0 0 12 22z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M18 8a6 6 0 1 0-12 0c0 7-3 8-3 8h18s-3-1-3-8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
 
           {unreadCount > 0 && (
@@ -83,7 +85,7 @@ export default function NotificationButton() {
                 position: 'absolute',
                 top: -4,
                 right: -4,
-                background: '#E11D48',
+                background: 'var(--danger)',
                 color: '#fff',
                 borderRadius: 999,
                 minWidth: 18,

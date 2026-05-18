@@ -1,0 +1,126 @@
+/* ============================================================
+   FlowArtes Design System — CSS Custom Properties
+   Light theme is default. Dark applied via [data-theme="dark"]
+   on <html> element.
+   ============================================================ */
+
+:root,
+[data-theme="light"] {
+    /* Surfaces */
+    --bg:        #f7f5f2;
+    --surface:   #ffffff;
+    --surface-2: #f2f0ec;
+    --surface-3: #eae7e1;
+
+    /* Borders */
+    --border:    #e2ddd6;
+    --border-2:  #cbc7c0;
+
+    /* Text */
+    --text-1:    #1a1916;
+    --text-2:    #6b6660;
+    --text-3:    #a09b95;
+
+    /* Accent — warm amber */
+    --accent:       #b5722b;
+    --accent-hover: #9a5f1e;
+    --accent-fg:    #ffffff;
+    --accent-soft:  rgba(181, 114, 43, 0.10);
+    --accent-soft2: rgba(181, 114, 43, 0.18);
+    --accent-muted: #d4a06a;
+
+    /* Semantic */
+    --success:    #15803d;
+    --success-bg: rgba(21, 128, 61, 0.10);
+    --danger:     #b91c1c;
+    --danger-bg:  rgba(185, 28, 28, 0.10);
+    --warning:    #b45309;
+    --warning-bg: rgba(180, 83, 9, 0.10);
+    --info:       #2563eb;
+    --info-bg:    rgba(37, 99, 235, 0.10);
+
+    /* Shadows */
+    --shadow-sm: 0 1px 4px rgba(26,25,22,0.06);
+    --shadow-md: 0 4px 16px rgba(26,25,22,0.08);
+    --shadow-lg: 0 8px 32px rgba(26,25,22,0.10);
+
+    /* Sidebar (inverted — dark even in light mode) */
+    --sidebar-bg:          #1a1916;
+    --sidebar-text:        #c8c3bb;
+    --sidebar-text-muted:  #7a756e;
+    --sidebar-hover-bg:    rgba(255,255,255,0.06);
+    --sidebar-active-bg:   rgba(232, 168, 62, 0.14);
+    --sidebar-active-text: #e8a83e;
+    --sidebar-border:      rgba(255,255,255,0.06);
+
+    /* Topbar */
+    --topbar-bg:     #ffffff;
+    --topbar-border: #e2ddd6;
+
+    /* Radii */
+    --r-sm:   6px;
+    --r-md:   10px;
+    --r-lg:   14px;
+    --r-xl:   20px;
+    --r-full: 9999px;
+}
+
+[data-theme="dark"] {
+    /* Surfaces */
+    --bg:        #111110;
+    --surface:   #1c1c1a;
+    --surface-2: #232320;
+    --surface-3: #2a2a27;
+
+    /* Borders */
+    --border:   #2e2e2a;
+    --border-2: #3a3a36;
+
+    /* Text */
+    --text-1:   #f0ebe2;
+    --text-2:   #9a958c;
+    --text-3:   #6b6660;
+
+    /* Accent — brighter amber in dark */
+    --accent:       #e8a83e;
+    --accent-hover: #f0c070;
+    --accent-fg:    #111110;
+    --accent-soft:  rgba(232, 168, 62, 0.12);
+    --accent-soft2: rgba(232, 168, 62, 0.22);
+    --accent-muted: #b5863a;
+
+    /* Semantic */
+    --success:    #22c55e;
+    --success-bg: rgba(34, 197, 94, 0.12);
+    --danger:     #ef4444;
+    --danger-bg:  rgba(239, 68, 68, 0.12);
+    --warning:    #f59e0b;
+    --warning-bg: rgba(245, 158, 11, 0.12);
+    --info:       #60a5fa;
+    --info-bg:    rgba(96, 165, 250, 0.12);
+
+    /* Shadows */
+    --shadow-sm: 0 1px 4px rgba(0,0,0,0.28);
+    --shadow-md: 0 4px 16px rgba(0,0,0,0.36);
+    --shadow-lg: 0 8px 32px rgba(0,0,0,0.44);
+
+    /* Sidebar */
+    --sidebar-bg:          #141412;
+    --sidebar-text:        #9a958c;
+    --sidebar-text-muted:  #5a5550;
+    --sidebar-hover-bg:    rgba(255,255,255,0.04);
+    --sidebar-active-bg:   rgba(232, 168, 62, 0.12);
+    --sidebar-active-text: #e8a83e;
+    --sidebar-border:      rgba(255,255,255,0.05);
+
+    /* Topbar */
+    --topbar-bg:     #1c1c1a;
+    --topbar-border: #2e2e2a;
+
+    /* Radii (same) */
+    --r-sm:   6px;
+    --r-md:   10px;
+    --r-lg:   14px;
+    --r-xl:   20px;
+    --r-full: 9999px;
+}

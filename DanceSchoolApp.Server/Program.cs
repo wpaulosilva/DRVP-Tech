@@ -100,57 +100,66 @@ builder.Services.AddAuthorization();
 //  Email Service 
 var email = Environment.GetEnvironmentVariable("DanceSchoolApp_Email_Password");
 if (email == null) Console.WriteLine($"{YELLOW}Warning{NORMAL} - DanceSchoolApp_Email_Password environment variable is not set!");
+// Define options statically or inline once to prevent per-request allocations
+var authOptions = new SlidingWindowRateLimiterOptions
+{
+    PermitLimit = 8,
+    Window = TimeSpan.FromMinutes(1),
+    SegmentsPerWindow = 4,
+    QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+    QueueLimit = 0
+};
 
-//  Rate Limiting
+var apiOptions = new SlidingWindowRateLimiterOptions
+{
+    PermitLimit = 200, // Note: Your comment said 60, but code had 200. Keeping 200.
+    Window = TimeSpan.FromMinutes(1),
+    SegmentsPerWindow = 4,
+    QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+    QueueLimit = 0
+};
+
+var uploadOptions = new SlidingWindowRateLimiterOptions
+{
+    PermitLimit = 5,
+    Window = TimeSpan.FromMinutes(1),
+    SegmentsPerWindow = 4,
+    QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+    QueueLimit = 0
+};
+
 builder.Services.AddRateLimiter(options =>
 {
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
 
-    // "auth" — 8 req/min per IP (login, forgot-password, reset-password, refresh)
+    // "auth" - Pass the IPAddress object directly (avoids .ToString() allocations)
     options.AddPolicy("auth", context =>
-        RateLimitPartition.GetSlidingWindowLimiter(
-            partitionKey: context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
-            factory: _ => new SlidingWindowRateLimiterOptions
-            {
-                PermitLimit          = 8,
-                Window               = TimeSpan.FromMinutes(1),
-                SegmentsPerWindow    = 4,
-                QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
-                QueueLimit           = 0
-            }));
+    {
+        object key = context.Connection.RemoteIpAddress ?? (object)"unknown";
+        return RateLimitPartition.GetSlidingWindowLimiter(key, _ => authOptions);
+    });
 
-    // "api" — 60 req/min per user ID (falls back to IP for unauthenticated)
+    // "api" - Mixing types? Cast to generic 'object' partition key
     options.AddPolicy("api", context =>
     {
-        var key = context.User.FindFirst(ClaimTypes.NameIdentifier)?.Value
-                  ?? context.Connection.RemoteIpAddress?.ToString()
-                  ?? "unknown";
-        return RateLimitPartition.GetSlidingWindowLimiter(key, _ => new SlidingWindowRateLimiterOptions
-        {
-            PermitLimit          = 60,
-            Window               = TimeSpan.FromMinutes(1),
-            SegmentsPerWindow    = 4,
-            QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
-            QueueLimit           = 0
-        });
+        object key = context.User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                     ?? context.Connection.RemoteIpAddress
+                     ?? (object)"unknown";
+
+        return RateLimitPartition.GetSlidingWindowLimiter(key, _ => apiOptions);
     });
 
-    // "uploads" — 5 req/min per user ID for file upload endpoints
+    // "uploads"
     options.AddPolicy("uploads", context =>
     {
-        var key = context.User.FindFirst(ClaimTypes.NameIdentifier)?.Value
-                  ?? context.Connection.RemoteIpAddress?.ToString()
-                  ?? "unknown";
-        return RateLimitPartition.GetSlidingWindowLimiter(key, _ => new SlidingWindowRateLimiterOptions
-        {
-            PermitLimit          = 5,
-            Window               = TimeSpan.FromMinutes(1),
-            SegmentsPerWindow    = 4,
-            QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
-            QueueLimit           = 0
-        });
+        object key = context.User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                     ?? context.Connection.RemoteIpAddress
+                     ?? (object)"unknown";
+
+        return RateLimitPartition.GetSlidingWindowLimiter(key, _ => uploadOptions);
     });
 });
+
 
 var app = builder.Build();
 

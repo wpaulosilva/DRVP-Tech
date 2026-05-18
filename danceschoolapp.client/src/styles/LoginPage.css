@@ -1,33 +1,51 @@
+/* ============================================================
+   Login, ForgotPassword, ResetPassword pages
+   ============================================================ */
+
 .login-page {
     min-height: 100vh;
     width: 100%;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: transparent;
+    background: var(--bg);
     padding: 1.5rem;
 }
 
 .login-card {
     width: 100%;
-    max-width: 32rem;
-    background: #ffffff;
-    border-radius: 1.75rem;
-    padding: 3rem 2.5rem;
-    box-shadow: 0 1.25rem 2.5rem rgba(0, 0, 0, 0.08);
+    max-width: 26rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--r-xl);
+    padding: 2.5rem 2rem;
+    box-shadow: var(--shadow-lg);
     text-align: center;
 }
 
 .login-logo {
-    width: 8.5rem;
+    width: 7rem;
     margin: 0 auto 1.5rem;
     display: block;
+    transition: filter 0.2s;
+}
+
+[data-theme="dark"] .login-logo {
+    filter: invert(1);
 }
 
 .login-card h1 {
-    margin: 0 0 2rem;
-    font-size: 2rem;
-    color: #172033;
+    margin: 0 0 0.35rem;
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--text-1);
+}
+
+.login-card .login-subtitle {
+    margin: 0 0 1.75rem;
+    font-size: 0.875rem;
+    color: var(--text-2);
 }
 
 .login-form {
@@ -35,95 +53,126 @@
 }
 
 .form-group {
-    margin-bottom: 1.2rem;
+    margin-bottom: 1rem;
 }
 
-    .form-group label {
-        display: block;
-        margin-bottom: 0.4rem;
-        font-size: 0.9rem;
-        font-weight: 600;
-        color: #344054;
-    }
-
-    .form-group input {
-        width: 100%;
-        padding: 0.85rem 1rem;
-        border: 1px solid #d8deea;
-        border-radius: 0.85rem;
-        font-size: 0.95rem;
-        outline: none;
-        background: #f8fafc;
-        transition: all 0.2s ease;
-    }
-
-        .form-group input:focus {
-            border-color: #64748b;
-            box-shadow: 0 0 0 3px rgba(100, 116, 139, 0.15);
-        }
-
-/* 🔵 botão agora azul/cinza (sem roxo) */
-.login-btn {
-    width: 100%;
-    margin-top: 0.6rem;
-    border: none;
-    border-radius: 0.85rem;
-    padding: 0.9rem;
-    font-size: 0.95rem;
-    font-weight: 700;
-    color: white;
-    cursor: pointer;
-    background: linear-gradient(135deg, #9b6bff, #7c4dff);
-    box-shadow: 0 0.6rem 1.2rem rgba(100, 116, 139, 0.25);
-    transition: all 0.2s ease;
-}
-
-    .login-btn:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 0.8rem 1.5rem rgba(100, 116, 139, 0.3);
-    }
-
-/* link mais neutro */
-.forgot-password {
+.form-group label {
     display: block;
-    margin-top: 1.2rem;
-    font-size: 0.9rem;
-    color: #64748b;
-    text-align: center;
+    margin-bottom: 0.35rem;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--text-2);
 }
 
-    .forgot-password:hover {
-        text-decoration: underline;
-    }
+.form-group input {
+    width: 100%;
+    padding: 0.7rem 0.95rem;
+    border: 1px solid var(--border);
+    border-radius: var(--r-md);
+    font-size: 0.9rem;
+    outline: none;
+    background: var(--surface);
+    color: var(--text-1);
+    transition: border-color 0.2s, box-shadow 0.2s;
+    box-sizing: border-box;
+}
 
-/* RESPONSIVE */
-@media (max-width: 48rem) {
-    .login-page {
-        background: #f1f5f9;
-        padding: 1rem;
-    }
+.form-group input::placeholder {
+    color: var(--text-3);
+}
 
-    .login-card {
-        padding: 2.5rem 1.5rem;
-    }
-
-        .login-card h1 {
-            font-size: 1.7rem;
-        }
+.form-group input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft);
 }
 
 .login-links {
     text-align: right;
-    margin-top: -8px;
+    margin: -0.4rem 0 0.9rem;
 }
 
-    .login-links a {
-        font-size: 0.9rem;
-        color: #7c3aed;
-        font-weight: 600;
-        text-decoration: none;
-    }
+.login-links a {
+    font-size: 0.82rem;
+    color: var(--accent);
+    font-weight: 600;
+    text-decoration: none;
+    transition: opacity 0.15s;
+}
 
-        .login-links a:hover {
-            text-decoration: underline;
-        }
+.login-links a:hover {
+    opacity: 0.75;
+    text-decoration: underline;
+}
+
+.login-btn {
+    width: 100%;
+    margin-top: 0.5rem;
+    border: none;
+    border-radius: var(--r-md);
+    padding: 0.8rem;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--accent-fg);
+    cursor: pointer;
+    background: var(--accent);
+    box-shadow: 0 4px 14px var(--accent-soft2);
+    transition: background 0.2s, box-shadow 0.2s, transform 0.15s;
+    letter-spacing: 0.01em;
+}
+
+.login-btn:hover:not(:disabled) {
+    background: var(--accent-hover);
+    transform: translateY(-1px);
+}
+
+.login-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Error message (inline, below form) */
+.login-error {
+    margin-top: 0.9rem;
+    padding: 0.7rem 1rem;
+    border-radius: var(--r-md);
+    background: var(--danger-bg);
+    color: var(--danger);
+    font-size: 0.875rem;
+    font-weight: 500;
+    text-align: left;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    line-height: 1.4;
+}
+
+/* Info message (e.g. "email sent") */
+.login-info {
+    margin-top: 0.9rem;
+    padding: 0.7rem 1rem;
+    border-radius: var(--r-md);
+    background: var(--success-bg);
+    color: var(--success);
+    font-size: 0.875rem;
+    font-weight: 500;
+    text-align: left;
+}
+
+.forgot-password {
+    display: block;
+    margin-top: 1.2rem;
+    font-size: 0.875rem;
+    color: var(--text-2);
+    text-align: center;
+}
+
+.forgot-password:hover {
+    text-decoration: underline;
+}
+
+@media (max-width: 48rem) {
+    .login-card {
+        padding: 2rem 1.25rem;
+    }
+}

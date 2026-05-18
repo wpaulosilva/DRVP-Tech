@@ -1,6 +1,9 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap');
+@import './styles/theme.css';
 
-* {
+*,
+*::before,
+*::after {
     box-sizing: border-box;
 }
 
@@ -15,11 +18,12 @@ body,
 body {
     min-width: 320px;
     min-height: 100vh;
-    font-family: 'Inter', Arial, sans-serif;
-    background: #f8fafc;
-    color: #172033;
+    font-family: 'Outfit', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text-1);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    transition: background 0.25s ease, color 0.25s ease;
 }
 
 a {
@@ -33,3 +37,26 @@ textarea,
 select {
     font: inherit;
 }
+
+/* Smooth theme transitions on common elements */
+.dashboard-topbar,
+.dashboard-sidebar,
+.dashboard-shell,
+.dashboard-page-card,
+.page-card,
+.modal,
+.kpi-card {
+    transition: background 0.25s ease, border-color 0.25s ease, color 0.25s ease;
+}
+
+/* ── Global scrollbar styling ─────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 7px; height: 7px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 6px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover { background: var(--text-3); background-clip: unset; }
+::-webkit-scrollbar-corner { background: transparent; }

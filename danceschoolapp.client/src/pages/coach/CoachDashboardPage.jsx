@@ -1,102 +1,118 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import PageCard from '@/components/common/PageCard'
 import KpiCard from '@/components/common/KpiCard'
 import { getCoachDashboard } from '@/services/coachService'
 import '@/styles/AdminPage.css'
 import '@/styles/DashboardCards.css'
 
+const fmt = {
+    date: v => v ? new Date(v).toLocaleDateString('pt-PT', { weekday: 'short', day: '2-digit', month: 'short' }) : '—',
+    time: v => v ? new Date(v).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' }) : '—',
+}
+
+function statusPill(status) {
+    // status: 1=Approved, 7=StaffApproved, etc.
+    if (status === 1 || status === 7) return { label: 'Confirmada', cls: '' }
+    if (status === 6)                 return { label: 'Pendente',   cls: 'dashboard-pill--pending' }
+    return { label: 'Agendada', cls: '' }
+}
+
 function CoachDashboardPage() {
     const [dashboard, setDashboard] = useState(null)
-    const [loading, setLoading] = useState(true)
-    const [error, setError] = useState('')
+    const [loading,   setLoading]   = useState(true)
+    const [error,     setError]     = useState('')
 
     useEffect(() => {
-        const fetchDashboard = async () => {
-            try {
-                const data = await getCoachDashboard()
-                setDashboard(data)
-            } catch (err) {
-                setError(err.message)
-            } finally {
-                setLoading(false)
-            }
-        }
-
-        fetchDashboard()
+        getCoachDashboard()
+            .then(setDashboard)
+            .catch(err => setError(err.message))
+            .finally(() => setLoading(false))
     }, [])
 
-    const firstName = dashboard?.coachName?.split(' ')[0] ?? 'Professor'
-
-    const formatDate = (value) =>
-        value
-            ? new Date(value).toLocaleDateString('pt-PT', {
-                day: '2-digit',
-                month: '2-digit',
-                year: 'numeric',
-            })
-            : '—'
-
-    const formatTime = (value) =>
-        value
-            ? new Date(value).toLocaleTimeString('pt-PT', {
-                hour: '2-digit',
-                minute: '2-digit',
-            })
-            : '—'
+    const firstName         = dashboard?.coachName?.split(' ')[0] ?? 'Professor'
+    const validationsPending = dashboard?.validationsPending ?? 0
 
     return (
         <PageCard>
-            <h2>Bem-vindo, Prof. {firstName}!</h2>
-            <p>Gerir a sua disponibilidade e agenda.</p>
+            <div className="admin-page-header">
+                <div>
+                    <h2>Bem-vindo, {firstName}!</h2>
+                    <p>A sua agenda e actividade este mês.</p>
+                </div>
+                <Link to="/coach/agenda" className="btn btn-secondary btn-sm">
+                    Ver agenda
+                </Link>
+            </div>
 
             {error && <p className="admin-error">{error}</p>}
 
+            {!loading && validationsPending > 0 && (
+                <div className="alert-banner alert-banner--warning">
+                    <span>
+                        {validationsPending} {validationsPending === 1 ? 'aula aguarda' : 'aulas aguardam'} a sua validação
+                    </span>
+                    <Link to="/coach/validar-aulas">Validar</Link>
+                </div>
+            )}
+
             <div className="kpi-grid">
                 <KpiCard
-                    label="Aulas Dadas Este Mês"
+                    label="Aulas Dadas"
                     value={dashboard?.classesTaughtThisMonth}
                     loading={loading}
+                    icon="validate"
+                    description="Este mês"
+                    tone="success"
                 />
-
                 <KpiCard
-                    label="Aulas que Faltam"
+                    label="Próximas Aulas"
                     value={dashboard?.classesUpcoming}
                     loading={loading}
+                    icon="classes"
+                    description="Agendadas à frente"
+                    to="/coach/agenda"
                 />
-
                 <KpiCard
                     label="Validações Pendentes"
-                    value={dashboard?.validationsPending}
+                    value={validationsPending}
                     loading={loading}
-                    tone="orange"
+                    tone={validationsPending > 0 ? 'orange' : 'default'}
+                    icon="validate"
+                    description="Aguardam confirmação"
+                    to={validationsPending > 0 ? '/coach/validar-aulas' : undefined}
                 />
             </div>
 
             <h3 className="dashboard-section-title">Próximas Aulas</h3>
 
             {loading ? (
-                <p>A carregar...</p>
+                <p style={{ color: 'var(--text-3)', fontSize: '0.875rem' }}>A carregar…</p>
             ) : !dashboard?.upcomingClasses?.length ? (
-                <p className="table-empty">Sem próximas aulas.</p>
+                <p className="dashboard-empty">Sem aulas próximas agendadas.</p>
             ) : (
                 <div className="dashboard-cards-grid">
-                    {dashboard.upcomingClasses.map((item) => (
-                        <div key={item.classId} className="dashboard-info-card">
-                            <h4>{item.modalityName}</h4>
+                    {dashboard.upcomingClasses.map(item => {
+                        const pill = statusPill(item.status)
+                        return (
+                            <div key={item.classId} className="dashboard-info-card">
+                                <div className="dashboard-card-header">
+                                    <h4>{item.modalityName}</h4>
+                                    <span className={`dashboard-pill ${pill.cls}`}>{pill.label}</span>
+                                </div>
 
-                            <p>
-                                {item.studentNames?.length
-                                    ? item.studentNames.join(', ')
-                                    : '—'}
-                            </p>
+                                {item.studentNames?.length > 0 && (
+                                    <p>{item.studentNames.join(', ')}</p>
+                                )}
 
-                            <div className="dashboard-card-footer">
-                                <span>{formatDate(item.startDatetime)}</span>
-                                <span>{formatTime(item.startDatetime)}</span>
-                                <span>{item.studioName || '—'}</span>
+                                <div className="dashboard-card-footer">
+                                    <span>{fmt.date(item.startDatetime)}</span>
+                                    <span>{fmt.time(item.startDatetime)}</span>
+                                    {item.studioName && <span>{item.studioName}</span>}
+                                </div>
                             </div>
-                        </div>
-                    ))}
+                        )
+                    })}
                 </div>
             )}
         </PageCard>

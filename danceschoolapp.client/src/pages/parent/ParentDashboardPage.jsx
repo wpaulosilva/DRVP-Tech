@@ -1,108 +1,124 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import PageCard from '@/components/common/PageCard'
 import KpiCard from '@/components/common/KpiCard'
 import { getParentDashboard } from '@/services/parentService'
 import '@/styles/AdminPage.css'
 import '@/styles/DashboardCards.css'
 
+const fmt = {
+    date: v => v ? new Date(v).toLocaleDateString('pt-PT', { weekday: 'short', day: '2-digit', month: 'short' }) : '—',
+    time: v => v ? new Date(v).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' }) : '—',
+}
+
+const STATUS_LABEL = {
+    0: { label: 'Pendente',    cls: 'dashboard-pill--pending' },
+    1: { label: 'Confirmada',  cls: '' },
+    4: { label: 'Concluída',   cls: 'dashboard-pill--pending' },
+    6: { label: 'A Validar',   cls: 'dashboard-pill--pending' },
+    7: { label: 'Aprovada',    cls: '' },
+}
+
+function classStatusPill(status) {
+    return STATUS_LABEL[status] ?? { label: 'Agendada', cls: '' }
+}
+
 function ParentDashboardPage() {
     const [dashboard, setDashboard] = useState(null)
-    const [loading, setLoading] = useState(true)
-    const [error, setError] = useState('')
+    const [loading,   setLoading]   = useState(true)
+    const [error,     setError]     = useState('')
 
     useEffect(() => {
-        const fetchDashboard = async () => {
-            try {
-                const data = await getParentDashboard()
-                setDashboard(data)
-            } catch (err) {
-                setError(err.message)
-            } finally {
-                setLoading(false)
-            }
-        }
-
-        fetchDashboard()
+        getParentDashboard()
+            .then(setDashboard)
+            .catch(err => setError(err.message))
+            .finally(() => setLoading(false))
     }, [])
 
-    const firstName = dashboard?.parentName?.split(' ')[0] ?? ''
-
-    const formatDate = (value) =>
-        value
-            ? new Date(value).toLocaleDateString('pt-PT', {
-                day: '2-digit',
-                month: '2-digit',
-                year: 'numeric',
-            })
-            : '—'
-
-    const formatTime = (value) =>
-        value
-            ? new Date(value).toLocaleTimeString('pt-PT', {
-                hour: '2-digit',
-                minute: '2-digit',
-            })
-            : '—'
-
-    const getStatusLabel = (status) => {
-        if (status === 1) return 'Confirmada'
-        if (status === 0) return 'Pendente'
-        return 'Agendada'
-    }
+    const firstName          = dashboard?.parentName?.split(' ')[0] ?? ''
+    const awaitingValidation = dashboard?.classesAwaitingValidation ?? 0
+    const upcomingCount      = dashboard?.upcomingClasses?.length ?? 0
 
     return (
         <PageCard>
-            <h2>Bem-vindo, {firstName || 'Encarregado'}!</h2>
-            <p>Gerir aulas e reservas dos seus estudantes.</p>
+            <div className="admin-page-header">
+                <div>
+                    <h2>Olá{firstName ? `, ${firstName}` : ''}!</h2>
+                    <p>Acompanhe as aulas e actividades dos seus estudantes.</p>
+                </div>
+                <Link to="/parent/aulas" className="btn btn-primary btn-sm">
+                    Marcar Aula
+                </Link>
+            </div>
 
             {error && <p className="admin-error">{error}</p>}
+
+            {!loading && awaitingValidation > 0 && (
+                <div className="alert-banner alert-banner--warning">
+                    <span>
+                        {awaitingValidation} {awaitingValidation === 1 ? 'aula aguarda' : 'aulas aguardam'} a sua confirmação
+                    </span>
+                    <Link to="/parent/aulas">Confirmar</Link>
+                </div>
+            )}
 
             <div className="kpi-grid">
                 <KpiCard
                     label="Próximas Aulas"
-                    value={dashboard?.upcomingClasses?.length ?? 0}
+                    value={upcomingCount}
                     loading={loading}
+                    icon="classes"
+                    description="Agendadas à frente"
+                    to="/parent/aulas"
                 />
-
                 <KpiCard
-                    label="Aulas por Validar"
-                    value={dashboard?.classesAwaitingValidation}
+                    label="Por Validar"
+                    value={awaitingValidation}
                     loading={loading}
-                    tone="orange"
+                    tone={awaitingValidation > 0 ? 'orange' : 'default'}
+                    icon="validate"
+                    description="Precisam da sua confirmação"
+                    to={awaitingValidation > 0 ? '/parent/aulas' : undefined}
                 />
             </div>
 
             <h3 className="dashboard-section-title">Próximas Aulas</h3>
 
             {loading ? (
-                <p>A carregar...</p>
+                <p style={{ color: 'var(--text-3)', fontSize: '0.875rem' }}>A carregar…</p>
             ) : !dashboard?.upcomingClasses?.length ? (
-                <p className="table-empty">Sem próximas aulas.</p>
+                <div className="dashboard-empty">
+                    <p>Sem aulas próximas.</p>
+                    <Link to="/parent/aulas" className="btn btn-primary btn-sm" style={{ marginTop: '0.75rem' }}>
+                        Marcar uma aula
+                    </Link>
+                </div>
             ) : (
                 <div className="dashboard-cards-grid">
-                    {dashboard.upcomingClasses.map((item) => (
-                        <div key={item.classId} className="dashboard-info-card">
-                            <div className="dashboard-card-header">
-                                <h4>{item.modalityName}</h4>
+                    {dashboard.upcomingClasses.map(item => {
+                        const pill = classStatusPill(item.status)
+                        return (
+                            <div key={item.classId} className="dashboard-info-card">
+                                <div className="dashboard-card-header">
+                                    <h4>{item.modalityName}</h4>
+                                    <span className={`dashboard-pill ${pill.cls}`}>{pill.label}</span>
+                                </div>
 
-                                <span className="dashboard-pill">
-                                    {getStatusLabel(item.status)}
-                                </span>
+                                {item.coachName && <p>Prof. {item.coachName}</p>}
+                                {item.studentName && (
+                                    <p style={{ fontSize: '0.82rem', color: 'var(--text-3)', marginTop: '-0.25rem' }}>
+                                        {item.studentName}
+                                    </p>
+                                )}
+
+                                <div className="dashboard-card-footer">
+                                    <span>{fmt.date(item.startDatetime)}</span>
+                                    <span>{fmt.time(item.startDatetime)}</span>
+                                    {item.studioName && <span>{item.studioName}</span>}
+                                </div>
                             </div>
-
-                            <p>{item.coachName || '—'}</p>
-
-                            <p>
-                                <strong>Estudante:</strong> {item.studentName || '—'}
-                            </p>
-
-                            <div className="dashboard-card-footer">
-                                <span>{formatDate(item.startDatetime)}</span>
-                                <span>{formatTime(item.startDatetime)}</span>
-                                <span>{item.studioName || '—'}</span>
-                            </div>
-                        </div>
-                    ))}
+                        )
+                    })}
                 </div>
             )}
         </PageCard>

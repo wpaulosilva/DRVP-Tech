@@ -1,11 +1,48 @@
 /* Reusable DataTable styles */
-:root{ --purple-600: #6d28d9; }
-.table-wrap{ overflow:auto; border-radius:10px; border:1px solid rgba(109,40,217,0.14); background:#fff; box-shadow: 0 6px 18px rgba(109,40,217,0.04); }
-.data-table{ width:100%; border-collapse:collapse; font-size:14px; }
-.data-table thead th{ background: linear-gradient(90deg,#f8fafc,#fff); text-align:left; padding:14px; color:#334155; font-weight:700; border-bottom:2px solid rgba(109,40,217,0.10); position: sticky; top:0; z-index:1; }
-.data-table tbody td{ padding:12px 14px; border-bottom:1px solid rgba(109,40,217,0.06); color:#374151; }
-.data-table tbody tr:nth-child(odd){ background:#ffffff; }
-.data-table tbody tr:nth-child(even){ background: #fbfbff; }
-.data-table .table-empty{ padding: 32px; text-align:center; color:#9CA3AF; }
-.btn-primary{ background: linear-gradient(90deg,var(--purple-600),#c084fc); color:#fff; border:none; padding:10px 16px; border-radius:10px; cursor:pointer; font-weight:700; box-shadow: 0 8px 24px rgba(109,40,217,0.12); }
-.btn-primary:hover{ filter:brightness(0.97); transform: translateY(-1px); }
+.table-wrap {
+    overflow: auto;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    box-shadow: var(--shadow-sm);
+}
+
+/* Scrollbar styling for table */
+.table-wrap::-webkit-scrollbar { width: 6px; height: 6px; }
+.table-wrap::-webkit-scrollbar-track { background: var(--surface-2); border-radius: 4px; }
+.table-wrap::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+.table-wrap::-webkit-scrollbar-thumb:hover { background: var(--text-3); }
+
+.data-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.data-table thead th {
+    background: var(--surface-2);
+    text-align: left;
+    padding: 14px;
+    color: var(--text-1);
+    font-weight: 700;
+    border-bottom: 2px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+.data-table tbody td {
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-1);
+}
+.data-table tbody tr:nth-child(odd) { background: var(--surface); }
+.data-table tbody tr:nth-child(even) { background: var(--surface-2); }
+.data-table .table-empty { padding: 32px; text-align: center; color: var(--text-3); }
+
+.btn-primary {
+    background: var(--accent);
+    color: var(--accent-fg);
+    border: none;
+    padding: 10px 16px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: 700;
+    box-shadow: 0 4px 14px var(--accent-soft2);
+    transition: background 0.18s ease, transform 0.15s ease;
+}
+.btn-primary:hover { background: var(--accent-hover); transform: translateY(-1px); }

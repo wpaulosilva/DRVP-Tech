@@ -1,9 +1,10 @@
 import { NavLink } from 'react-router-dom'
+import Icon from '../components/ui/Icon'
 
 function Sidebar({ items = [] }) {
     return (
         <aside className="dashboard-sidebar">
-            <nav className="dashboard-sidebar-nav">
+            <nav className="dashboard-sidebar-nav" aria-label="Navegacao principal">
                 {items.map((item, index) => (
                     <NavLink
                         key={item.to}
@@ -15,6 +16,11 @@ function Sidebar({ items = [] }) {
                                 : 'dashboard-sidebar-link'
                         }
                     >
+                        {item.icon && (
+                            <span className="sidebar-link-icon">
+                                <Icon name={item.icon} size={16} />
+                            </span>
+                        )}
                         {item.label}
                     </NavLink>
                 ))}

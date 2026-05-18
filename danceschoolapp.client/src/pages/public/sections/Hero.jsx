@@ -15,8 +15,8 @@ function Hero() {
                     </p>
                 </div>
 
-                <div className="">
-                    <img src={heroImg} alt="Ent'Artes Escola de Dança" />
+                <div className="hero-image">
+                    <img src={heroImg} alt="Ent'Artes Escola de Dança" className="hero-logo-img" />
                 </div>
             </div>
         </section>

@@ -35,11 +35,11 @@
 
 /* --- Individual card --- */
 .mc-card {
-    background: #ffffff;
-    border: 1px solid #e5e7eb;
+    background: var(--surface);
+    border: 1px solid var(--border);
     border-radius: 16px;
     padding: 18px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+    box-shadow: var(--shadow-sm);
     display: flex;
     flex-direction: column;
     gap: 12px;
@@ -47,7 +47,7 @@
 }
 
 .mc-card:hover {
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+    box-shadow: var(--shadow-md);
 }
 
 .mc-card--inactive {
@@ -64,13 +64,13 @@
 .mc-card-name {
     font-size: 1.05rem;
     font-weight: 700;
-    color: #0f172a;
+    color: var(--text-1);
     margin: 0;
 }
 
 .mc-card-meta {
     font-size: 0.88rem;
-    color: #6b7280;
+    color: var(--text-2);
     display: flex;
     flex-direction: column;
     gap: 4px;
@@ -78,7 +78,7 @@
 
 .mc-card-desc {
     font-size: 0.88rem;
-    color: #6b7280;
+    color: var(--text-2);
     margin: 0;
     line-height: 1.5;
 }
@@ -98,13 +98,13 @@
     border-radius: 999px;
     font-size: 0.78rem;
     font-weight: 600;
-    background: #ede9fe;
-    color: #6d28d9;
+    background: var(--accent-soft);
+    color: var(--accent);
 }
 
 .mc-tag--coach {
-    background: #dbeafe;
-    color: #1e40af;
+    background: var(--info-bg);
+    color: var(--info);
 }
 
 .mc-tag--remove {
@@ -134,13 +134,13 @@
 }
 
 .mc-badge--active {
-    background: #d1fae5;
-    color: #065f46;
+    background: var(--success-bg);
+    color: var(--success);
 }
 
 .mc-badge--inactive {
-    background: #f3f4f6;
-    color: #6b7280;
+    background: var(--surface-2);
+    color: var(--text-3);
 }
 
 /* --- Card action buttons --- */
@@ -154,17 +154,17 @@
 /* --- Empty state --- */
 .mc-empty {
     grid-column: 1 / -1;
-    background: #ffffff;
-    border: 1px solid #e5e7eb;
+    background: var(--surface);
+    border: 1px solid var(--border);
     border-radius: 16px;
     padding: 48px 24px;
     text-align: center;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+    box-shadow: var(--shadow-sm);
 }
 
 .mc-empty p {
     margin: 0;
-    color: #6b7280;
+    color: var(--text-2);
     font-size: 0.95rem;
 }
 
@@ -183,28 +183,30 @@
 .mc-label {
     font-size: 0.88rem;
     font-weight: 600;
-    color: #475569;
+    color: var(--text-2);
 }
 
 .mc-input,
 .mc-textarea,
 .mc-select {
     padding: 10px 14px;
-    background: rgba(255, 255, 255, 0.9);
-    border: 2px solid #e2e8f0;
+    background: var(--surface);
+    border: 2px solid var(--border);
     border-radius: 12px;
     font-size: 0.95rem;
+    color: var(--text-1);
     outline: none;
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
     width: 100%;
     box-sizing: border-box;
+    font-family: inherit;
 }
 
 .mc-input:focus,
 .mc-textarea:focus,
 .mc-select:focus {
-    border-color: #7c3aed;
-    box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.08);
+    border-color: var(--accent);
+    box-shadow: 0 0 0 4px var(--accent-soft);
 }
 
 .mc-textarea {
@@ -227,12 +229,12 @@
     align-items: center;
     gap: 8px;
     font-size: 0.9rem;
-    color: #374151;
+    color: var(--text-1);
     cursor: pointer;
 }
 
 .mc-checkbox-item input[type="checkbox"] {
-    accent-color: #7c3aed;
+    accent-color: var(--accent);
     width: 15px;
     height: 15px;
     cursor: pointer;
@@ -252,7 +254,7 @@
 
 /* --- Loading spinner text --- */
 .mc-loading {
-    color: #6b7280;
+    color: var(--text-2);
     font-size: 0.95rem;
     padding: 16px 0;
     text-align: center;
@@ -261,7 +263,7 @@
 /* --- Confirmation modal text --- */
 .mc-confirm-text {
     font-size: 0.95rem;
-    color: #374151;
+    color: var(--text-1);
     line-height: 1.6;
     margin: 0 0 16px;
 }

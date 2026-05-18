@@ -3,18 +3,18 @@
 /* Tab description */
 .tab-description {
     margin: 0 0 20px;
-    color: #6b7280;
+    color: var(--text-2);
     font-size: 0.95rem;
 }
 
 /* ---- Shared card wrapper ---- */
 .pc-card {
-    background: #ffffff;
-    border: 1px solid #e5e7eb;
+    background: var(--surface);
+    border: 1px solid var(--border);
     border-radius: 16px;
     padding: 20px;
     margin-bottom: 16px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    box-shadow: var(--shadow-sm);
 }
 
 /* ---- Calendar header (shared between month and week) ---- */
@@ -28,7 +28,7 @@
 .pc-cal-title {
     font-size: 1.1rem;
     font-weight: 700;
-    color: #0f172a;
+    color: var(--text-1);
     margin: 0;
     text-transform: capitalize;
 }
@@ -41,10 +41,10 @@
 .pc-cal-nav-btn {
     width: 34px;
     height: 34px;
-    border: 1px solid #e5e7eb;
+    border: 1px solid var(--border);
     border-radius: 10px;
-    background: #ffffff;
-    color: #374151;
+    background: var(--surface);
+    color: var(--text-1);
     font-size: 1rem;
     cursor: pointer;
     display: inline-flex;
@@ -54,8 +54,7 @@
 }
 
 .pc-cal-nav-btn:hover:not(:disabled) {
-    background: #f3f4f6;
-    border-color: #d1d5db;
+    background: var(--surface-2);
 }
 
 .pc-cal-nav-btn:disabled {
@@ -68,7 +67,7 @@
     text-align: center;
     font-size: 0.82rem;
     font-weight: 600;
-    color: #9ca3af;
+    color: var(--text-3);
     padding: 6px 0 10px;
 }
 
@@ -81,17 +80,17 @@
 
 .pc-day-cell {
     min-height: 80px;
-    border: 1px solid #e5e7eb;
+    border: 1px solid var(--border);
     border-radius: 10px;
     padding: 6px;
     cursor: pointer;
     transition: background 0.15s, border-color 0.15s, box-shadow 0.15s;
     overflow: hidden;
+    background: var(--surface);
 }
 
 .pc-day-cell:hover:not(.pc-day-cell--empty) {
-    background: #f9fafb;
-    border-color: #d1d5db;
+    background: var(--surface-2);
 }
 
 .pc-day-cell--empty {
@@ -102,12 +101,12 @@
 }
 
 .pc-day-cell--has {
-    border-color: #c4b5fd;
-    background: #faf5ff;
+    border-color: var(--accent-soft2);
+    background: var(--accent-soft);
 }
 
 .pc-day-cell--has:hover {
-    background: #f5f3ff;
+    background: var(--accent-soft2);
 }
 
 /* Green variant — available slots (Tab 2) */
@@ -133,29 +132,29 @@
 }
 
 .pc-day-cell--selected {
-    border-color: #7c3aed !important;
-    background: #f5f3ff !important;
-    box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.15);
+    border-color: var(--accent) !important;
+    background: var(--accent-soft) !important;
+    box-shadow: 0 0 0 2px var(--accent-soft2);
 }
 
 .pc-day-num {
     display: block;
     font-size: 0.82rem;
     font-weight: 500;
-    color: #374151;
+    color: var(--text-1);
     margin-bottom: 4px;
 }
 
 .pc-day-cell--selected .pc-day-num {
-    color: #7c3aed;
+    color: var(--accent);
     font-weight: 700;
 }
 
 .pc-event-chip {
     display: block;
     font-size: 0.68rem;
-    background: #ede9fe;
-    color: #6d28d9;
+    background: var(--accent-soft);
+    color: var(--accent);
     border-radius: 4px;
     padding: 2px 4px;
     margin-bottom: 2px;
@@ -167,7 +166,7 @@
 
 .pc-event-more {
     font-size: 0.68rem;
-    color: #9ca3af;
+    color: var(--text-3);
     margin-top: 2px;
 }
 
@@ -180,12 +179,13 @@
 
 .pc-week-cell {
     aspect-ratio: 1;
-    border: 1px solid #e5e7eb;
+    border: 1px solid var(--border);
     border-radius: 10px;
     padding: 6px;
     cursor: pointer;
     overflow: hidden;
     transition: background 0.15s, border-color 0.15s, box-shadow 0.15s;
+    background: var(--surface);
 }
 
 .pc-week-cell--has {
@@ -199,14 +199,14 @@
 }
 
 .pc-week-cell--selected {
-    border-color: #7c3aed !important;
-    background: #f5f3ff !important;
-    box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.15);
+    border-color: var(--accent) !important;
+    background: var(--accent-soft) !important;
+    box-shadow: 0 0 0 2px var(--accent-soft2);
 }
 
 .pc-week-cell--empty {
-    border-color: #f3f4f6;
-    background: #f9fafb;
+    border-color: var(--border);
+    background: var(--surface-2);
     opacity: 0.5;
     cursor: default;
 }
@@ -215,8 +215,8 @@
     display: block;
     width: 100%;
     font-size: 0.68rem;
-    background: #d1fae5;
-    color: #065f46;
+    background: var(--success-bg);
+    color: var(--success);
     border-radius: 4px;
     padding: 2px 4px;
     margin-bottom: 2px;
@@ -232,13 +232,13 @@
     align-items: center;
     justify-content: space-between;
     gap: 16px;
-    background: #ffffff;
-    border: 1px solid #e5e7eb;
+    background: var(--surface);
+    border: 1px solid var(--border);
     border-left: 4px solid #10b981;
     border-radius: 14px;
     padding: 16px;
     margin-bottom: 10px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    box-shadow: var(--shadow-sm);
     flex-wrap: wrap;
 }
 
@@ -250,7 +250,7 @@
 .pc-slot-time {
     font-size: 1.05rem;
     font-weight: 700;
-    color: #0f172a;
+    color: var(--text-1);
     margin-bottom: 6px;
 }
 
@@ -259,13 +259,13 @@
     flex-wrap: wrap;
     gap: 10px 20px;
     font-size: 0.88rem;
-    color: #6b7280;
+    color: var(--text-2);
 }
 
 /* ---- Filter bar ---- */
 .pc-filter-bar {
-    background: #ffffff;
-    border: 1px solid #e5e7eb;
+    background: var(--surface);
+    border: 1px solid var(--border);
     border-radius: 14px;
     padding: 16px;
     margin-bottom: 16px;
@@ -283,7 +283,7 @@
 .pc-filter-label {
     font-size: 0.85rem;
     font-weight: 600;
-    color: #374151;
+    color: var(--text-1);
 }
 
 /* ---- Open classes card (teal variant) ---- */
@@ -339,7 +339,7 @@
 
 .pagination-label {
     font-size: 0.9rem;
-    color: #6b7280;
+    color: var(--text-2);
     font-weight: 500;
 }
 
@@ -376,7 +376,7 @@
 .modal-label {
     font-size: 0.88rem;
     font-weight: 600;
-    color: #374151;
+    color: var(--text-1);
 }
 
 .modal-actions {
@@ -398,6 +398,48 @@
 
 .modal-actions .btn {
     flex: 1 1 120px;
+}
+
+/* ---- Dark mode: muted green/teal backgrounds for slot/open cells ---- */
+[data-theme="dark"] .pc-day-cell--has-slot {
+    border-color: #166534;
+    background: rgba(21, 128, 61, 0.15);
+}
+
+[data-theme="dark"] .pc-day-cell--has-slot:hover:not(.pc-day-cell--empty) {
+    background: rgba(21, 128, 61, 0.25);
+    border-color: #15803d;
+}
+
+[data-theme="dark"] .pc-day-cell--has-open {
+    border-color: #0f766e;
+    background: rgba(15, 118, 110, 0.15);
+}
+
+[data-theme="dark"] .pc-day-cell--has-open:hover:not(.pc-day-cell--empty) {
+    background: rgba(15, 118, 110, 0.25);
+    border-color: #14b8a6;
+}
+
+[data-theme="dark"] .pc-week-cell--has {
+    border-color: #166534;
+    background: rgba(21, 128, 61, 0.15);
+}
+
+[data-theme="dark"] .pc-week-cell--has:hover {
+    background: rgba(21, 128, 61, 0.25);
+}
+
+[data-theme="dark"] .pc-slot-card {
+    border-left-color: #15803d;
+}
+
+[data-theme="dark"] .pc-students-list {
+    background: rgba(15, 118, 110, 0.12);
+}
+
+[data-theme="dark"] .pc-students-list li {
+    color: #6ee7b7;
 }
 
 /* ---- Responsive ---- */

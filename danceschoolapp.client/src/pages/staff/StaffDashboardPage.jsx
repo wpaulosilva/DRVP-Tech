@@ -1,116 +1,139 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import PageCard from '../../components/common/PageCard'
 import KpiCard from '../../components/common/KpiCard'
 import { getStaffDashboardStats } from '../../services/dashboardService'
 import '../../styles/AdminPage.css'
 import '../../styles/DashboardCards.css'
 
+const fmt = {
+    date: v => v ? new Date(v).toLocaleDateString('pt-PT', { day: '2-digit', month: 'short' }) : '—',
+    time: v => v ? new Date(v).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' }) : '—',
+}
+
 function StaffDashboardPage() {
-    const [stats, setStats] = useState(null)
+    const [stats,   setStats]   = useState(null)
     const [loading, setLoading] = useState(true)
-    const [error, setError] = useState('')
+    const [error,   setError]   = useState('')
 
     useEffect(() => {
-        const fetchDashboard = async () => {
-            try {
-                const data = await getStaffDashboardStats()
-                setStats(data)
-            } catch (err) {
-                setError(err.message)
-            } finally {
-                setLoading(false)
-            }
-        }
-
-        fetchDashboard()
+        getStaffDashboardStats()
+            .then(setStats)
+            .catch(err => setError(err.message))
+            .finally(() => setLoading(false))
     }, [])
 
-    const formatDate = (value) =>
-        value
-            ? new Date(value).toLocaleDateString('pt-PT', {
-                day: '2-digit',
-                month: '2-digit',
-                year: 'numeric',
-            })
-            : '—'
-
-    const formatTime = (value) =>
-        value
-            ? new Date(value).toLocaleTimeString('pt-PT', {
-                hour: '2-digit',
-                minute: '2-digit',
-            })
-            : '—'
+    const pendingValidation = stats?.classesPendingValidation ?? 0
+    const pendingStudents   = stats?.pendingStudentRegistrations ?? 0
 
     return (
         <PageCard>
-            <h2>Painel de Direção</h2>
-            <p>Gestão completa da escola Ent&apos;Artes.</p>
+            <div className="admin-page-header">
+                <div>
+                    <h2>Painel de Direção</h2>
+                    <p>Gestão completa da escola Ent&apos;Artes.</p>
+                </div>
+            </div>
 
             {error && <p className="admin-error">{error}</p>}
 
+            {/* Action alerts — only shown when there's something needing attention */}
+            {!loading && pendingValidation > 0 && (
+                <div className="alert-banner alert-banner--warning">
+                    <span>
+                        {pendingValidation} {pendingValidation === 1 ? 'aula aguarda' : 'aulas aguardam'} validação
+                    </span>
+                    <Link to="/staff/validar-aulas">Validar agora</Link>
+                </div>
+            )}
+            {!loading && pendingStudents > 0 && (
+                <div className="alert-banner alert-banner--warning">
+                    <span>
+                        {pendingStudents} {pendingStudents === 1 ? 'novo estudante aguarda' : 'novos estudantes aguardam'} aprovação
+                    </span>
+                    <Link to="/staff/validar-estudantes">Aprovar</Link>
+                </div>
+            )}
+
+            {/* Row 1 — People */}
             <div className="kpi-grid">
                 <KpiCard
                     label="Encarregados"
                     value={stats?.totalParents}
                     loading={loading}
+                    icon="users"
+                    description="Contas de EE ativas"
+                    to="/staff/utilizadores"
                 />
-
                 <KpiCard
                     label="Professores"
                     value={stats?.totalCoaches}
                     loading={loading}
+                    icon="students"
+                    description="Professores ativos"
+                    to="/staff/utilizadores"
                 />
-
                 <KpiCard
                     label="Estudantes Ativos"
                     value={stats?.totalActiveStudents}
                     loading={loading}
+                    icon="students"
+                    description="Alunos com inscrição válida"
+                    to="/staff/validar-estudantes"
                 />
-
                 <KpiCard
                     label="Eventos Ativos"
                     value={stats?.totalActiveEvents}
                     loading={loading}
+                    icon="events"
+                    description="Publicados e visíveis"
+                    to="/staff/eventos"
                 />
             </div>
 
+            {/* Row 2 — Classes this month */}
             <div className="kpi-grid">
                 <KpiCard
-                    label="Aulas Marcadas Este Mês"
+                    label="Aulas Este Mês"
                     value={stats?.classesScheduledThisMonth}
                     loading={loading}
+                    icon="classes"
+                    description="Agendadas no mês corrente"
                 />
-
                 <KpiCard
                     label="Aulas Realizadas"
                     value={stats?.classesCompletedThisMonth}
                     loading={loading}
+                    tone="success"
+                    icon="validate"
+                    description="Concluídas e validadas"
                 />
-
                 <KpiCard
                     label="Pendentes Validação"
-                    value={stats?.classesPendingValidation}
+                    value={pendingValidation}
                     loading={loading}
-                    tone="orange"
+                    tone={pendingValidation > 0 ? 'orange' : 'default'}
+                    icon="validate"
+                    description="Aguardam confirmação"
+                    to={pendingValidation > 0 ? '/staff/validar-aulas' : undefined}
                 />
             </div>
 
+            {/* Upcoming events */}
             <h3 className="dashboard-section-title">Próximos Eventos</h3>
 
             {loading ? (
-                <p>A carregar...</p>
+                <p style={{ color: 'var(--text-3)', fontSize: '0.875rem' }}>A carregar…</p>
             ) : !stats?.upcomingEvents?.length ? (
-                <p className="table-empty">Sem próximos eventos.</p>
+                <p className="dashboard-empty">Sem eventos próximos.</p>
             ) : (
                 <div className="dashboard-cards-grid">
-                    {stats.upcomingEvents.map((event) => (
+                    {stats.upcomingEvents.map(event => (
                         <div key={event.eventId} className="dashboard-info-card">
                             <h4>{event.title}</h4>
-
                             <div className="dashboard-card-footer">
-                                <span>{formatDate(event.startDatetime)}</span>
-                                <span>{formatTime(event.startDatetime)}</span>
+                                <span>{fmt.date(event.startDatetime)}</span>
+                                <span>{fmt.time(event.startDatetime)}</span>
                             </div>
                         </div>
                     ))}

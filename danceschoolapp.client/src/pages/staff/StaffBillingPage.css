@@ -1,28 +1,79 @@
 /* Styles for Staff Billing page */
-.billing-section{
-  background: #fff;
-  padding: 18px;
-  border-radius: 12px;
-  border: 1px solid rgba(124,58,237,0.18); /* darker border */
-  box-shadow: 0 10px 32px rgba(109,40,217,0.06);
+.billing-section {
+    background: var(--surface);
+    padding: 18px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-sm);
 }
-.cards-row{ display:flex; gap:12px; margin-bottom:16px; }
-.card{ flex:1; background: linear-gradient(90deg, rgba(124,58,237,0.03), #fff); padding:16px; border-radius:10px; border:1px solid rgba(124,58,237,0.18); box-shadow: 0 8px 22px rgba(109,40,217,0.06); }
-.card-title{ font-size:13px; color:#6b7280; }
-.card-value{ font-size:20px; font-weight:700; margin-top:6px; }
-.card-value-money{ color: #10b981; }
 
-.controls-row{ display:flex; gap:12px; align-items:center; padding:18px; border-radius:12px; border:1px solid rgba(124,58,237,0.14); margin-bottom:16px; background: linear-gradient(90deg, rgba(248,250,252,1), rgba(255,255,255,1)); }
-.search-box{ display:flex; align-items:center; gap:8px; background:#fbfbff; padding:8px 12px; border-radius:10px; border:1px solid #eef2ff; }
-.search-box input{ border:none; outline:none; background:transparent; min-width:220px; }
-.filter-box{ display:flex; flex-direction:column; gap:6px; }
-.filter-box select{ padding:8px 12px; border-radius:8px; border:1px solid #eef2ff; }
+.cards-row { display: flex; gap: 12px; margin-bottom: 16px; }
 
-.controls-row .btn-primary{ height:44px; padding:10px 20px; border-radius:10px; }
+.card {
+    flex: 1;
+    background: var(--surface);
+    padding: 16px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-sm);
+}
 
-.data-table{ margin-top:12px; border-radius:10px; overflow:hidden; }
-.data-table thead th{ background:#f8fafc; }
-.data-table tbody tr td{ background: #fff; }
+.card-title { font-size: 13px; color: var(--text-2); }
+.card-value { font-size: 20px; font-weight: 700; margin-top: 6px; color: var(--text-1); }
+.card-value-money { color: var(--success); }
+
+.controls-row {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    padding: 18px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    margin-bottom: 16px;
+    background: var(--surface);
+}
+
+.search-box {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--surface-2);
+    padding: 8px 12px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+}
+
+.search-box input {
+    border: none;
+    outline: none;
+    background: transparent;
+    min-width: 220px;
+    color: var(--text-1);
+    font-family: inherit;
+    font-size: 0.9rem;
+}
+
+.search-box input::placeholder { color: var(--text-3); }
+
+.filter-box { display: flex; flex-direction: column; gap: 6px; }
+
+.filter-box select {
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text-1);
+    font-family: inherit;
+}
+
+.controls-row .btn-primary { height: 44px; padding: 10px 20px; border-radius: 10px; }
+
+.data-table { margin-top: 12px; border-radius: 10px; overflow: hidden; }
+.data-table thead th { background: var(--surface-2); }
+.data-table tbody tr td { background: var(--surface); }
 
 /* small responsive tweaks */
-@media (max-width:900px){ .cards-row{ flex-direction:column } .controls-row{ flex-direction:column; align-items:stretch } }
+@media (max-width: 900px) {
+    .cards-row { flex-direction: column; }
+    .controls-row { flex-direction: column; align-items: stretch; }
+}

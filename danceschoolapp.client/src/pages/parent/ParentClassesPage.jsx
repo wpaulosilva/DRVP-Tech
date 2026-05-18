@@ -91,16 +91,16 @@ const STATUS_LABEL = {
     3: 'Cancelada', 4: 'Finalizada', 5: 'Validada', 6: 'Pendente', 7: 'Staff Aprovada',
 }
 
-// Chip colors per status (for calendar chips in Tab 1)
+// Chip colors per status (for calendar chips in Tab 1) — use CSS variables
 const STATUS_CHIP = {
-    0: { background: '#fef3c7', color: '#92400e' },
-    1: { background: '#ede9fe', color: '#6d28d9' },
-    2: { background: '#fee2e2', color: '#991b1b' },
-    3: { background: '#f3f4f6', color: '#6b7280' },
-    4: { background: '#d1fae5', color: '#065f46' },
-    5: { background: '#d1fae5', color: '#065f46' },
-    6: { background: '#ffedd5', color: '#9a3412' },
-    7: { background: '#ede9fe', color: '#6d28d9' },
+    0: { background: 'var(--warning-bg)', color: 'var(--warning)' },
+    1: { background: 'var(--accent-soft)', color: 'var(--accent)' },
+    2: { background: 'var(--danger-bg)', color: 'var(--danger)' },
+    3: { background: 'var(--surface-2)', color: 'var(--text-2)' },
+    4: { background: 'var(--success-bg)', color: 'var(--success)' },
+    5: { background: 'var(--success-bg)', color: 'var(--success)' },
+    6: { background: 'var(--warning-bg)', color: 'var(--warning)' },
+    7: { background: 'var(--accent-soft)', color: 'var(--accent)' },
 }
 
 function statusCardClass(s) {
@@ -613,7 +613,7 @@ function ParentClassesPage() {
                             {t1AllClasses.length > 0 && ` Tem ${t1AllClasses.length} aula${t1AllClasses.length > 1 ? 's' : ''} noutros meses.`}
                         </p>
                         {t1NextClass && (
-                            <p style={{ color: '#7c3aed', fontWeight: 600, fontSize: '0.92rem' }}>
+                            <p style={{ color: 'var(--accent)', fontWeight: 600, fontSize: '0.92rem' }}>
                                 Próxima aula: {fmtDateLong((t1NextClass.StartDatetime ?? t1NextClass.startDatetime ?? '').slice(0, 10))} às {fmtTime(t1NextClass.StartDatetime ?? t1NextClass.startDatetime)} — {t1NextClass.ModalityName ?? t1NextClass.modalityName}
                             </p>
                         )}

@@ -1,48 +1,56 @@
-/* ===== VALIDATE CLASSES — polished styles matching Figma mockup ===== */
+/* ============================================================
+   Validate Classes — expandable class cards, KPI row, tabs
+   Uses CSS variables from theme.css
+   ============================================================ */
 
 /* --- KPI Row --- */
+
 .validate-kpi-row {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 16px;
-    margin-bottom: 24px;
+    grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
 }
 
 .validate-kpi {
-    background: #ffffff;
-    border: 1px solid #e5e7eb;
-    border-radius: 16px;
-    padding: 18px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--r-xl);
+    padding: 1.1rem 1.25rem;
+    box-shadow: var(--shadow-sm);
 }
 
 .validate-kpi-label {
     display: block;
-    font-size: 0.88rem;
-    color: #6b7280;
-    font-weight: 500;
-    margin-bottom: 6px;
+    font-size: 0.78rem;
+    color: var(--text-2);
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    margin-bottom: 0.4rem;
 }
 
 .validate-kpi-value {
     display: block;
-    font-size: 2rem;
-    font-weight: 700;
-    line-height: 1.2;
+    font-size: 1.9rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1.15;
 }
 
-.validate-kpi-value--purple { color: #7c3aed; }
-.validate-kpi-value--amber  { color: #d97706; }
-.validate-kpi-value--green  { color: #059669; }
-.validate-kpi-value--orange { color: #ea580c; }
+.validate-kpi-value--purple { color: var(--accent); }
+.validate-kpi-value--amber  { color: var(--warning); }
+.validate-kpi-value--green  { color: var(--success); }
+.validate-kpi-value--orange { color: var(--warning); }
 
-/* --- Gradient Tabs --- */
+/* --- Tabs --- */
+
 .validate-tabs {
     position: relative;
     display: flex;
-    gap: 4px;
+    gap: 0.25rem;
     padding-bottom: 2px;
-    margin-bottom: 24px;
+    margin-bottom: 1.5rem;
 }
 
 .validate-tabs::after {
@@ -52,30 +60,27 @@
     left: 0;
     right: 0;
     height: 2px;
-    background: linear-gradient(90deg, #7c3aed, #a78bfa);
-    opacity: 0.15;
+    background: var(--border);
     border-radius: 2px;
 }
 
 .validate-tab {
     position: relative;
-    padding: 12px 24px;
+    padding: 0.7rem 1.25rem;
     border: none;
     background: transparent;
-    font-size: 0.95rem;
+    font-size: 0.9rem;
     font-weight: 700;
-    color: #475569;
+    color: var(--text-2);
     cursor: pointer;
-    border-radius: 14px 14px 0 0;
-    transition: color 0.2s ease, background 0.2s ease;
+    border-radius: var(--r-md) var(--r-md) 0 0;
+    transition: color 0.2s ease;
 }
 
-.validate-tab:hover {
-    color: #1e293b;
-}
+.validate-tab:hover { color: var(--text-1); }
 
 .validate-tab--active {
-    color: #7c3aed;
+    color: var(--accent);
 }
 
 .validate-tab--active::after {
@@ -85,14 +90,12 @@
     left: 0;
     right: 0;
     height: 3px;
-    background: linear-gradient(90deg, #7c3aed, #a78bfa);
+    background: var(--accent);
     border-radius: 3px 3px 0 0;
     z-index: 1;
 }
 
-.validate-tab--active-orange {
-    color: #ea580c;
-}
+.validate-tab--active-orange { color: var(--warning); }
 
 .validate-tab--active-orange::after {
     content: '';
@@ -101,50 +104,40 @@
     left: 0;
     right: 0;
     height: 3px;
-    background: linear-gradient(90deg, #ea580c, #f59e0b);
+    background: var(--warning);
     border-radius: 3px 3px 0 0;
     z-index: 1;
 }
 
 /* --- Expandable Class Card --- */
+
 .class-card {
-    background: #ffffff;
-    border: 1px solid #e5e7eb;
-    border-left: 4px solid #8b5cf6;
-    border-radius: 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    border-radius: var(--r-xl);
     overflow: hidden;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
-    margin-bottom: 12px;
+    box-shadow: var(--shadow-sm);
+    margin-bottom: 0.75rem;
     transition: box-shadow 0.2s ease;
 }
 
-.class-card:hover {
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
-}
+.class-card:hover { box-shadow: var(--shadow-md); }
 
-.class-card--amber {
-    border-left-color: #f59e0b;
-}
-
-.class-card--orange {
-    border-left-color: #ea580c;
-}
-
-.class-card--green {
-    border-left-color: #10b981;
-}
-
+.class-card--amber    { border-left-color: var(--warning); }
+.class-card--orange   { border-left-color: var(--warning); }
+.class-card--green    { border-left-color: var(--success); }
 .class-card--contested {
-    border-left-color: #dc2626;
-    background: #fff7f7;
+    border-left-color: var(--danger);
+    background: var(--danger-bg);
 }
 
 .class-card-header {
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
-    gap: 16px;
-    padding: 16px;
+    gap: 1rem;
+    padding: 1rem;
     cursor: pointer;
     background: transparent;
     border: none;
@@ -154,226 +147,191 @@
 }
 
 .class-card-header:hover {
-    background: rgba(248, 250, 252, 0.6);
+    background: var(--surface-2);
 }
 
 .class-card-title-row {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 0.6rem;
     flex-wrap: wrap;
-    margin-bottom: 8px;
+    margin-bottom: 0.5rem;
 }
 
 .class-card-title {
     margin: 0;
-    font-size: 1.12rem;
+    font-size: 1.05rem;
     font-weight: 700;
-    color: #0f172a;
+    color: var(--text-1);
 }
 
 .class-card-capacity {
     display: inline-flex;
     align-items: center;
-    font-size: 0.78rem;
+    font-size: 0.75rem;
     font-weight: 600;
-    padding: 3px 10px;
-    border-radius: 999px;
-    background: #ede9fe;
-    color: #6d28d9;
+    padding: 0.15rem 0.6rem;
+    border-radius: var(--r-full);
+    background: var(--accent-soft);
+    color: var(--accent);
 }
 
-.class-card-capacity--amber {
-    background: #fef3c7;
-    color: #92400e;
-}
-
-.class-card-capacity--orange {
-    background: #ffedd5;
-    color: #9a3412;
-}
+.class-card-capacity--amber  { background: var(--warning-bg); color: var(--warning); }
+.class-card-capacity--orange { background: var(--warning-bg); color: var(--warning); }
 
 .class-card-info-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 4px 24px;
-    font-size: 0.9rem;
-    color: #374151;
+    gap: 0.25rem 1.5rem;
+    font-size: 0.875rem;
+    color: var(--text-1);
 }
 
 .class-card-info-grid span.label {
-    color: #9ca3af;
+    color: var(--text-3);
 }
 
 .class-card-chevron {
     flex-shrink: 0;
-    width: 20px;
-    height: 20px;
-    color: #9ca3af;
+    width: 1.25rem;
+    height: 1.25rem;
+    color: var(--text-3);
     transition: transform 0.25s ease;
-    margin-top: 4px;
+    margin-top: 0.25rem;
 }
 
-.class-card-chevron--open {
-    transform: rotate(180deg);
-}
+.class-card-chevron--open { transform: rotate(180deg); }
 
-/* --- Tally badges (inline) --- */
+/* --- Tally badges --- */
+
 .tally-row {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 16px;
-    margin-top: 10px;
+    gap: 1rem;
+    margin-top: 0.6rem;
 }
 
 .tally-badge {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    font-size: 0.78rem;
-    color: #374151;
+    gap: 0.35rem;
+    font-size: 0.75rem;
+    color: var(--text-1);
 }
 
 .tally-badge-label {
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.06em;
-    color: #9ca3af;
+    color: var(--text-3);
 }
 
 .tally-dot {
     display: inline-flex;
     align-items: center;
-    gap: 3px;
+    gap: 0.2rem;
 }
 
 .tally-dot-circle {
-    width: 8px;
-    height: 8px;
-    border-radius: 999px;
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: var(--r-full);
     display: inline-block;
 }
 
-.tally-dot-circle--green  { background: #10b981; }
-.tally-dot-circle--red    { background: #ef4444; }
-.tally-dot-circle--amber  { background: #f59e0b; }
+.tally-dot-circle--green  { background: var(--success); }
+.tally-dot-circle--red    { background: var(--danger); }
+.tally-dot-circle--amber  { background: var(--warning); }
 
-.tally-count {
-    color: #9ca3af;
-}
-
-/* --- Validation Dot (icon-like) --- */
-.validation-dot {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 0.78rem;
-    color: #374151;
-}
-
-.validation-dot-icon {
-    width: 18px;
-    height: 18px;
-    border-radius: 999px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.65rem;
-    font-weight: 700;
-    color: white;
-}
-
-.validation-dot-icon--green  { background: #10b981; }
-.validation-dot-icon--red    { background: #ef4444; }
-.validation-dot-icon--amber  { background: #f59e0b; }
+.tally-count { color: var(--text-3); }
 
 /* --- Expanded Panel --- */
+
 .class-card-expanded {
-    border-top: 1px solid #f1f5f9;
-    background: linear-gradient(135deg, #ffffff, rgba(237, 233, 254, 0.15));
-    padding: 16px;
+    border-top: 1px solid var(--border);
+    background: var(--surface-2);
+    padding: 1rem;
 }
 
-.class-card-expanded--amber {
-    background: linear-gradient(135deg, #ffffff, rgba(254, 243, 199, 0.15));
-}
-
-.class-card-expanded--orange {
-    background: linear-gradient(135deg, #ffffff, rgba(255, 237, 213, 0.15));
-}
-
-.class-card-expanded--contested {
-    background: linear-gradient(135deg, #ffffff, rgba(254, 226, 226, 0.2));
-}
+.class-card-expanded--amber,
+.class-card-expanded--orange { background: var(--warning-bg); }
+.class-card-expanded--contested { background: var(--danger-bg); }
 
 .class-card-section-title {
-    font-size: 0.88rem;
+    font-size: 0.82rem;
     font-weight: 700;
-    color: #475569;
-    margin: 0 0 10px;
+    color: var(--text-2);
+    margin: 0 0 0.6rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
 }
 
 /* Participant rows */
+
 .participant-row {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 10px;
-    padding: 10px 14px;
-    background: #ffffff;
-    border: 1px solid #f1f5f9;
-    border-radius: 12px;
-    margin-bottom: 8px;
+    gap: 0.6rem;
+    padding: 0.6rem 0.875rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+    margin-bottom: 0.5rem;
 }
 
 .participant-row--highlight {
-    border-color: rgba(124, 58, 237, 0.3);
-    background: rgba(237, 233, 254, 0.25);
+    border-color: var(--accent-soft2);
+    background: var(--accent-soft);
 }
 
 .participant-name {
-    font-size: 0.9rem;
+    font-size: 0.875rem;
     font-weight: 600;
-    color: #0f172a;
+    color: var(--text-1);
     margin: 0;
 }
 
 .participant-parent {
     font-size: 0.78rem;
-    color: #6b7280;
+    color: var(--text-2);
     margin: 0;
 }
 
 .participant-right {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 0.75rem;
     font-size: 0.78rem;
-    color: #9ca3af;
+    color: var(--text-3);
     flex-shrink: 0;
 }
 
-/* --- Validation summary cards (coach + parent tally in expanded) --- */
+/* Validation summary */
+
 .validation-summary-row {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 12px;
-    margin-top: 12px;
+    grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+    gap: 0.75rem;
+    margin-top: 0.75rem;
 }
 
 .validation-summary-card {
-    padding: 12px;
-    background: #ffffff;
-    border: 1px solid #f1f5f9;
-    border-radius: 12px;
+    padding: 0.75rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
 }
 
 .validation-summary-card-label {
     display: block;
-    font-size: 0.78rem;
-    color: #9ca3af;
-    margin-bottom: 6px;
+    font-size: 0.75rem;
+    color: var(--text-3);
+    margin-bottom: 0.35rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
 }
 
 .validation-summary-card-content {
@@ -383,286 +341,290 @@
 }
 
 .validation-summary-card-date {
-    font-size: 0.78rem;
-    color: #9ca3af;
+    font-size: 0.75rem;
+    color: var(--text-3);
 }
 
-/* --- Per-participant inline action buttons (parent validation view) --- */
+/* --- Participant inline actions --- */
+
 .participant-actions {
     display: flex;
-    gap: 6px;
+    gap: 0.35rem;
     align-items: center;
 }
 
 .btn-participant-confirm {
-    font-size: 0.74rem;
+    font-size: 0.75rem;
     font-weight: 600;
-    padding: 4px 10px;
-    border-radius: 8px;
-    border: 1px solid #d1fae5;
-    background: #ecfdf5;
-    color: #059669;
+    padding: 0.25rem 0.6rem;
+    border-radius: var(--r-sm);
+    border: 1px solid var(--success-bg);
+    background: var(--success-bg);
+    color: var(--success);
     cursor: pointer;
-    transition: background 0.15s, border-color 0.15s;
+    transition: filter 0.15s;
     white-space: nowrap;
 }
 
-.btn-participant-confirm:hover {
-    background: #d1fae5;
-    border-color: #6ee7b7;
-}
+.btn-participant-confirm:hover { filter: brightness(0.92); }
 
 .btn-participant-reject {
-    font-size: 0.74rem;
+    font-size: 0.75rem;
     font-weight: 600;
-    padding: 4px 10px;
-    border-radius: 8px;
-    border: 1px solid #fee2e2;
-    background: #fff7f7;
-    color: #dc2626;
+    padding: 0.25rem 0.6rem;
+    border-radius: var(--r-sm);
+    border: 1px solid var(--danger-bg);
+    background: var(--danger-bg);
+    color: var(--danger);
     cursor: pointer;
-    transition: background 0.15s, border-color 0.15s;
+    transition: filter 0.15s;
     white-space: nowrap;
 }
 
-.btn-participant-reject:hover {
-    background: #fee2e2;
-    border-color: #fca5a5;
-}
+.btn-participant-reject:hover { filter: brightness(0.9); }
 
-/* --- Action buttons in expanded --- */
 .class-card-actions {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
-    margin-top: 14px;
+    gap: 0.5rem;
+    margin-top: 0.875rem;
 }
 
-/* --- Empty state (polished) --- */
+/* --- Empty state --- */
+
 .validate-empty {
-    background: #ffffff;
-    border: 1px solid #e5e7eb;
-    border-radius: 16px;
-    padding: 48px 24px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--r-xl);
+    padding: 3rem 1.5rem;
     text-align: center;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+    box-shadow: var(--shadow-sm);
 }
 
 .validate-empty-icon {
-    width: 48px;
-    height: 48px;
-    border-radius: 999px;
-    background: #d1fae5;
-    color: #059669;
+    width: 3rem;
+    height: 3rem;
+    border-radius: var(--r-full);
+    background: var(--success-bg);
+    color: var(--success);
     display: inline-flex;
     align-items: center;
     justify-content: center;
     font-size: 1.5rem;
-    margin-bottom: 14px;
+    margin-bottom: 0.875rem;
 }
 
 .validate-empty h3 {
-    margin: 0 0 8px;
-    font-size: 1.2rem;
+    margin: 0 0 0.5rem;
+    font-size: 1.15rem;
     font-weight: 700;
-    color: #0f172a;
+    color: var(--text-1);
 }
 
 .validate-empty p {
     margin: 0;
-    color: #6b7280;
-    font-size: 0.95rem;
+    color: var(--text-2);
+    font-size: 0.9rem;
 }
 
-/* --- Warning banner (parent page) --- */
+/* --- Warning banner --- */
+
 .validate-warning {
     display: flex;
     align-items: flex-start;
-    gap: 12px;
-    padding: 14px 16px;
-    background: #fefce8;
-    border: 1px solid #fef08a;
-    border-radius: 14px;
-    margin-bottom: 20px;
+    gap: 0.75rem;
+    padding: 0.875rem 1rem;
+    background: var(--warning-bg);
+    border: 1px solid var(--warning-bg);
+    border-radius: var(--r-lg);
+    margin-bottom: 1.25rem;
 }
 
 .validate-warning-icon {
     flex-shrink: 0;
-    width: 22px;
-    height: 22px;
-    border-radius: 999px;
-    background: #facc15;
-    color: #713f12;
+    width: 1.375rem;
+    height: 1.375rem;
+    border-radius: var(--r-full);
+    background: var(--warning);
+    color: #ffffff;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.8rem;
+    font-size: 0.78rem;
     font-weight: 700;
     margin-top: 1px;
 }
 
 .validate-warning p {
     margin: 0;
-    font-size: 0.9rem;
-    color: #713f12;
+    font-size: 0.875rem;
+    color: var(--warning);
     line-height: 1.5;
 }
 
-/* --- Parent Session Card --- */
+/* --- Session card (parent validate) --- */
+
 .session-card {
-    background: #ffffff;
-    border: 1px solid #e5e7eb;
-    border-radius: 16px;
-    padding: 18px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
-    margin-bottom: 12px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--r-xl);
+    padding: 1.1rem;
+    box-shadow: var(--shadow-sm);
+    margin-bottom: 0.75rem;
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 0.75rem;
 }
 
-.session-card--validated {
-    background: #f9fafb;
-}
+.session-card--validated { background: var(--surface-2); }
 
 .session-card-top {
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
-    gap: 12px;
+    gap: 0.75rem;
     flex-wrap: wrap;
 }
 
 .session-card-name {
-    font-size: 1.05rem;
+    font-size: 1rem;
     font-weight: 600;
     margin: 0;
-    color: #0f172a;
+    color: var(--text-1);
 }
 
 .session-card-info {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 6px 16px;
-    font-size: 0.88rem;
-    color: #6b7280;
+    gap: 0.35rem 1rem;
+    font-size: 0.85rem;
+    color: var(--text-2);
 }
 
 .session-card-expiry {
     display: flex;
     align-items: center;
-    gap: 6px;
-    font-size: 0.88rem;
-    color: #6b7280;
+    gap: 0.35rem;
+    font-size: 0.85rem;
+    color: var(--text-2);
     grid-column: 1 / -1;
 }
 
 .session-card-prof-status {
-    font-size: 0.88rem;
+    font-size: 0.85rem;
     margin: 0;
+    color: var(--text-2);
 }
 
-.session-card-prof-status .confirmed { color: #059669; font-weight: 600; }
-.session-card-prof-status .denied    { color: #dc2626; font-weight: 600; }
+.session-card-prof-status .confirmed { color: var(--success); font-weight: 600; }
+.session-card-prof-status .denied    { color: var(--danger);  font-weight: 600; }
 
 .session-card-actions {
     display: flex;
-    gap: 10px;
+    gap: 0.6rem;
     justify-content: flex-end;
     flex-wrap: wrap;
 }
 
 .session-card-validations {
-    font-size: 0.88rem;
-    margin: 4px 0 0;
+    font-size: 0.85rem;
+    margin: 0.25rem 0 0;
+    color: var(--text-2);
 }
 
-/* --- Status badges --- */
+/* --- Status pills --- */
+
 .status-pill {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
-    padding: 3px 10px;
-    border-radius: 999px;
-    font-size: 0.78rem;
+    gap: 0.25rem;
+    padding: 0.2rem 0.65rem;
+    border-radius: var(--r-full);
+    font-size: 0.75rem;
     font-weight: 600;
 }
 
-.status-pill--pending {
-    background: #fef3c7;
-    color: #92400e;
-}
-
-.status-pill--confirmed {
-    background: #d1fae5;
-    color: #065f46;
-}
-
-.status-pill--rejected {
-    background: #fee2e2;
-    color: #991b1b;
-}
+.status-pill--pending   { background: var(--warning-bg); color: var(--warning); }
+.status-pill--confirmed { background: var(--success-bg); color: var(--success); }
+.status-pill--rejected  { background: var(--danger-bg);  color: var(--danger); }
 
 /* --- Section heading --- */
+
 .validate-section-heading {
-    font-size: 1.15rem;
+    font-size: 1.1rem;
     font-weight: 700;
-    color: #0f172a;
-    margin: 24px 0 14px;
+    color: var(--text-1);
+    margin: 1.5rem 0 0.875rem;
 }
 
-/* --- Modal textarea --- */
+/* --- Reject textarea / modal --- */
+
 .reject-textarea {
     width: 100%;
-    padding: 12px 16px;
-    background: rgba(255, 255, 255, 0.8);
-    border: 2px solid #e2e8f0;
-    border-radius: 16px;
+    padding: 0.75rem 1rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+    color: var(--text-1);
     resize: none;
-    font-size: 0.95rem;
+    font-size: 0.9rem;
     line-height: 1.5;
     outline: none;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    box-sizing: border-box;
 }
 
+.reject-textarea::placeholder { color: var(--text-3); }
+
 .reject-textarea:focus {
-    border-color: #7c3aed;
-    box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.08);
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft);
 }
 
 .reject-class-summary {
-    padding: 12px;
-    background: #f9fafb;
-    border-radius: 12px;
-    font-size: 0.9rem;
-    color: #374151;
-    margin-bottom: 12px;
+    padding: 0.75rem;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--r-md);
+    font-size: 0.875rem;
+    color: var(--text-1);
+    margin-bottom: 0.75rem;
     line-height: 1.7;
 }
 
+/* --- Validation dot icon --- */
+
+.validation-dot {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.75rem;
+    color: var(--text-2);
+}
+
+.validation-dot-icon {
+    width: 1.1rem;
+    height: 1.1rem;
+    border-radius: var(--r-full);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.6rem;
+    font-weight: 700;
+    color: white;
+}
+
+.validation-dot-icon--green  { background: var(--success); }
+.validation-dot-icon--red    { background: var(--danger); }
+.validation-dot-icon--amber  { background: var(--warning); }
+
 /* --- Responsive --- */
+
 @media (max-width: 640px) {
-    .class-card-info-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .session-card-info {
-        grid-template-columns: 1fr;
-    }
-
-    .session-card-actions {
-        flex-direction: column;
-    }
-
-    .session-card-actions .btn {
-        width: 100%;
-    }
-
-    .validate-kpi-row {
-        grid-template-columns: 1fr;
-    }
-
-    .validation-summary-row {
-        grid-template-columns: 1fr;
-    }
+    .class-card-info-grid  { grid-template-columns: 1fr; }
+    .session-card-info     { grid-template-columns: 1fr; }
+    .session-card-actions  { flex-direction: column; }
+    .session-card-actions .btn { width: 100%; }
+    .validate-kpi-row      { grid-template-columns: 1fr 1fr; }
+    .validation-summary-row { grid-template-columns: 1fr; }
 }
