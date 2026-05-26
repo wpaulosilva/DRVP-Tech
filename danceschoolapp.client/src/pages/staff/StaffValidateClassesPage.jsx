@@ -77,7 +77,7 @@ function StaffValidateClassesPage() {
             return
         }
         if (editEndTime <= editStartTime) {
-            setEditError('A hora de fim deve ser depois da hora de início.')
+            setEditError('A hora de fim deve ser depois da hora de início.');
             return
         }
         const id = editTarget?.ClassId ?? editTarget?.classId

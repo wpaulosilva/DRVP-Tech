@@ -131,7 +131,7 @@ function CoachAvailabilityPage() {
         if (!form.startTime || !form.endTime) return 'Indique a hora de início e fim.'
         if (form.startTime >= form.endTime) return 'A hora de fim deve ser superior à hora de início.'
         if (form.validFrom && form.validUntil && form.validFrom > form.validUntil) {
-            return 'A data de fim de vigência deve ser posterior à de início.'
+            return 'A data de fim de validade deve ser posterior à de início.'
         }
         const wd = Number(form.weekday)
         const conflict = items.find(

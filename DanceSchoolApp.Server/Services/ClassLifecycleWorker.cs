@@ -115,7 +115,7 @@ namespace DanceSchoolApp.Server.Services
                 await notifications.SendAsync(
                     userId: cls.IdCoach,
                     title: "Validação de Aula Necessária",
-                    message: $"Por favor, confirme que lecionou a aula de {cls.StartDatetime:dd/MM/yyyy HH:mm}. Tem 48 horas para responder.",
+                    message: $"Por favor, confirme que lecionou a aula de {cls.StartDatetime:dd/MM/yyyy HH:mm}. Você tem 48 horas para responder.",
                     type: NotificationType.ValidationRequest,
                     entityType: "CoachClass",
                     entityId: cls.ClassId);
@@ -129,7 +129,7 @@ namespace DanceSchoolApp.Server.Services
                     await notifications.SendAsync(
                         userId: parentId,
                         title: "Validação de Aula Necessária",
-                        message: $"Por favor, confirme a presença na aula de {cls.StartDatetime:dd/MM/yyyy HH:mm}. Tem 48 horas para responder.",
+                        message: $"Por favor, confirme a presença na aula de {cls.StartDatetime:dd/MM/yyyy HH:mm}. Você tem 48 horas para responder.",
                         type: NotificationType.ValidationRequest,
                         entityType: "CoachClass",
                         entityId: cls.ClassId);
