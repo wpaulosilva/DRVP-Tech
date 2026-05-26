@@ -77,6 +77,7 @@ function ClassValidationCard({
     variant = 'purple',
     onConfirm,
     onReject,
+    onEdit,
     showParticipants = true,
     showCoachValidation = false,
     showParentTally = false,
@@ -297,6 +298,14 @@ function ClassValidationCard({
                     {/* Actions — hidden for parent view (per-participant buttons handle it), always shown for coach */}
                     {!(tipo === 'professor' && !showCoachValidation && participants.length > 0) && (
                         <div className="class-card-actions">
+                            {onEdit && (
+                                <button
+                                    className="btn btn-secondary"
+                                    onClick={(e) => { e.stopPropagation(); onEdit(aula) }}
+                                >
+                                    ✏ Editar
+                                </button>
+                            )}
                             <button
                                 className="btn btn-accept"
                                 onClick={() => id && onConfirm(id)}

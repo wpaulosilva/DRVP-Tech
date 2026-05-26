@@ -282,7 +282,23 @@ namespace DanceSchoolApp.Server.Controllers.Classes
             catch (Exception ex) { return StatusCode(500, "An unexpected error occurred."); }
         }
 
-        //  PATCH /api/coachclasses/{id}/cancel 
+        //  PATCH /api/coachclasses/{id}/update-details
+        // Staff use — update studio, start/end datetime before accepting a class request.
+        [Authorize(Roles = "staff")]
+        [HttpPatch("{id}/update-details")]
+        public async Task<IActionResult> UpdateDetails(int id, [FromBody] CoachClassUpdateDetailsRequest request)
+        {
+            try
+            {
+                await _coachClassService.UpdateDetailsAsync(id, request);
+                return NoContent();
+            }
+            catch (KeyNotFoundException ex) { return NotFound(ex.Message); }
+            catch (InvalidOperationException ex) { return Conflict(ex.Message); }
+            catch (Exception) { return StatusCode(500, "An unexpected error occurred."); }
+        }
+
+        //  PATCH /api/coachclasses/{id}/cancel
         //  Staff use — transitions Requested or Approved → Cancelled.
         [Authorize(Roles = "staff")]
         [HttpPatch("{id}/cancel")]

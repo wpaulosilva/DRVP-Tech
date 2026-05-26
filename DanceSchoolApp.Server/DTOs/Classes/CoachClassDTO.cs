@@ -182,4 +182,13 @@ namespace DanceSchoolApp.Server.DTOs.Classes
 
         public string? Reason { get; set; }
     }
+
+    // Staff can adjust logistical details (studio, schedule) before accepting a class request.
+    // All fields are optional — only provided fields are updated.
+    public class CoachClassUpdateDetailsRequest
+    {
+        public int? StudioId { get; set; }
+        public DateTime? StartDatetime { get; set; }
+        public DateTime? EndDatetime { get; set; }
+    }
 }

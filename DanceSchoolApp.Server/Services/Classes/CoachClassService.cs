@@ -507,6 +507,30 @@ namespace DanceSchoolApp.Server.Services.Classes
             }
         }
 
+        public async Task UpdateDetailsAsync(int classId, CoachClassUpdateDetailsRequest request)
+        {
+            var coachClass = await _context.CoachClasses
+                .FirstOrDefaultAsync(c => c.ClassId == classId);
+
+            if (coachClass is null)
+                throw new KeyNotFoundException($"Class with id {classId} was not found.");
+
+            if (request.StudioId.HasValue)
+                coachClass.IdStudio = request.StudioId.Value;
+
+            if (request.StartDatetime.HasValue)
+                coachClass.StartDatetime = request.StartDatetime.Value;
+
+            if (request.EndDatetime.HasValue)
+            {
+                if (request.EndDatetime.Value <= (request.StartDatetime ?? coachClass.StartDatetime))
+                    throw new InvalidOperationException("EndDatetime must be after StartDatetime.");
+                coachClass.EndDatetime = request.EndDatetime.Value;
+            }
+
+            await _context.SaveChangesAsync();
+        }
+
         public async Task CancelAsync(int classId)
         {
             await TransitionStatusAsync(

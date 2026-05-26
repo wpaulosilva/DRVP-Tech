@@ -21,6 +21,10 @@ export function cancelClass(classId) {
     return patch(`/api/coachclasses/${classId}/cancel`)
 }
 
+export function updateClassDetails(classId, body) {
+    return patch(`/api/coachclasses/${classId}/update-details`, body)
+}
+
 export function getAgenda({ from, to, studioId } = {}) {
     const params = new URLSearchParams()
     if (from) params.set('from', from)

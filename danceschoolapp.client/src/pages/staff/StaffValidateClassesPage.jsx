@@ -1,7 +1,10 @@
 import { useEffect, useState } from 'react'
 import ClassValidationCard from '../../components/common/ClassValidationCard'
 import Modal from '../../components/common/Modal'
-import { getValidateClasses, staffApprove, staffReject, staffValidate } from '../../services/staffService'
+import Button from '../../components/common/Button'
+import Select from '../../components/common/Select'
+import { getValidateClasses, staffApprove, staffReject, staffValidate, updateClassDetails } from '../../services/staffService'
+import { getStudios } from '../../services/studiosService'
 import '../../styles/ValidateClasses.css'
 
 function StaffValidateClassesPage() {
@@ -10,10 +13,22 @@ function StaffValidateClassesPage() {
     const [loading, setLoading] = useState(false)
     const [stats, setStats] = useState({ requested: 0, pending: 0 })
 
+    // Studios for edit modal
+    const [studios, setStudios] = useState([])
+
     // Reject modal state
     const [rejectTarget, setRejectTarget] = useState(null)
     const [rejectReason, setRejectReason] = useState('')
     const [rejecting, setRejecting] = useState(false)
+
+    // Edit modal state
+    const [editTarget, setEditTarget] = useState(null)
+    const [editStudioId, setEditStudioId] = useState('')
+    const [editStartDate, setEditStartDate] = useState('')
+    const [editStartTime, setEditStartTime] = useState('')
+    const [editEndTime, setEditEndTime] = useState('')
+    const [editError, setEditError] = useState('')
+    const [editSaving, setEditSaving] = useState(false)
 
     const fetchData = async () => {
         setLoading(true)
@@ -37,6 +52,51 @@ function StaffValidateClassesPage() {
         fetchData()
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [activeTab])
+
+    useEffect(() => {
+        getStudios()
+            .then(data => setStudios(Array.isArray(data) ? data : (data?.items ?? data?.Items ?? [])))
+            .catch(() => {})
+    }, [])
+
+    const openEditModal = (aula) => {
+        setEditTarget(aula)
+        const startDt = aula.StartDatetime ?? aula.startDatetime ?? ''
+        const endDt   = aula.EndDatetime   ?? aula.endDatetime   ?? ''
+        setEditStudioId(String(aula.StudioId ?? aula.studioId ?? ''))
+        setEditStartDate(startDt ? startDt.slice(0, 10) : '')
+        setEditStartTime(startDt ? startDt.slice(11, 16) : '')
+        setEditEndTime(endDt ? endDt.slice(11, 16) : '')
+        setEditError('')
+    }
+
+    const submitEdit = async (e) => {
+        e.preventDefault()
+        if (!editStartDate || !editStartTime || !editEndTime) {
+            setEditError('Preencha data e horários.')
+            return
+        }
+        if (editEndTime <= editStartTime) {
+            setEditError('A hora de fim deve ser depois da hora de início.')
+            return
+        }
+        const id = editTarget?.ClassId ?? editTarget?.classId
+        setEditSaving(true); setEditError('')
+        try {
+            const body = {
+                startDatetime: `${editStartDate}T${editStartTime}:00`,
+                endDatetime:   `${editStartDate}T${editEndTime}:00`,
+            }
+            if (editStudioId) body.studioId = Number(editStudioId)
+            await updateClassDetails(id, body)
+            setEditTarget(null)
+            fetchData()
+        } catch (err) {
+            setEditError(err.message)
+        } finally {
+            setEditSaving(false)
+        }
+    }
 
     const handleApprove = async (id) => {
         try {
@@ -159,10 +219,89 @@ function StaffValidateClassesPage() {
                     showParentTally={!isRequested}
                     onConfirm={(id) => isRequested ? handleApprove(id) : handleValidate(id)}
                     onReject={(id) => isRequested ? openRejectModal(id) : handleCancel(id)}
+                    onEdit={isRequested ? openEditModal : undefined}
                     confirmLabel={isRequested ? 'Aceitar Aula' : 'Validar'}
                     rejectLabel={isRequested ? 'Recusar Aula' : 'Cancelar'}
                 />
             ))}
+
+            {/* Edit Modal */}
+            <Modal
+                open={!!editTarget}
+                title="Editar Detalhes da Aula"
+                onClose={() => setEditTarget(null)}
+            >
+                <form onSubmit={submitEdit}>
+                    {editTarget && (
+                        <div className="reject-class-summary">
+                            <div><strong>Modalidade:</strong> {editTarget.ModalityName ?? editTarget.modalityName ?? '—'}</div>
+                            <div><strong>Coach:</strong> {editTarget.CoachName ?? editTarget.coachName ?? '—'}</div>
+                        </div>
+                    )}
+
+                    <div className="modal-field" style={{ marginTop: '16px' }}>
+                        <label className="modal-label">Estúdio</label>
+                        <Select
+                            value={editStudioId}
+                            onChange={setEditStudioId}
+                            options={[
+                                { value: '', label: 'Manter atual' },
+                                ...studios
+                                    .filter(s => s.isActive ?? s.IsActive ?? true)
+                                    .map(s => ({
+                                        value: String(s.StudioId ?? s.studioId),
+                                        label: s.Name ?? s.name ?? '',
+                                    }))
+                            ]}
+                        />
+                    </div>
+
+                    <div className="modal-field" style={{ marginTop: '12px' }}>
+                        <label className="modal-label">Data</label>
+                        <input
+                            type="date"
+                            className="input"
+                            value={editStartDate}
+                            onChange={e => setEditStartDate(e.target.value)}
+                            required
+                        />
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '12px', marginTop: '12px' }}>
+                        <div className="modal-field" style={{ flex: 1 }}>
+                            <label className="modal-label">Hora início</label>
+                            <input
+                                type="time"
+                                className="input"
+                                value={editStartTime}
+                                onChange={e => setEditStartTime(e.target.value)}
+                                required
+                            />
+                        </div>
+                        <div className="modal-field" style={{ flex: 1 }}>
+                            <label className="modal-label">Hora fim</label>
+                            <input
+                                type="time"
+                                className="input"
+                                value={editEndTime}
+                                onChange={e => setEditEndTime(e.target.value)}
+                                required
+                            />
+                        </div>
+                    </div>
+
+                    {editError && <p style={{ color: 'var(--danger)', fontSize: '0.875rem', marginTop: '8px' }}>{editError}</p>}
+
+                    <div className="modal-actions" style={{ marginTop: '16px' }}>
+                        <Button type="button" variant="secondary" onClick={() => setEditTarget(null)}>
+                            Cancelar
+                        </Button>
+                        <Button type="submit" variant="primary" disabled={editSaving}>
+                            {editSaving ? 'A guardar...' : 'Guardar Alterações'}
+                        </Button>
+                    </div>
+                </form>
+            </Modal>
 
             {/* Reject Modal */}
             <Modal
