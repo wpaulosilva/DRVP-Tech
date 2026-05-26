@@ -100,8 +100,8 @@ function CoachValidateClassesPage() {
 
     return (
         <section className="dashboard-page-card">
-            <h2>Validar Aulas</h2>
-            <p>Aceite pedidos de aula aprovados pela direção e valide aulas pendentes após o prazo de 48h.</p>
+            <h2>Validar Coachings</h2>
+            <p>Aceite pedidos de coaching aprovados pela direção e valide coachings pendentes após o prazo de 48h.</p>
 
             <div className="validate-kpi-row" style={{ marginTop: '20px' }}>
                 <div className="validate-kpi">
@@ -124,7 +124,7 @@ function CoachValidateClassesPage() {
                     className={`validate-tab ${activeTab === 'requests' ? 'validate-tab--active' : ''}`}
                     onClick={() => setActiveTab('requests')}
                 >
-                    Pedidos de Aula ({stats.requests})
+                    Pedidos de Coaching ({stats.requests})
                 </button>
                 <button
                     type="button"
@@ -142,13 +142,13 @@ function CoachValidateClassesPage() {
             )}
 
             {!loading && aulas.length === 0 && (
-                <div className="validate-empty">
+                    <div className="validate-empty">
                     <div className="validate-empty-icon">{'\u2713'}</div>
                     <h3>{isRequests ? 'Sem pedidos pendentes' : 'Sem validações pendentes'}</h3>
                     <p>
                         {isRequests
-                            ? 'Não há aulas aprovadas pela direção a aguardar a sua resposta.'
-                            : 'Não há aulas em estado pendente para validar.'}
+                            ? 'Não há coachings aprovados pela direção a aguardar a sua resposta.'
+                            : 'Não há coachings em estado pendente para validar.'}
                     </p>
                 </div>
             )}
@@ -167,7 +167,7 @@ function CoachValidateClassesPage() {
                         showParentTally={!isRequests}
                         onConfirm={() => isRequests ? handleAccept(classId) : handleValidar(classId, true)}
                         onReject={() => isRequests ? openRejectModal(classId) : handleValidar(classId, false)}
-                        confirmLabel={isRequests ? 'Aceitar Aula' : 'Realizada'}
+                        confirmLabel={isRequests ? 'Aceitar Coaching' : 'Realizada'}
                         rejectLabel={isRequests ? 'Recusar' : 'Não realizada'}
                     />
                 )
@@ -175,7 +175,7 @@ function CoachValidateClassesPage() {
 
             <Modal
                 open={!!rejectTarget}
-                title="Recusar pedido de aula"
+                title="Recusar pedido de coaching"
                 onClose={() => {
                     setRejectTarget(null)
                     setRejectReason('')

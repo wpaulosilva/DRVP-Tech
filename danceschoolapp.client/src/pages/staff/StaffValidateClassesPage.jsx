@@ -146,13 +146,13 @@ function StaffValidateClassesPage() {
 
     return (
         <section className="dashboard-page-card">
-            <h2>Aulas</h2>
-            <p>Aprovar aulas requisitadas e validar aulas pendentes após o prazo de 48h.</p>
+            <h2>Coachings</h2>
+            <p>Aprovar coachings requisitados e validar coachings pendentes após o prazo de 48h.</p>
 
             {/* KPI cards */}
             <div className="validate-kpi-row" style={{ marginTop: '20px' }}>
                 <div className="validate-kpi">
-                    <span className="validate-kpi-label">Requisitadas</span>
+                    <span className="validate-kpi-label">Requisitados</span>
                     <span className="validate-kpi-value validate-kpi-value--purple">
                         {loading ? '\u2014' : stats.requested}
                     </span>
@@ -178,7 +178,7 @@ function StaffValidateClassesPage() {
                     className={`validate-tab ${activeTab === 'requested' ? 'validate-tab--active' : ''}`}
                     onClick={() => setActiveTab('requested')}
                 >
-                    Requisitadas
+                    Requisitados
                 </button>
                 <button
                     type="button"
@@ -202,8 +202,8 @@ function StaffValidateClassesPage() {
                     <h3>Tudo em ordem!</h3>
                     <p>
                         {isRequested
-                            ? 'Não há pedidos de aulas aguardando aprovação.'
-                            : 'Não há aulas pendentes de validação.'}
+                            ? 'Não há pedidos de coaching aguardando aprovação.'
+                            : 'Não há coachings pendentes de validação.'}
                     </p>
                 </div>
             )}
@@ -220,15 +220,15 @@ function StaffValidateClassesPage() {
                     onConfirm={(id) => isRequested ? handleApprove(id) : handleValidate(id)}
                     onReject={(id) => isRequested ? openRejectModal(id) : handleCancel(id)}
                     onEdit={isRequested ? openEditModal : undefined}
-                    confirmLabel={isRequested ? 'Aceitar Aula' : 'Validar'}
-                    rejectLabel={isRequested ? 'Recusar Aula' : 'Cancelar'}
+                    confirmLabel={isRequested ? 'Aceitar Coaching' : 'Validar'}
+                    rejectLabel={isRequested ? 'Recusar Coaching' : 'Cancelar'}
                 />
             ))}
 
             {/* Edit Modal */}
             <Modal
                 open={!!editTarget}
-                title="Editar Detalhes da Aula"
+                title="Editar Detalhes do Coaching"
                 onClose={() => setEditTarget(null)}
             >
                 <form onSubmit={submitEdit}>
@@ -306,14 +306,14 @@ function StaffValidateClassesPage() {
             {/* Reject Modal */}
             <Modal
                 open={!!rejectTarget}
-                title="Recusar Aula"
+                title="Recusar Coaching"
                 onClose={() => { setRejectTarget(null); setRejectReason('') }}
             >
                 <form onSubmit={submitReject}>
                     <p>
-                        Indique o motivo para recusar a aula de{' '}
+                        Indique o motivo para recusar o coaching de{' '}
                         <strong>
-                            {rejectTarget?.ModalityName ?? rejectTarget?.modalityName ?? rejectTarget?.Modality ?? rejectTarget?.modality ?? 'esta aula'}
+                            {rejectTarget?.ModalityName ?? rejectTarget?.modalityName ?? rejectTarget?.Modality ?? rejectTarget?.modality ?? 'este coaching'}
                         </strong>.
                     </p>
 

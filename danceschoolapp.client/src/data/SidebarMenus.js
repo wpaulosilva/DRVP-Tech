@@ -8,7 +8,7 @@ export const sidebarMenus = {
         { label: 'Dashboard',     to: '/staff',                       icon: 'dashboard'    },
         { label: 'Utilizadores',  to: '/staff/utilizadores',          icon: 'users'        },
         { label: 'Estudantes',    to: '/staff/validar-estudantes',    icon: 'students'     },
-        { label: 'Aulas',         to: '/staff/validar-aulas',         icon: 'validate'     },
+        { label: 'Coachings',     to: '/staff/validar-aulas',         icon: 'validate'     },
         { label: 'Modalidades',   to: '/staff/modalidades',           icon: 'modalities'   },
         { label: 'Estúdios',      to: '/staff/estudios',              icon: 'studios'      },
         { label: 'Eventos',       to: '/staff/eventos',               icon: 'events'       },
@@ -21,14 +21,14 @@ export const sidebarMenus = {
     coach: [
         { label: 'Dashboard',      to: '/coach',                  icon: 'dashboard'    },
         { label: 'Disponibilidade', to: '/coach/disponibilidade', icon: 'availability' },
-        { label: 'Validar Aulas',   to: '/coach/validar-aulas',  icon: 'validate'     },
+        { label: 'Validar Coachings',   to: '/coach/validar-aulas',  icon: 'validate'     },
         { label: 'Agenda',          to: '/coach/agenda',          icon: 'agenda'       },
         { label: 'Eventos',         to: '/coach/eventos',         icon: 'events'       },
     ],
 
     parent: [
         { label: 'Dashboard',       to: '/parent',               icon: 'dashboard'  },
-        { label: 'Aulas',           to: '/parent/aulas',         icon: 'classes'    },
+        { label: 'Coachings',       to: '/parent/aulas',         icon: 'classes'    },
         { label: 'Meus Estudantes', to: '/parent/estudantes',    icon: 'students'   },
         { label: 'Inventário',      to: '/parent/inventario',    icon: 'inventory'  },
         { label: 'Eventos',         to: '/parent/eventos',       icon: 'events'     },

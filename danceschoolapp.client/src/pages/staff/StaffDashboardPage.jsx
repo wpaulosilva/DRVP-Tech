@@ -41,7 +41,7 @@ function StaffDashboardPage() {
             {!loading && pendingValidation > 0 && (
                 <div className="alert-banner alert-banner--warning">
                     <span>
-                        {pendingValidation} {pendingValidation === 1 ? 'aula aguarda' : 'aulas aguardam'} validação
+                        {pendingValidation} {pendingValidation === 1 ? 'coaching aguarda' : 'coachings aguardam'} validação
                     </span>
                     <Link to="/staff/validar-aulas">Validar agora</Link>
                 </div>
@@ -94,14 +94,14 @@ function StaffDashboardPage() {
             {/* Row 2 — Classes this month */}
             <div className="kpi-grid">
                 <KpiCard
-                    label="Aulas Este Mês"
+                    label="Coachings Este Mês"
                     value={stats?.classesScheduledThisMonth}
                     loading={loading}
                     icon="classes"
-                    description="Agendadas no mês corrente"
+                    description="Agendados no mês corrente"
                 />
                 <KpiCard
-                    label="Aulas Realizadas"
+                    label="Coachings Realizados"
                     value={stats?.classesCompletedThisMonth}
                     loading={loading}
                     tone="success"

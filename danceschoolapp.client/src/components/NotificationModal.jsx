@@ -8,7 +8,7 @@ const PAGE_SIZE = 20
 
 // Human-readable labels for each EntityType value from the API
 const ENTITY_LABELS = {
-  coachclass:       'Aulas',
+  coachclass:       'Coachings',
   itemrequisition:  'Inventário',
   student:          'Utilizadores',
 }
@@ -18,9 +18,9 @@ function resolveLink(entityType, roles) {
   if (!entityType) return null
   const et = entityType.toLowerCase()
   if (et === 'coachclass') {
-    if (roles.includes('coach'))  return { path: '/coach/validar-aulas', label: 'Validar Aulas' }
-    if (roles.includes('parent')) return { path: '/parent/aulas', label: 'Ver Aulas' }
-    if (roles.includes('staff') || roles.includes('admin')) return { path: '/staff/validar-aulas', label: 'Validar Aulas' }
+    if (roles.includes('coach'))  return { path: '/coach/validar-aulas', label: 'Validar Coachings' }
+    if (roles.includes('parent')) return { path: '/parent/aulas', label: 'Ver Coachings' }
+    if (roles.includes('staff') || roles.includes('admin')) return { path: '/staff/validar-aulas', label: 'Validar Coachings' }
   }
   if (et === 'itemrequisition') {
     if (roles.includes('parent'))                        return { path: '/parent/inventario',         label: 'Inventário' }
@@ -64,10 +64,54 @@ export default function NotificationModal({ userId, onClose, onUnreadChange }) {
       const data  = await res.json()
       const list  = Array.isArray(data) ? data : (data.Items ?? data.items ?? [])
 
+      // Replace backend text occurrences of 'aula'/'aulas' with 'coaching'/'coachings' for UI consistency
+      const replaceAula = (s) => {
+        if (!s || typeof s !== 'string') return s
+
+        // Replace common feminine articles + 'aula(s)' -> masculine equivalents
+        // e.g. 'a aula' -> 'o coaching', 'As aulas' -> 'Os coachings'
+        s = s.replace(/\b([Aa]|[Aa]s)\s+(aula|aulas)\b/g, (match, art, noun) => {
+          const isPlural = noun.toLowerCase() === 'aulas'
+          const artIsCapital = art[0] === art[0].toUpperCase()
+          const repArticle = artIsCapital ? (isPlural ? 'Os' : 'O') : (isPlural ? 'os' : 'o')
+          const repNoun = isPlural ? 'coachings' : 'coaching'
+          return `${repArticle} ${repNoun}`
+        })
+
+        // Replace remaining standalone 'aula'/'aulas' → 'coaching'/'coachings', preserving case
+        s = s.replace(/\b(aulas|aula)\b/gi, (m) => {
+          const lower = m.toLowerCase()
+          const rep = lower === 'aulas' ? 'coachings' : 'coaching'
+          if (m[0] === m[0].toUpperCase()) return rep.charAt(0).toUpperCase() + rep.slice(1)
+          return rep
+        })
+
+        // Convert common feminine adjective forms to masculine (singular and plural)
+        const genderMap = {
+          'aprovada': 'aprovado', 'aprovadas': 'aprovados',
+          'confirmada': 'confirmado', 'confirmadas': 'confirmados',
+          'cancelada': 'cancelado', 'canceladas': 'cancelados',
+          'marcada': 'marcado', 'marcadas': 'marcados',
+          'realizada': 'realizado', 'realizadas': 'realizados',
+          'agendada': 'agendado', 'agendadas': 'agendados',
+          'solicitada': 'solicitado', 'solicitadas': 'solicitados',
+          'requisitada': 'requisitado', 'requisitadas': 'requisitados'
+        }
+        s = s.replace(/\b(aprovadas|aprovada|confirmadas|confirmada|canceladas|cancelada|marcadas|marcada|realizadas|realizada|agendadas|agendada|solicitadas|solicitada|requisitadas|requisitada)\b/gi, (m) => {
+          const lower = m.toLowerCase()
+          const rep = genderMap[lower] ?? m
+          // preserve capitalization
+          if (m[0] === m[0].toUpperCase()) return rep.charAt(0).toUpperCase() + rep.slice(1)
+          return rep
+        })
+
+        return s
+      }
+
       const mapped = list.map(n => ({
         id:          n.NotificationId ?? n.notificationId ?? n.id ?? null,
-        title:       n.Title   ?? n.title   ?? '',
-        message:     n.Message ?? n.message ?? '',
+        title:       replaceAula(n.Title   ?? n.title   ?? ''),
+        message:     replaceAula(n.Message ?? n.message ?? ''),
         createdAt:   n.CreatedAt ?? n.createdAt ?? null,
         displayDate: (n.CreatedAt ?? n.createdAt)
                        ? new Date(n.CreatedAt ?? n.createdAt).toLocaleString('pt-PT')

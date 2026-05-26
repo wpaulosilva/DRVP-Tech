@@ -13,9 +13,9 @@ const fmt = {
 
 function statusPill(status) {
     // status: 1=Approved, 7=StaffApproved, etc.
-    if (status === 1 || status === 7) return { label: 'Confirmada', cls: '' }
+    if (status === 1 || status === 7) return { label: 'Confirmado', cls: '' }
     if (status === 6)                 return { label: 'Pendente',   cls: 'dashboard-pill--pending' }
-    return { label: 'Agendada', cls: '' }
+    return { label: 'Agendado', cls: '' }
 }
 
 function CoachDashboardPage() {
@@ -50,7 +50,7 @@ function CoachDashboardPage() {
             {!loading && validationsPending > 0 && (
                 <div className="alert-banner alert-banner--warning">
                     <span>
-                        {validationsPending} {validationsPending === 1 ? 'aula aguarda' : 'aulas aguardam'} a sua validação
+                        {validationsPending} {validationsPending === 1 ? 'coaching aguarda' : 'coachings aguardam'} a sua validação
                     </span>
                     <Link to="/coach/validar-aulas">Validar</Link>
                 </div>
@@ -58,7 +58,7 @@ function CoachDashboardPage() {
 
             <div className="kpi-grid">
                 <KpiCard
-                    label="Aulas Dadas"
+                    label="Coachings Dados"
                     value={dashboard?.classesTaughtThisMonth}
                     loading={loading}
                     icon="validate"
@@ -66,7 +66,7 @@ function CoachDashboardPage() {
                     tone="success"
                 />
                 <KpiCard
-                    label="Próximas Aulas"
+                    label="Próximos Coachings"
                     value={dashboard?.classesUpcoming}
                     loading={loading}
                     icon="classes"
@@ -84,12 +84,12 @@ function CoachDashboardPage() {
                 />
             </div>
 
-            <h3 className="dashboard-section-title">Próximas Aulas</h3>
+            <h3 className="dashboard-section-title">Próximos Coachings</h3>
 
             {loading ? (
                 <p style={{ color: 'var(--text-3)', fontSize: '0.875rem' }}>A carregar…</p>
-            ) : !dashboard?.upcomingClasses?.length ? (
-                <p className="dashboard-empty">Sem aulas próximas agendadas.</p>
+                ) : !dashboard?.upcomingClasses?.length ? (
+                <p className="dashboard-empty">Sem coachings próximos agendados.</p>
             ) : (
                 <div className="dashboard-cards-grid">
                     {dashboard.upcomingClasses.map(item => {

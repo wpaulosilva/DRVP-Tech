@@ -44,10 +44,10 @@ function ParentDashboardPage() {
             <div className="admin-page-header">
                 <div>
                     <h2>Olá{firstName ? `, ${firstName}` : ''}!</h2>
-                    <p>Acompanhe as aulas e actividades dos seus estudantes.</p>
+                    <p>Acompanhe os coachings e actividades dos seus estudantes.</p>
                 </div>
                 <Link to="/parent/aulas" className="btn btn-primary btn-sm">
-                    Marcar Aula
+                    Marcar Coaching
                 </Link>
             </div>
 
@@ -56,7 +56,7 @@ function ParentDashboardPage() {
             {!loading && awaitingValidation > 0 && (
                 <div className="alert-banner alert-banner--warning">
                     <span>
-                        {awaitingValidation} {awaitingValidation === 1 ? 'aula aguarda' : 'aulas aguardam'} a sua confirmação
+                        {awaitingValidation} {awaitingValidation === 1 ? 'coaching aguarda' : 'coachings aguardam'} a sua confirmação
                     </span>
                     <Link to="/parent/aulas">Confirmar</Link>
                 </div>
@@ -64,7 +64,7 @@ function ParentDashboardPage() {
 
             <div className="kpi-grid">
                 <KpiCard
-                    label="Próximas Aulas"
+                    label="Próximos Coachings"
                     value={upcomingCount}
                     loading={loading}
                     icon="classes"
@@ -82,15 +82,15 @@ function ParentDashboardPage() {
                 />
             </div>
 
-            <h3 className="dashboard-section-title">Próximas Aulas</h3>
+            <h3 className="dashboard-section-title">Próximos Coachings</h3>
 
             {loading ? (
                 <p style={{ color: 'var(--text-3)', fontSize: '0.875rem' }}>A carregar…</p>
             ) : !dashboard?.upcomingClasses?.length ? (
                 <div className="dashboard-empty">
-                    <p>Sem aulas próximas.</p>
+                    <p>Sem coachings próximos.</p>
                     <Link to="/parent/aulas" className="btn btn-primary btn-sm" style={{ marginTop: '0.75rem' }}>
-                        Marcar uma aula
+                        Marcar um coaching
                     </Link>
                 </div>
             ) : (

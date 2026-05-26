@@ -221,7 +221,7 @@ function CoachAvailabilityPage() {
                 <div>
                     <h2>Disponibilidade</h2>
                     <p className="av-subtitle">
-                        Defina os blocos semanais recorrentes em que está disponível para dar aulas.
+                        Defina os blocos semanais recorrentes em que está disponível para dar coaching.
                     </p>
                 </div>
                 <button type="button" className="btn btn-primary" onClick={() => openAdd()}>
@@ -239,7 +239,7 @@ function CoachAvailabilityPage() {
                     onChange={(e) => setReferenceDate(e.target.value)}
                 />
                 <span className="av-filter-hint">
-                    Mostra os blocos cuja vigência cobre esta data.
+                    Mostra os blocos cuja validade cobre esta data.
                 </span>
             </div>
 
@@ -298,7 +298,7 @@ function CoachAvailabilityPage() {
                                         className="av-block"
                                         style={blockStyle(b)}
                                         onClick={() => openEdit(b)}
-                                        title={`${getStartTime(b)}–${getEndTime(b)}\nVigência: ${formatPtDate(getValidFrom(b))} → ${formatPtDate(getValidUntil(b))}`}
+                                        title={`${getStartTime(b)}–${getEndTime(b)}\nValidade: ${formatPtDate(getValidFrom(b))} → ${formatPtDate(getValidUntil(b))}`}
                                     >
                                         <span className="av-block-time">
                                             {getStartTime(b)}–{getEndTime(b)}
@@ -416,7 +416,7 @@ function CoachAvailabilityPage() {
 
                     <div className="av-form-row-2">
                         <div className="av-form-group">
-                            <label className="av-form-label" htmlFor="av-from">Início de vigência</label>
+                            <label className="av-form-label" htmlFor="av-from">Início de validade</label>
                             <input
                                 id="av-from"
                                 type="date"
@@ -426,7 +426,7 @@ function CoachAvailabilityPage() {
                             />
                         </div>
                         <div className="av-form-group">
-                            <label className="av-form-label" htmlFor="av-until">Fim de vigência</label>
+                            <label className="av-form-label" htmlFor="av-until">Fim de validade</label>
                             <input
                                 id="av-until"
                                 type="date"
@@ -439,7 +439,7 @@ function CoachAvailabilityPage() {
 
                     <p className="av-form-hint">
                         Pode adicionar vários blocos no mesmo dia (ex.: 09:00–11:00 e 14:00–16:00).
-                        Deixe a vigência em branco para um bloco recorrente sem data limite.
+                        Deixe a validade em branco para um bloco recorrente sem data limite.
                     </p>
 
                     {formError && <div className="av-form-error">{formError}</div>}

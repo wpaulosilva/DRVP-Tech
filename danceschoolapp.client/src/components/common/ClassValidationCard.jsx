@@ -124,9 +124,9 @@ function ClassValidationCard({
             : variant === 'orange' ? 'class-card-expanded--orange' : ''
 
     const confirmText = confirmLabel
-        || (tipo === 'coach-request' ? 'Aceitar Aula' : 'Realizada')
+        || (tipo === 'coach-request' ? 'Aceitar Coaching' : 'Realizada')
     const rejectText = rejectLabel
-        || (tipo === 'coach-request' ? 'Recusar Aula' : 'Não realizada')
+        || (tipo === 'coach-request' ? 'Recusar Coaching' : 'Não realizada')
 
     return (
         <div className={`class-card ${borderClass}`}>
@@ -138,7 +138,7 @@ function ClassValidationCard({
                 <div style={{ flex: '1 1 auto', minWidth: 0 }}>
                     <div className="class-card-title-row">
                         <h3 className="class-card-title">
-                            {modality || (studentNames[0] ?? 'Aula')}
+                            {modality || (studentNames[0] ?? 'Coaching')}
                         </h3>
                         <span className={`class-card-capacity ${capacityClass}`}>
                             Alunos {enrolled}/{maxParticipants}
@@ -203,7 +203,7 @@ function ClassValidationCard({
 
             {expanded && (
                 <div className={`class-card-expanded ${expandedClass}`}>
-                    {/* Participant list */}
+                    {/* Participant list (Alunos label preserved) */}
                     {showParticipants && participants.length > 0 && (
                         <div>
                             <p className="class-card-section-title">

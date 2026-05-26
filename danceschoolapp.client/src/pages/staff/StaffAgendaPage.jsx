@@ -4,7 +4,7 @@ function StaffAgendaPage() {
     return (
         <section className="dashboard-page-card">
             <h2>Agenda Global</h2>
-            <p>Visualizar calendário semanal de todas as aulas.</p>
+            <p>Visualizar calendário semanal de todos os coachings.</p>
         </section>
     )
 }

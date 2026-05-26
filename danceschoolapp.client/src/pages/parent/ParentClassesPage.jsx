@@ -117,9 +117,9 @@ const DAYS_PT = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
 
 const TABS = [
     { id: 'minhas-marcacoes', label: 'Minhas Marcações', activeExtra: '' },
-    { id: 'marcar',           label: 'Criar Aula',       activeExtra: '' },
-    { id: 'grupo',            label: 'Aulas Existentes', activeExtra: '-teal' },
-    { id: 'validar',          label: 'Validar Aulas',    activeExtra: '-orange' },
+    { id: 'marcar',           label: 'Criar Coaching',       activeExtra: '' },
+    { id: 'grupo',            label: 'Coachings Existentes', activeExtra: '-teal' },
+    { id: 'validar',          label: 'Validar Coachings',    activeExtra: '-orange' },
 ]
 
 // ---- Shared MonthCalendar ----
@@ -570,7 +570,7 @@ function ParentClassesPage() {
 
         return (
             <div>
-                <p className="tab-description">Visualize as aulas marcadas para os seus educandos no mês.</p>
+                <p className="tab-description">Visualize os coachings marcados para os seus educandos no mês.</p>
                 {t1Error && <p className="admin-error">{t1Error}</p>}
 
                 <MonthCalendar
@@ -659,8 +659,8 @@ function ParentClassesPage() {
                 {t1SelectedDate && dayList.length === 0 && !t1Loading && (
                     <div className="validate-empty">
                         <div className="validate-empty-icon">📅</div>
-                        <h3>Sem aulas</h3>
-                        <p>Nenhuma aula marcada para este dia.</p>
+                        <h3>Sem coachings</h3>
+                        <p>Nenhum coaching marcado para este dia.</p>
                     </div>
                 )}
 
@@ -669,7 +669,7 @@ function ParentClassesPage() {
                     <div className="validate-empty">
                         <div className="validate-empty-icon">📅</div>
                         <h3>Sem marcações</h3>
-                        <p>Não tem aulas marcadas. Crie uma aula no separador "Criar Aula".</p>
+                        <p>Não tem coachings marcados. Crie um coaching no separador "Criar Coaching".</p>
                     </div>
                 )}
 
@@ -678,11 +678,11 @@ function ParentClassesPage() {
                     <div className="validate-empty" style={{ padding: '20px' }}>
                         <p style={{ color: '#6b7280', marginBottom: '8px' }}>
                             Não tem aulas marcadas este mês.
-                            {t1AllClasses.length > 0 && ` Tem ${t1AllClasses.length} aula${t1AllClasses.length > 1 ? 's' : ''} noutros meses.`}
+                        {t1AllClasses.length > 0 && ` Tem ${t1AllClasses.length} coaching${t1AllClasses.length > 1 ? 's' : ''} noutros meses.`}
                         </p>
                         {t1NextClass && (
                             <p style={{ color: 'var(--accent)', fontWeight: 600, fontSize: '0.92rem' }}>
-                                Próxima aula: {fmtDateLong((t1NextClass.StartDatetime ?? t1NextClass.startDatetime ?? '').slice(0, 10))} às {fmtTime(t1NextClass.StartDatetime ?? t1NextClass.startDatetime)} — {t1NextClass.ModalityName ?? t1NextClass.modalityName}
+                                Próximo coaching: {fmtDateLong((t1NextClass.StartDatetime ?? t1NextClass.startDatetime ?? '').slice(0, 10))} às {fmtTime(t1NextClass.StartDatetime ?? t1NextClass.startDatetime)} — {t1NextClass.ModalityName ?? t1NextClass.modalityName}
                             </p>
                         )}
                     </div>
@@ -724,7 +724,7 @@ function ParentClassesPage() {
         return (
             <div>
                 <p className="tab-description">
-                    Filtre por modalidade ou professor, clique num dia com vagas disponíveis e envie o pedido de aula.
+                    Filtre por modalidade ou professor, clique num dia com vagas disponíveis e envie o pedido de coaching.
                 </p>
                 {t2Error && <p className="admin-error">{t2Error}</p>}
 
@@ -782,8 +782,8 @@ function ParentClassesPage() {
                                                     {modNames  && <div><span className="label">Modalidades: </span>{modNames}</div>}
                                                 </div>
                                             </div>
-                                            <Button variant="primary" onClick={() => openBookingModal(slot, t2SelectedDate)}>
-                                                Pedir Aula
+                        <Button variant="primary" onClick={() => openBookingModal(slot, t2SelectedDate)}>
+                                                Pedir Coaching
                                             </Button>
                                         </div>
                                     </div>
@@ -849,7 +849,7 @@ function ParentClassesPage() {
 
         return (
             <div>
-                <p className="tab-description">Aulas abertas a inscrições — clique num dia para ver as aulas disponíveis.</p>
+                <p className="tab-description">Coachings abertos a inscrições — clique num dia para ver os coachings disponíveis.</p>
                 {t3Error && <p className="admin-error">{t3Error}</p>}
 
                 {/* Modality filter */}
@@ -875,7 +875,7 @@ function ParentClassesPage() {
                 {/* Selected day class cards */}
                 {t3SelectedDate && selectedClasses.length > 0 && (
                     <div>
-                        <h3 className="validate-section-heading">Aulas para {fmtDateLong(t3SelectedDate)}</h3>
+                        <h3 className="validate-section-heading">Coachings para {fmtDateLong(t3SelectedDate)}</h3>
                         {selectedClasses
                             .sort((a, b) => (a.StartDatetime ?? a.startDatetime ?? '').localeCompare(b.StartDatetime ?? b.startDatetime ?? ''))
                             .map((c, i) => {
@@ -973,7 +973,7 @@ function ParentClassesPage() {
             <div className="validate-empty">
                 <div className="validate-empty-icon">✓</div>
                 <h3>Tudo validado</h3>
-                <p>Não há aulas para validar neste momento.</p>
+                <p>Não há coachings para validar neste momento.</p>
             </div>
         )
         return (
@@ -1054,8 +1054,8 @@ function ParentClassesPage() {
         <PageCard>
             <div className="admin-page-header">
                 <div>
-                    <h2>Aulas</h2>
-                    <p>Gerir marcações, validações e aulas de grupo.</p>
+                    <h2>Coachings</h2>
+                    <p>Gerir marcações, validações e coachings de grupo.</p>
                 </div>
             </div>
 
@@ -1082,14 +1082,14 @@ function ParentClassesPage() {
             {/* ====== Booking Modal (Tab 2 — Pedir Aula) ====== */}
             <Modal
                 open={bookingSlot !== null}
-                title="Pedir Aula"
+                title="Pedir Coaching"
                 onClose={() => setBookingSlot(null)}
             >
                 {bookingSuccess ? (
                     <div className="validate-empty" style={{ padding: '24px' }}>
                         <div className="validate-empty-icon">✓</div>
                         <h3>Pedido enviado!</h3>
-                        <p>O seu pedido de aula foi submetido e aguarda aprovação da direção.</p>
+                        <p>O seu pedido de coaching foi submetido e aguarda aprovação da direção.</p>
                     </div>
                 ) : (
                     <form onSubmit={handleBookingSubmit} className="modal-form">
@@ -1175,7 +1175,7 @@ function ParentClassesPage() {
             {/* ====== Invite Modal (Tab 1 — Adicionar Aluno) ====== */}
             <Modal
                 open={inviteTarget !== null}
-                title="Adicionar Aluno à Aula"
+                title="Adicionar Aluno ao Coaching"
                 onClose={() => setInviteTarget(null)}
             >
                 <form onSubmit={handleInviteSubmit} className="modal-form">
@@ -1187,7 +1187,7 @@ function ParentClassesPage() {
                         return (
                             <>
                                 <div className="reject-class-summary">
-                                    <div>💃 {inviteTarget.ModalityName ?? inviteTarget.modalityName ?? 'Aula'}</div>
+                                    <div>💃 {inviteTarget.ModalityName ?? inviteTarget.modalityName ?? 'Coaching'}</div>
                                     <div>📅 {fmtDateLong((inviteTarget.StartDatetime ?? inviteTarget.startDatetime ?? '').slice(0, 10))} · {fmtTime(inviteTarget.StartDatetime ?? inviteTarget.startDatetime)} – {fmtTime(inviteTarget.EndDatetime ?? inviteTarget.endDatetime)}</div>
                                 </div>
                                 <div className="modal-field">
@@ -1229,7 +1229,7 @@ function ParentClassesPage() {
                 <form onSubmit={handleEnrollSubmit} className="modal-form">
                     {enrollTarget && (
                         <div className="reject-class-summary">
-                            <div>💃 {enrollTarget.ModalityName ?? 'Aula'}</div>
+                            <div>💃 {enrollTarget.ModalityName ?? 'Coaching'}</div>
                             <div>📅 {fmtDateLong((enrollTarget.StartDatetime ?? '').slice(0, 10))} · {fmtTime(enrollTarget.StartDatetime)} – {fmtTime(enrollTarget.EndDatetime)}</div>
                             {enrollTarget.CoachName  && <div>👨‍🏫 {enrollTarget.CoachName}</div>}
                             {enrollTarget.StudioName && <div>📍 {enrollTarget.StudioName}</div>}

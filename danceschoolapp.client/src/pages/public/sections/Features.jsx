@@ -1,6 +1,6 @@
 const features = [
     {
-        title: 'Aulas para várias idades',
+        title: 'Coachings para várias idades',
         description: 'Turmas adaptadas a diferentes níveis e fases de aprendizagem.',
         icon: '🩰',
     },
