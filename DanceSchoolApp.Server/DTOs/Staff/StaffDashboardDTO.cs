@@ -83,5 +83,6 @@ namespace DanceSchoolApp.Server.DTOs.Staff
         public DateOnly SubmittedAt { get; set; }  // TODO: Student has no created_at column — always DateOnly.MinValue
         public string? ParentName { get; set; }
         public string? ParentEmail { get; set; }
+        public List<string> Modalities { get; set; } = new();
     }
 }

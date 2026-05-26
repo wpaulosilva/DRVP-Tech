@@ -79,6 +79,16 @@ namespace DanceSchoolApp.Server.Controllers.Classes
             }
         }
 
+        //  GET /api/coachclasses/join-class-status
+        // Any authenticated user — returns the current state of the join_class_enabled setting.
+        [Authorize]
+        [HttpGet("join-class-status")]
+        public async Task<IActionResult> GetJoinClassStatus()
+        {
+            var enabled = await _appSettingService.GetBoolAsync("join_class_enabled", defaultValue: true);
+            return Ok(new { enabled });
+        }
+
         //  GET /api/coachclasses/open
         // Parent use — returns Approved classes with available spots.
         // Returns 423 Locked when the join_class_enabled setting is false.

@@ -74,6 +74,8 @@ namespace DanceSchoolApp.Server.DTOs.Parent
         public string? Nif { get; set; }
         public byte AcceptanceStatus { get; set; }
         public bool IsActive { get; set; }
+        public List<int> ModalityIds { get; set; } = new();
+        public List<string> ModalityNames { get; set; } = new();
     }
 
     // ─── Inventory / school ───────────────────────────────────────────────────

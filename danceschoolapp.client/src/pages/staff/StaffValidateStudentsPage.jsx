@@ -5,12 +5,16 @@ import {
     rejectStudent,
     deactivateStudent,
     activateStudent,
+    getStudent,
+    updateStudent,
 } from '@/services/studentsService'
+import { getModalities } from '@/services/modalitiesService'
 import { get } from '@/api/client'
 import Button from '@/components/common/Button'
 import StatusBadge from '@/components/common/StatusBadge'
 import Modal from '@/components/common/Modal'
 import Input from '@/components/common/Input'
+import AddStudentModal from '@/features/students/components/AddStudentModal'
 import '@/styles/AdminPage.css'
 
 function StaffValidateStudentsPage() {
@@ -23,6 +27,20 @@ function StaffValidateStudentsPage() {
     const [showRejectModal, setShowRejectModal] = useState(false)
     const [rejectReason, setRejectReason] = useState('')
     const [selectedStudentId, setSelectedStudentId] = useState(null)
+
+    // Edit student modal state
+    const [modalities, setModalities] = useState([])
+    const [showEditModal, setShowEditModal] = useState(false)
+    const [editingStudent, setEditingStudent] = useState(null)
+    const [editFirstName, setEditFirstName] = useState('')
+    const [editLastName, setEditLastName] = useState('')
+    const [editBirthDate, setEditBirthDate] = useState('')
+    const [editPhone, setEditPhone] = useState('')
+    const [editAddress, setEditAddress] = useState('')
+    const [editNif, setEditNif] = useState('')
+    const [editModalityIds, setEditModalityIds] = useState([])
+    const [editError, setEditError] = useState('')
+    const [editLoading, setEditLoading] = useState(false)
 
     const fetchStudents = async () => {
         setLoading(true)
@@ -45,6 +63,78 @@ function StaffValidateStudentsPage() {
     useEffect(() => {
         fetchStudents()
     }, [tab])
+
+    useEffect(() => {
+        getModalities().then(data => {
+            const list = Array.isArray(data) ? data : (data?.items ?? data?.Items ?? [])
+            setModalities(list.filter(m => m.isActive ?? m.IsActive ?? true))
+        }).catch(() => {})
+    }, [])
+
+    const openEditModal = async (student) => {
+        setEditingStudent(student)
+        setEditError('')
+        setEditLoading(true)
+        try {
+            const data = await getStudent(student.studentId)
+            setEditFirstName(data.personInfo?.firstName ?? '')
+            setEditLastName(data.personInfo?.lastName ?? '')
+            setEditBirthDate(data.personInfo?.birthDate ?? '')
+            setEditPhone(data.personInfo?.phone ?? '')
+            setEditAddress(data.personInfo?.address ?? '')
+            setEditNif(data.personInfo?.nif ?? '')
+            const existingIds = (data.modalities ?? []).map(m => m.modalityId ?? m.ModalityId)
+            setEditModalityIds(existingIds)
+            setShowEditModal(true)
+        } catch (err) {
+            alert(err.message)
+            setEditingStudent(null)
+        } finally {
+            setEditLoading(false)
+        }
+    }
+
+    const handleEditSubmit = async () => {
+        if (!editFirstName.trim() || !editLastName.trim()) {
+            setEditError('Nome e apelido são obrigatórios.')
+            return
+        }
+        if (!editBirthDate) {
+            setEditError('Data de nascimento é obrigatória.')
+            return
+        }
+        if (editNif && editNif.length !== 9) {
+            setEditError('NIF deve ter 9 dígitos.')
+            return
+        }
+        setEditLoading(true)
+        setEditError('')
+        try {
+            await updateStudent(editingStudent.studentId, {
+                parentId:    editingStudent.parentId ?? 0,
+                firstName:   editFirstName.trim(),
+                lastName:    editLastName.trim(),
+                birthDate:   editBirthDate,
+                phone:       editPhone.trim() || null,
+                address:     editAddress.trim() || null,
+                nif:         editNif.trim() || null,
+                modalityIds: editModalityIds,
+            })
+            setShowEditModal(false)
+            setEditingStudent(null)
+            fetchStudents()
+        } catch (err) {
+            setEditError(err.message)
+        } finally {
+            setEditLoading(false)
+        }
+    }
+
+    const toggleEditModality = (id) => {
+        setEditModalityIds(prev =>
+            prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+        )
+    }
 
     const handleSort = (field) => {
         if (sortBy === field) {
@@ -175,6 +265,10 @@ function StaffValidateStudentsPage() {
                                 <p><strong>Encarregado:</strong> {s.parentName || '—'}</p>
                                 <p><strong>Email:</strong> {s.parentEmail || '—'}</p>
 
+                                {(s.modalities ?? []).length > 0 && (
+                                    <p><strong>Modalidades:</strong> {(s.modalities).join(', ')}</p>
+                                )}
+
                                 <div className="validate-actions">
                                     <Button
                                         variant="secondary"
@@ -212,13 +306,14 @@ function StaffValidateStudentsPage() {
                                 </th>
 
                                 <th>Ações</th>
+                                <th></th>
                             </tr>
                         </thead>
 
                         <tbody>
                             {sortedStudents.length === 0 ? (
                                 <tr>
-                                    <td colSpan={4} className="table-empty">
+                                    <td colSpan={5} className="table-empty">
                                         Nenhum estudante encontrado.
                                     </td>
                                 </tr>
@@ -256,6 +351,14 @@ function StaffValidateStudentsPage() {
                                                 )
                                             )}
                                         </td>
+                                        <td>
+                                            <Button
+                                                variant="secondary"
+                                                onClick={() => openEditModal(s)}
+                                            >
+                                                Editar
+                                            </Button>
+                                        </td>
                                     </tr>
                                 ))
                             )}
@@ -288,6 +391,33 @@ function StaffValidateStudentsPage() {
                     </Button>
                 </div>
             </Modal>
+
+            <AddStudentModal
+                open={showEditModal}
+                title="Editar Estudante"
+                description="Altere os dados do estudante e as modalidades atribuídas."
+                confirmLabel="Guardar Alterações"
+                loadingLabel="A guardar..."
+                onClose={() => { setShowEditModal(false); setEditingStudent(null) }}
+                onConfirm={handleEditSubmit}
+                firstName={editFirstName}
+                lastName={editLastName}
+                birthDate={editBirthDate}
+                phone={editPhone}
+                address={editAddress}
+                nif={editNif}
+                modalities={modalities}
+                selectedModalityIds={editModalityIds}
+                onModalityToggle={toggleEditModality}
+                onFirstNameChange={setEditFirstName}
+                onLastNameChange={setEditLastName}
+                onBirthDateChange={setEditBirthDate}
+                onPhoneChange={setEditPhone}
+                onAddressChange={setEditAddress}
+                onNifChange={setEditNif}
+                error={editError}
+                loading={editLoading}
+            />
         </section>
     )
 }

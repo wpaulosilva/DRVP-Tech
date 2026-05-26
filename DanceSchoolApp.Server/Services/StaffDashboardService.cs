@@ -135,7 +135,7 @@ namespace DanceSchoolApp.Server.Services
             {
                 "finished" => (byte)CoachClassStatus.Finished,
                 "pending"  => (byte)CoachClassStatus.Pending,
-                _          => (byte)CoachClassStatus.Requested
+                _          => (byte)CoachClassStatus.CoachApproved
             };
 
             var dbQuery = _context.CoachClasses
@@ -213,6 +213,7 @@ namespace DanceSchoolApp.Server.Services
         {
             var query = _context.Students
                 .Include(s => s.PersonInfo)
+                .Include(s => s.IdModalities)
                 .Include(s => s.ParentUser)
                     .ThenInclude(u => u.PersonInfo)
                 .AsQueryable();
@@ -244,7 +245,8 @@ namespace DanceSchoolApp.Server.Services
                 AcceptanceStatus = s.AcceptanceStatus,
                 SubmittedAt      = DateOnly.MinValue, // TODO: Student has no created_at column
                 ParentName       = ResolveUserName(s.ParentUser),
-                ParentEmail      = s.ParentUser?.Email
+                ParentEmail      = s.ParentUser?.Email,
+                Modalities       = s.IdModalities.Select(m => m.Name).ToList()
             }).ToList();
 
             return new PagedResult<ValidateStudentItem>

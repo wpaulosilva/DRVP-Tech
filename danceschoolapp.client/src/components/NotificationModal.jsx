@@ -20,7 +20,7 @@ function resolveLink(entityType, roles, entityId) {
   if (et === 'coachclass') {
     if (roles.includes('coach'))  return { path: '/coach/validar-aulas', label: 'Validar Aulas' }
     if (roles.includes('parent')) {
-      const path = entityId ? `/parent/entrar-aula?classId=${entityId}` : '/parent/aulas'
+        const path = entityId ? `/parent/aulas` : '/parent/aulas'
       return { path, label: 'Ver Aula' }
     }
     if (roles.includes('staff') || roles.includes('admin')) return { path: '/staff/validar-aulas', label: 'Validar Aulas' }

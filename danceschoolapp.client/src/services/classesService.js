@@ -57,9 +57,9 @@ export function enrollByInvite(body) {
     return post('/api/participants/invite-join', body)
 }
 
-/** GET /api/appsettings/join-class-status — returns { enabled: bool } */
+/** GET /api/coachclasses/join-class-status — returns { enabled: bool } */
 export function getJoinClassStatus() {
-    return get('/api/appsettings/join-class-status')
+    return get('/api/coachclasses/join-class-status')
 }
 
 /** GET /api/coachclasses/{id} — fetch a single class by id */

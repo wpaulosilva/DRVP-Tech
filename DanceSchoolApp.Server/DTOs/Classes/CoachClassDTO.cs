@@ -32,12 +32,14 @@ namespace DanceSchoolApp.Server.DTOs.Classes
         public CoachValidationStatus CoachValidationStatus { get; set; }
         public DateTime StartDatetime { get; set; }
         public DateTime EndDatetime { get; set; }
+        public int ModalityId { get; set; }
         public string ModalityName { get; set; } = null!;
         public string StudioName { get; set; } = null!;
         public string CoachName { get; set; } = null!;
         public int MaxParticipants { get; set; }
         public int CurrentParticipants { get; set; }
         public DateOnly CreatedAt { get; set; }
+        public List<string> StudentNames { get; set; } = new();
     }
 
     public class CoachClassDetailResponse

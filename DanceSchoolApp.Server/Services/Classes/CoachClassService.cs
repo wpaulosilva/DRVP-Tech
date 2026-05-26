@@ -187,6 +187,7 @@ namespace DanceSchoolApp.Server.Services.Classes
                         .ThenInclude(u => u.PersonInfo)
                 .Include(c => c.Participants)
                     .ThenInclude(p => p.IdStudentNavigation)
+                        .ThenInclude(s => s.PersonInfo)
                 .Where(c => c.Participants
                     .Any(p => p.IdStudentNavigation.ParentUserId == parentUserId))
                 .ToListAsync();
@@ -764,12 +765,16 @@ namespace DanceSchoolApp.Server.Services.Classes
                 CoachValidationStatus = (CoachValidationStatus)c.CoachValidationStatus,
                 StartDatetime = c.StartDatetime,
                 EndDatetime = c.EndDatetime,
+                ModalityId = c.IdModality,
                 ModalityName = c.IdModalityNavigation.Name,
                 StudioName = c.IdStudioNavigation.Name,
                 CoachName = ResolveCoachName(c.IdCoachNavigation),
                 MaxParticipants = c.MaxParticipants,
                 CurrentParticipants = c.Participants.Count,
-                CreatedAt = c.CreatedAt
+                CreatedAt = c.CreatedAt,
+                StudentNames = c.Participants
+                    .Select(p => ResolveStudentName(p.IdStudentNavigation))
+                    .ToList()
             };
 
         private static string ResolveCoachName(Coach coach)

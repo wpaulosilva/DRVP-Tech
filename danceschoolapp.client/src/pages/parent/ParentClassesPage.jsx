@@ -22,6 +22,7 @@ import {
     parentValidateParticipant,
     createClass,
     enrollInClass,
+    enrollByInvite,
     getJoinClassStatus,
 } from '../../services/classesService'
 import { getModalities } from '../../services/modalitiesService'
@@ -228,6 +229,12 @@ function ParentClassesPage() {
     const [t1Loading, setT1Loading]           = useState(false)
     const [t1Error, setT1Error]               = useState('')
     const [t1SelectedDate, setT1SelectedDate] = useState(null)
+
+    // Invite modal (Tab 1 — add student to existing class)
+    const [inviteTarget, setInviteTarget]       = useState(null)
+    const [inviteStudentId, setInviteStudentId] = useState('')
+    const [inviteSubmitting, setInviteSubmitting] = useState(false)
+    const [inviteError, setInviteError]         = useState('')
 
     useEffect(() => {
         if (activeTab !== 'minhas-marcacoes' || !user?.userId) return
@@ -497,6 +504,27 @@ function ParentClassesPage() {
         }
     }
 
+    const handleInviteSubmit = async (e) => {
+        e.preventDefault()
+        if (!inviteStudentId) { setInviteError('Selecione um aluno.'); return }
+        setInviteSubmitting(true); setInviteError('')
+        try {
+            await enrollByInvite({
+                classId:   inviteTarget.ClassId ?? inviteTarget.classId,
+                studentId: Number(inviteStudentId),
+            })
+            setInviteTarget(null)
+            // Refresh the parent's class list
+            getClassesByParent(user.userId)
+                .then(d => setT1AllClasses(normalizeItems(d)))
+                .catch(() => {})
+        } catch (err) {
+            setInviteError(err.message)
+        } finally {
+            setInviteSubmitting(false)
+        }
+    }
+
     const t4Pending = useMemo(() =>
         t4Items.filter(cls =>
             (cls.Participants ?? cls.participants ?? []).some(p => (p.ValidationStatus ?? p.validationStatus ?? 0) === 0)
@@ -566,6 +594,18 @@ function ParentClassesPage() {
                                 const studioName   = c.StudioName  ?? c.studioName
                                 const start        = c.StartDatetime ?? c.startDatetime
                                 const end          = c.EndDatetime   ?? c.endDatetime
+                                const studentNames     = c.StudentNames ?? c.studentNames ?? []
+                                const maxParts         = c.MaxParticipants ?? c.maxParticipants ?? 0
+                                const currentParts     = c.CurrentParticipants ?? c.currentParticipants ?? 0
+                                const modalityId       = c.ModalityId ?? c.modalityId ?? 0
+                                const isFull           = currentParts >= maxParts && maxParts > 0
+                                const canInvite        = !isFull && (status === 0 || status === 1 || status === 7)
+                                // Students assigned to this class's modality, not yet enrolled
+                                const invitableStudents = myStudents.filter(s => {
+                                    const sIds = s.ModalityIds ?? s.modalityIds ?? []
+                                    return sIds.includes(modalityId)
+                                })
+
                                 return (
                                     <div key={c.ClassId ?? c.classId ?? i} className={`class-card ${statusCardClass(status)}`}>
                                         <div className="class-card-header" style={{ cursor: 'default' }}>
@@ -583,8 +623,32 @@ function ParentClassesPage() {
                                                     </div>
                                                     {coachName  && <div><span className="label">Coach: </span>{coachName}</div>}
                                                     {studioName && <div><span className="label">Estúdio: </span>{studioName}</div>}
+                                                    {maxParts > 0 && (
+                                                        <div>
+                                                            <span className="label">Vagas: </span>
+                                                            {currentParts}/{maxParts}
+                                                        </div>
+                                                    )}
                                                 </div>
+                                                {studentNames.length > 0 && (
+                                                    <div style={{ marginTop: '6px', fontSize: '0.875rem' }}>
+                                                        <span className="label">Alunos: </span>
+                                                        {studentNames.join(', ')}
+                                                    </div>
+                                                )}
                                             </div>
+                                            {canInvite && invitableStudents.length > 0 && (
+                                                <Button
+                                                    variant="secondary"
+                                                    onClick={() => {
+                                                        setInviteTarget(c)
+                                                        setInviteStudentId('')
+                                                        setInviteError('')
+                                                    }}
+                                                >
+                                                    + Aluno
+                                                </Button>
+                                            )}
                                         </div>
                                     </div>
                                 )
@@ -1106,6 +1170,54 @@ function ParentClassesPage() {
                         </div>
                     </form>
                 )}
+            </Modal>
+
+            {/* ====== Invite Modal (Tab 1 — Adicionar Aluno) ====== */}
+            <Modal
+                open={inviteTarget !== null}
+                title="Adicionar Aluno à Aula"
+                onClose={() => setInviteTarget(null)}
+            >
+                <form onSubmit={handleInviteSubmit} className="modal-form">
+                    {inviteTarget && (() => {
+                        const modalityId = inviteTarget.ModalityId ?? inviteTarget.modalityId ?? 0
+                        const filteredStudents = myStudents
+                            .filter(s => (s.ModalityIds ?? s.modalityIds ?? []).includes(modalityId))
+                            .map(s => ({ value: String(s.StudentId ?? s.studentId ?? ''), label: studentLabel(s) }))
+                        return (
+                            <>
+                                <div className="reject-class-summary">
+                                    <div>💃 {inviteTarget.ModalityName ?? inviteTarget.modalityName ?? 'Aula'}</div>
+                                    <div>📅 {fmtDateLong((inviteTarget.StartDatetime ?? inviteTarget.startDatetime ?? '').slice(0, 10))} · {fmtTime(inviteTarget.StartDatetime ?? inviteTarget.startDatetime)} – {fmtTime(inviteTarget.EndDatetime ?? inviteTarget.endDatetime)}</div>
+                                </div>
+                                <div className="modal-field">
+                                    <label className="modal-label">Selecionar Aluno *</label>
+                                    {filteredStudents.length === 0 ? (
+                                        <p style={{ color: 'var(--text-2)', fontSize: '0.875rem' }}>
+                                            Não tem alunos inscritos na modalidade desta aula.
+                                        </p>
+                                    ) : (
+                                        <Select
+                                            value={inviteStudentId}
+                                            onChange={setInviteStudentId}
+                                            placeholder="Selecione o aluno"
+                                            options={filteredStudents}
+                                        />
+                                    )}
+                                </div>
+                            </>
+                        )
+                    })()}
+                    {inviteError && <p className="admin-error">{inviteError}</p>}
+                    <div className="modal-actions">
+                        <Button type="button" variant="secondary" onClick={() => setInviteTarget(null)}>
+                            Cancelar
+                        </Button>
+                        <Button type="submit" variant="primary" disabled={inviteSubmitting}>
+                            {inviteSubmitting ? 'A adicionar...' : 'Adicionar'}
+                        </Button>
+                    </div>
+                </form>
             </Modal>
 
             {/* ====== Enroll Modal (Tab 3 — Inscrever) ====== */}

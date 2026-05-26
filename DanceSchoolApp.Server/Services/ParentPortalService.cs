@@ -222,6 +222,7 @@ namespace DanceSchoolApp.Server.Services
         {
             var students = await _context.Students
                 .Include(s => s.PersonInfo)
+                .Include(s => s.IdModalities)
                 .Where(s => s.ParentUserId == userId && s.IsActive)
                 .ToListAsync();
 
@@ -236,7 +237,9 @@ namespace DanceSchoolApp.Server.Services
                 Address          = s.PersonInfo?.Address,
                 Nif              = s.PersonInfo?.Nif,
                 AcceptanceStatus = s.AcceptanceStatus,
-                IsActive         = s.IsActive
+                IsActive         = s.IsActive,
+                ModalityIds      = s.IdModalities.Select(m => m.ModalityId).ToList(),
+                ModalityNames    = s.IdModalities.Select(m => m.Name).ToList()
             }).ToList();
         }
 
