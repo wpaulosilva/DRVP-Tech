@@ -62,7 +62,7 @@ namespace DanceSchoolApp.Server.Services
             var classesUpcoming = await _context.CoachClasses
                 .CountAsync(c =>
                     c.IdCoach == coachId &&
-                    (c.Status == (byte)CoachClassStatus.StaffApproved ||
+                    (c.Status == (byte)CoachClassStatus.CoachApproved ||
                      c.Status == (byte)CoachClassStatus.Approved) &&
                     c.StartDatetime > now);
 
@@ -80,7 +80,7 @@ namespace DanceSchoolApp.Server.Services
                         .ThenInclude(s => s.PersonInfo)
                 .Where(c =>
                     c.IdCoach == coachId &&
-                    (c.Status == (byte)CoachClassStatus.StaffApproved ||
+                    (c.Status == (byte)CoachClassStatus.CoachApproved ||
                      c.Status == (byte)CoachClassStatus.Approved) &&
                     c.StartDatetime > now)
                 .OrderBy(c => c.StartDatetime)
@@ -164,7 +164,7 @@ namespace DanceSchoolApp.Server.Services
                         .ThenInclude(s => s.PersonInfo)
                 .Where(c =>
                     c.IdCoach == coachId &&
-                    c.Status == (byte)CoachClassStatus.StaffApproved);
+                    c.Status == (byte)CoachClassStatus.Requested);
 
             var total = await dbQuery.CountAsync();
 

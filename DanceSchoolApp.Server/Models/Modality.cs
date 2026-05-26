@@ -18,4 +18,6 @@ public partial class Modality
     public virtual ICollection<Coach> IdCoaches { get; set; } = new List<Coach>();
 
     public virtual ICollection<Studio> IdStudios { get; set; } = new List<Studio>();
+
+    public virtual ICollection<Student> IdStudents { get; set; } = new List<Student>();
 }

@@ -40,6 +40,9 @@ public class ParticipantServiceTests
 
         var parentUser = SeedData.SeedUserWithRole(db, "parent_p", "parent");
         var student    = SeedData.SeedStudent(db, parentUser);
+        // Assign the student to the modality so enrollment validation passes
+        student.IdModalities.Add(modality);
+        db.SaveChanges();
 
         return (db, coach, modality, studio, parentUser, student);
     }

@@ -80,7 +80,46 @@ namespace DanceSchoolApp.Server.Controllers.Classes
             }
         }
 
-        //  PATCH /api/participants/{id}/parent-validate 
+        //  POST /api/participants/invite-join
+        // Parent use — enroll a student in a class received via invite.
+        // Class can be Requested, CoachApproved, or Approved.
+        // Not gated by join_class_enabled setting.
+        [Authorize(Roles = "parent")]
+        [HttpPost("invite-join")]
+        public async Task<IActionResult> InviteJoin([FromBody] ParticipantJoinRequest request)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
+            try
+            {
+                var newId = await _participantService.InviteJoinAsync(request, userId);
+                return CreatedAtAction(
+                    nameof(GetByClass),
+                    new { classId = request.ClassId },
+                    new { participantId = newId });
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return StatusCode(StatusCodes.Status403Forbidden, ex.Message);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Conflict(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, "An unexpected error occurred.");
+            }
+        }
+
+        //  PATCH /api/participants/{id}/parent-validate
         // Parent use — confirm whether their student attended the class.
         // Only available when class status is Finished.
         // Sets ValidationStatus to ParentConfirmed (1) or Disputed (2).

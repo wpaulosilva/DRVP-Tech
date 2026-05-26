@@ -1,5 +1,6 @@
 using DanceSchoolApp.Server.DTOs;
 using DanceSchoolApp.Server.DTOs.Classes;
+using DanceSchoolApp.Server.Services;
 using DanceSchoolApp.Server.Services.Classes;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
@@ -14,10 +15,12 @@ namespace DanceSchoolApp.Server.Controllers.Classes
     public class CoachClassController : ControllerBase
     {
         private readonly CoachClassService _coachClassService;
+        private readonly AppSettingService _appSettingService;
 
-        public CoachClassController(CoachClassService coachClassService)
+        public CoachClassController(CoachClassService coachClassService, AppSettingService appSettingService)
         {
             _coachClassService = coachClassService;
+            _appSettingService = appSettingService;
         }
 
         //  GET /api/coachclasses 
@@ -76,12 +79,17 @@ namespace DanceSchoolApp.Server.Controllers.Classes
             }
         }
 
-        //  GET /api/coachclasses/open 
+        //  GET /api/coachclasses/open
         // Parent use — returns Approved classes with available spots.
+        // Returns 423 Locked when the join_class_enabled setting is false.
         [Authorize(Roles = "staff,parent")]
         [HttpGet("open")]
         public async Task<IActionResult> GetOpenClasses()
         {
+            if (!await _appSettingService.GetBoolAsync("join_class_enabled", defaultValue: true))
+                return StatusCode(StatusCodes.Status423Locked,
+                    "A funcionalidade de inscrição em aulas está desativada.");
+
             try
             {
                 var result = await _coachClassService.GetOpenClassesAsync();
@@ -100,7 +108,7 @@ namespace DanceSchoolApp.Server.Controllers.Classes
         //  GET /api/coachclasses/status/{status} 
         // Staff use — filter classes by status.
         // Status values: 0=Requested, 1=Approved, 2=Rejected,
-        //                3=Cancelled, 4=Finished, 5=Validated, 6=Pending, 7=StaffApproved
+        //                3=Cancelled, 4=Finished, 5=Validated, 6=Pending, 7=CoachApproved
         [Authorize(Roles = "staff")]
         [HttpGet("status/{status}")]
         public async Task<IActionResult> GetByStatus(byte status)
@@ -108,7 +116,7 @@ namespace DanceSchoolApp.Server.Controllers.Classes
             if (!Enum.IsDefined(typeof(CoachClassStatus), status))
                 return BadRequest($"Invalid status value '{status}'. " +
                     "Valid values: 0=Requested, 1=Approved, 2=Rejected, " +
-                    "3=Cancelled, 4=Finished, 5=Validated, 6=Pending, 7=StaffApproved.");
+                    "3=Cancelled, 4=Finished, 5=Validated, 6=Pending, 7=CoachApproved.");
 
             try
             {
@@ -182,13 +190,18 @@ namespace DanceSchoolApp.Server.Controllers.Classes
             }
         }
 
-        //  POST /api/coachclasses 
+        //  POST /api/coachclasses
         // Parent use — creates a class request with at least one student.
         // Runs all conflict checks before inserting.
+        // Returns 423 Locked when the join_class_enabled setting is false.
         [Authorize(Roles = "parent")]
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] CoachClassCreateRequest request)
         {
+            if (!await _appSettingService.GetBoolAsync("join_class_enabled", defaultValue: true))
+                return StatusCode(StatusCodes.Status423Locked,
+                    "A funcionalidade de pedido de aulas está desativada.");
+
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
@@ -218,8 +231,8 @@ namespace DanceSchoolApp.Server.Controllers.Classes
 
         private bool IsStaff() => User.IsInRole("staff");
 
-        //  PATCH /api/coachclasses/{id}/staff-respond 
-        // Staff use — Requested → StaffApproved (approve=true) or Rejected (approve=false).
+        //  PATCH /api/coachclasses/{id}/staff-respond
+        // Staff use — CoachApproved → Approved (approve=true) or Rejected (approve=false).
         [Authorize(Roles = "staff")]
         [HttpPatch("{id}/staff-respond")]
         public async Task<IActionResult> StaffRespond(int id, [FromBody] StaffRespondRequest request)
@@ -237,8 +250,8 @@ namespace DanceSchoolApp.Server.Controllers.Classes
             catch (Exception ex) { return StatusCode(500, "An unexpected error occurred."); }
         }
 
-        //  PATCH /api/coachclasses/{id}/coach-respond 
-        // Coach use — StaffApproved → Approved (accept=true) or Rejected (accept=false).
+        //  PATCH /api/coachclasses/{id}/coach-respond
+        // Coach use — Requested → CoachApproved (accept=true) or Rejected (accept=false).
         [Authorize(Roles = "coach")]
         [HttpPatch("{id}/coach-respond")]
         public async Task<IActionResult> CoachRespond(int id, [FromBody] CoachRespondRequest request)

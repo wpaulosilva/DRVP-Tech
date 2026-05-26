@@ -19,7 +19,24 @@ namespace DanceSchoolApp.Server.Controllers
             _appSettingService = appSettingService;
         }
 
-        //  GET /api/appsettings 
+        //  GET /api/appsettings/join-class-status
+        // Any authenticated user — used by the frontend to show/hide the join-class section.
+        [HttpGet("join-class-status")]
+        [Authorize]
+        public async Task<IActionResult> GetJoinClassStatus()
+        {
+            try
+            {
+                var enabled = await _appSettingService.GetBoolAsync("join_class_enabled", defaultValue: true);
+                return Ok(new { enabled });
+            }
+            catch (Exception)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, "An unexpected error occurred.");
+            }
+        }
+
+        //  GET /api/appsettings
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {

@@ -15,6 +15,9 @@ function AddStudentModal({
     phone,
     address,
     nif,
+    modalities = [],
+    selectedModalityIds = [],
+    onModalityToggle,
     onFirstNameChange,
     onLastNameChange,
     onBirthDateChange,
@@ -100,6 +103,46 @@ function AddStudentModal({
                     />
                 </div>
             </div>
+
+            {modalities.length > 0 && (
+                <div style={{ marginTop: '12px' }}>
+                    <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500 }}>
+                        Modalidades
+                    </label>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                        {modalities.map(m => {
+                            const id = m.modalityId ?? m.ModalityId
+                            const name = m.name ?? m.Name ?? ''
+                            const checked = selectedModalityIds.includes(id)
+                            return (
+                                <label
+                                    key={id}
+                                    style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '6px',
+                                        padding: '6px 12px',
+                                        border: `1.5px solid ${checked ? 'var(--accent)' : 'var(--border)'}`,
+                                        borderRadius: '8px',
+                                        cursor: 'pointer',
+                                        background: checked ? 'var(--accent-soft)' : 'transparent',
+                                        fontSize: '0.875rem',
+                                        userSelect: 'none',
+                                    }}
+                                >
+                                    <input
+                                        type="checkbox"
+                                        checked={checked}
+                                        onChange={() => onModalityToggle && onModalityToggle(id)}
+                                        style={{ accentColor: 'var(--accent)' }}
+                                    />
+                                    {name}
+                                </label>
+                            )
+                        })}
+                    </div>
+                </div>
+            )}
 
             {error && (
                 <div className="form-error">

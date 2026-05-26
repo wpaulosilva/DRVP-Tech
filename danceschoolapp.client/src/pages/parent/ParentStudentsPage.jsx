@@ -6,6 +6,7 @@ import {
     updateStudent,
     getStudent,
 } from '@/services/studentsService'
+import { getModalities } from '@/services/modalitiesService'
 import Button from '@/components/common/Button'
 import AddStudentModal from '@/features/students/components/AddStudentModal'
 import StudentsTable from '@/features/students/components/StudentsTable'
@@ -25,6 +26,8 @@ function ParentStudentsPage() {
     const [phone, setPhone] = useState('')
     const [address, setAddress] = useState('')
     const [nif, setNif] = useState('')
+    const [selectedModalityIds, setSelectedModalityIds] = useState([])
+    const [modalities, setModalities] = useState([])
     const [error, setError] = useState('')
     const [loading, setLoading] = useState(false)
 
@@ -45,6 +48,10 @@ function ParentStudentsPage() {
 
     useEffect(() => {
         fetchStudents()
+        getModalities().then(data => {
+            const list = Array.isArray(data) ? data : (data?.items ?? data?.Items ?? [])
+            setModalities(list.filter(m => m.isActive ?? m.IsActive ?? true))
+        }).catch(() => {})
     }, [user])
 
     const resetForm = () => {
@@ -54,7 +61,14 @@ function ParentStudentsPage() {
         setPhone('')
         setAddress('')
         setNif('')
+        setSelectedModalityIds([])
         setError('')
+    }
+
+    const toggleModality = (id) => {
+        setSelectedModalityIds(prev =>
+            prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+        )
     }
 
     const openModal = () => {
@@ -77,6 +91,8 @@ function ParentStudentsPage() {
             setPhone(data.personInfo?.phone ?? '')
             setAddress(data.personInfo?.address ?? '')
             setNif(data.personInfo?.nif ?? '')
+            const existingIds = (data.modalities ?? []).map(m => m.modalityId ?? m.ModalityId)
+            setSelectedModalityIds(existingIds)
 
             setShowModal(true)
         } catch (err) {
@@ -124,6 +140,7 @@ function ParentStudentsPage() {
             phone: phone.trim() || null,
             address: address.trim() || null,
             nif: nif.trim() || null,
+            modalityIds: selectedModalityIds,
         }
 
         try {
@@ -185,6 +202,9 @@ function ParentStudentsPage() {
                 phone={phone}
                 address={address}
                 nif={nif}
+                modalities={modalities}
+                selectedModalityIds={selectedModalityIds}
+                onModalityToggle={toggleModality}
                 onFirstNameChange={setFirstName}
                 onLastNameChange={setLastName}
                 onBirthDateChange={setBirthDate}

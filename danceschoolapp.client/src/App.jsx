@@ -42,6 +42,7 @@ import ParentStudentsPage from './pages/parent/ParentStudentsPage'
 import ParentInventoryPage from './pages/parent/ParentInventoryPage'
 import ParentItemDetailPage from './pages/parent/ParentItemDetailPage'
 import ParentEventsPage from './pages/parent/ParentEventsPage'
+import ParentJoinByInvitePage from './pages/parent/ParentJoinByInvitePage'
 
 function App() {
     return (
@@ -122,6 +123,7 @@ function App() {
                 <Route path="/parent/inventario" element={<ParentInventoryPage />} />
                 <Route path="/parent/inventario/:itemId" element={<ParentItemDetailPage />} />
                 <Route path="/parent/eventos" element={<ParentEventsPage />} />
+                <Route path="/parent/entrar-aula" element={<ParentJoinByInvitePage />} />
             </Route>
         </Routes>
     )

@@ -20,4 +20,6 @@ public partial class Student
     public virtual ICollection<Participant> Participants { get; set; } = new List<Participant>();
 
     public virtual PersonInfo PersonInfo { get; set; } = null!;
+
+    public virtual ICollection<Modality> IdModalities { get; set; } = new List<Modality>();
 }

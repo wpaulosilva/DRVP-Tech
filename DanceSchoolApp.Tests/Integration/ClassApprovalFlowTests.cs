@@ -86,7 +86,7 @@ public class ClassApprovalFlowTests : IClassFixture<CustomWebApplicationFactory>
     [Fact]
     public async Task StaffRespond_Reject_Returns204AndClassIsRejected()
     {
-        // Arrange — seed a Requested class directly
+        // Arrange — seed a CoachApproved class (staff acts after the coach)
         int classId = 0;
         _factory.SeedDatabase(db =>
         {
@@ -101,7 +101,7 @@ public class ClassApprovalFlowTests : IClassFixture<CustomWebApplicationFactory>
 
             var parentUser = SeedData.SeedUserWithRole(db, "parent_rej", "parent");
             var cls = SeedData.SeedCoachClass(db, coach, modality, studio, parentUser,
-                          status: (byte)CoachClassStatus.Requested);
+                          status: (byte)CoachClassStatus.CoachApproved);
             classId = cls.ClassId;
         });
 
@@ -124,7 +124,7 @@ public class ClassApprovalFlowTests : IClassFixture<CustomWebApplicationFactory>
     [Fact]
     public async Task CoachRespond_Reject_Returns204AndClassIsRejected()
     {
-        // Arrange — seed a StaffApproved class directly
+        // Arrange — seed a Requested class (coach acts first now)
         int classId = 0;
         _factory.SeedDatabase(db =>
         {
@@ -139,7 +139,7 @@ public class ClassApprovalFlowTests : IClassFixture<CustomWebApplicationFactory>
 
             var parentUser = SeedData.SeedUserWithRole(db, "parent_cr", "parent");
             var cls = SeedData.SeedCoachClass(db, coach, modality, studio, parentUser,
-                          status: (byte)CoachClassStatus.StaffApproved);
+                          status: (byte)CoachClassStatus.Requested);
             classId = cls.ClassId;
         });
 
@@ -153,7 +153,7 @@ public class ClassApprovalFlowTests : IClassFixture<CustomWebApplicationFactory>
 
         // Assert
         resp.StatusCode.Should().Be(HttpStatusCode.NoContent,
-            because: "coach-respond (accept=false) on a StaffApproved class must return 204");
+            because: "coach-respond (accept=false) on a Requested class must return 204");
 
         var status = await GetClassStatus(classId, staffJwt);
         status.Should().Be((int)CoachClassStatus.Rejected,

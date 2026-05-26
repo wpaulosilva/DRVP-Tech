@@ -51,3 +51,18 @@ export function createClass(body) {
 export function enrollInClass(body) {
     return post('/api/participants', body)
 }
+
+/** POST /api/participants/invite-join — enroll via invite link (Requested/CoachApproved/Approved) */
+export function enrollByInvite(body) {
+    return post('/api/participants/invite-join', body)
+}
+
+/** GET /api/appsettings/join-class-status — returns { enabled: bool } */
+export function getJoinClassStatus() {
+    return get('/api/appsettings/join-class-status')
+}
+
+/** GET /api/coachclasses/{id} — fetch a single class by id */
+export function getClassById(id) {
+    return get(`/api/coachclasses/${id}`)
+}

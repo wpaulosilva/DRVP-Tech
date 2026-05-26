@@ -87,8 +87,9 @@ namespace DanceSchoolApp.Server.Services.Classes
                 throw new InvalidOperationException(
                     "This class is full. No spots available.");
 
-            //  2. Student must exist and be active 
+            //  2. Student must exist and be active
             var student = await _context.Students
+                .Include(s => s.IdModalities)
                 .FirstOrDefaultAsync(s => s.StudentId == request.StudentId
                                        && s.IsActive);
 
@@ -103,7 +104,16 @@ namespace DanceSchoolApp.Server.Services.Classes
                 throw new InvalidOperationException(
                     "This student has not been accepted by staff yet and cannot join classes.");
 
-            //  3. Student must belong to the requesting parent 
+            // Verify student is assigned to the class's modality
+            bool studentInModality = student.IdModalities
+                .Any(m => m.ModalityId == coachClass.IdModality);
+
+            if (!studentInModality)
+                throw new InvalidOperationException(
+                    $"Student {request.StudentId} is not assigned to the modality of this class " +
+                    $"and cannot join it.");
+
+            //  3. Student must belong to the requesting parent
 
             //  4. Student not already enrolled in this class 
             // The DB has a unique constraint UQ_ClassStudent, but we catch it
@@ -241,10 +251,104 @@ namespace DanceSchoolApp.Server.Services.Classes
             await _context.SaveChangesAsync();
         }
 
-        //  Private helpers 
+        public async Task<int> InviteJoinAsync(ParticipantJoinRequest request, int callingUserId)
+        {
+            var coachClass = await _context.CoachClasses
+                .Include(c => c.Participants)
+                .FirstOrDefaultAsync(c => c.ClassId == request.ClassId);
 
-        
- 
+            if (coachClass is null)
+                throw new KeyNotFoundException(
+                    $"Class with id {request.ClassId} was not found.");
+
+            var allowedStatuses = new byte[]
+            {
+                (byte)CoachClassStatus.Requested,
+                (byte)CoachClassStatus.CoachApproved,
+                (byte)CoachClassStatus.Approved
+            };
+
+            if (!allowedStatuses.Contains(coachClass.Status))
+                throw new InvalidOperationException(
+                    "You can only join a class that is in Requested, CoachApproved, or Approved status.");
+
+            if (coachClass.Participants.Count >= coachClass.MaxParticipants)
+                throw new InvalidOperationException(
+                    "This class is full. No spots available.");
+
+            var student = await _context.Students
+                .Include(s => s.IdModalities)
+                .FirstOrDefaultAsync(s => s.StudentId == request.StudentId && s.IsActive);
+
+            if (student is null)
+                throw new KeyNotFoundException(
+                    $"Student with id {request.StudentId} was not found or is inactive.");
+
+            if (student.ParentUserId != callingUserId)
+                throw new UnauthorizedAccessException("You can only enroll your own students.");
+
+            if (student.AcceptanceStatus != 1)
+                throw new InvalidOperationException(
+                    "This student has not been accepted by staff yet and cannot join classes.");
+
+            bool studentInModality = student.IdModalities
+                .Any(m => m.ModalityId == coachClass.IdModality);
+
+            if (!studentInModality)
+                throw new InvalidOperationException(
+                    $"Student {request.StudentId} is not assigned to the modality of this class " +
+                    $"and cannot join it.");
+
+            bool alreadyEnrolled = coachClass.Participants
+                .Any(p => p.IdStudent == request.StudentId);
+
+            if (alreadyEnrolled)
+                throw new InvalidOperationException(
+                    $"Student {request.StudentId} is already enrolled in this class.");
+
+            bool timeConflict = await _context.Participants
+                .Include(p => p.IdCoachClassNavigation)
+                .AnyAsync(p =>
+                    p.IdStudent == request.StudentId &&
+                    p.IdCoachClassNavigation.Status != (byte)CoachClassStatus.Rejected &&
+                    p.IdCoachClassNavigation.Status != (byte)CoachClassStatus.Cancelled &&
+                    p.IdCoachClassNavigation.StartDatetime < coachClass.EndDatetime &&
+                    p.IdCoachClassNavigation.EndDatetime > coachClass.StartDatetime);
+
+            if (timeConflict)
+                throw new InvalidOperationException(
+                    "This student is already enrolled in another class at this time.");
+
+            var participant = new Participant
+            {
+                IdCoachClass = request.ClassId,
+                IdStudent = request.StudentId,
+                JoinedAt = DateOnly.FromDateTime(DateTime.Now),
+                ValidationStatus = (byte)ParticipantValidationStatus.Pending
+            };
+
+            _context.Participants.Add(participant);
+            await _context.SaveChangesAsync();
+
+            var classInfo = await _context.CoachClasses
+                .FirstOrDefaultAsync(c => c.ClassId == request.ClassId);
+
+            if (classInfo is not null)
+            {
+                await _notificationService.SendAsync(
+                    userId: classInfo.IdCoach,
+                    title: "Novo aluno inscrito",
+                    message: $"Um aluno inscreveu-se na sua aula em {classInfo.StartDatetime:dd/MM/yyyy HH:mm}.",
+                    type: NotificationType.ClassUpdate,
+                    entityType: "CoachClass",
+                    entityId: request.ClassId);
+            }
+
+            return participant.ParticipantId;
+        }
+
+        //  Private helpers
+
         private async Task TryAdvanceClassToStaffReviewAsync(int classId)
         {
             var allParticipants = await _context.Participants

@@ -14,13 +14,16 @@ const ENTITY_LABELS = {
 }
 
 // Destination route for a notification based on EntityType + current user's roles
-function resolveLink(entityType, roles) {
+function resolveLink(entityType, roles, entityId) {
   if (!entityType) return null
   const et = entityType.toLowerCase()
   if (et === 'coachclass') {
-    if (roles.includes('coach'))                         return { path: '/coach/validar-aulas',       label: 'Validar Aulas' }
-    if (roles.includes('parent'))                        return { path: '/parent/aulas',              label: 'As Minhas Aulas' }
-    if (roles.includes('staff') || roles.includes('admin')) return { path: '/staff/validar-aulas',   label: 'Validar Aulas' }
+    if (roles.includes('coach'))  return { path: '/coach/validar-aulas', label: 'Validar Aulas' }
+    if (roles.includes('parent')) {
+      const path = entityId ? `/parent/entrar-aula?classId=${entityId}` : '/parent/aulas'
+      return { path, label: 'Ver Aula' }
+    }
+    if (roles.includes('staff') || roles.includes('admin')) return { path: '/staff/validar-aulas', label: 'Validar Aulas' }
   }
   if (et === 'itemrequisition') {
     if (roles.includes('parent'))                        return { path: '/parent/inventario',         label: 'Inventário' }
@@ -242,7 +245,7 @@ export default function NotificationModal({ userId, onClose, onUnreadChange }) {
           {tabFiltered.length > 0 && (
             <div className="list" role="list">
               {tabFiltered.map((n, idx) => {
-                const dest      = resolveLink(n.entityType, roles)
+                const dest      = resolveLink(n.entityType, roles, n.entityId)
                 const isExpanded = expandedId === n.id
 
                 return (

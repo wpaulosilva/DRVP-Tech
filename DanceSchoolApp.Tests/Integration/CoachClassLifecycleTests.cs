@@ -106,6 +106,9 @@ public class CoachClassLifecycleTests : IClassFixture<CustomWebApplicationFactor
             var parentUser = SeedData.SeedUserWithRole(db, "parent_lc", "parent");
             var student = SeedData.SeedStudent(db, parentUser, "Ana"); // AcceptanceStatus = 1
             studentId = student.StudentId;
+            // Student must be enrolled in the modality for class creation to succeed
+            student.IdModalities.Add(modality);
+            db.SaveChanges();
         });
 
         // Compute a class window that is always in the future (next Monday 10-11h UTC).
@@ -145,23 +148,23 @@ public class CoachClassLifecycleTests : IClassFixture<CustomWebApplicationFactor
         classId.Should().BeGreaterThan(0, because: "response body must contain a positive classId");
 
 
-        //  Step 2 — Staff approves (Requested → StaffApproved)
-        var staffJwt = await LoginAndGetCookie("staff_lc");
-        var approveResp = await _client.SendAsync(
-            MakeRequest(HttpMethod.Patch, $"/api/coachclasses/{classId}/staff-respond", staffJwt,
-                new { approve = true }));
-
-        approveResp.StatusCode.Should().Be(HttpStatusCode.NoContent,
-            because: "staff-respond (approve=true) on a Requested class must return 204");
-
-        //  Step 3 — Coach accepts (StaffApproved → Approved)
+        //  Step 2 — Coach accepts (Requested → CoachApproved)
         var coachJwt = await LoginAndGetCookie("coach_lc");
         var acceptResp = await _client.SendAsync(
             MakeRequest(HttpMethod.Patch, $"/api/coachclasses/{classId}/coach-respond", coachJwt,
                 new { accept = true }));
 
         acceptResp.StatusCode.Should().Be(HttpStatusCode.NoContent,
-            because: "coach-respond (accept=true) on a StaffApproved class must return 204");
+            because: "coach-respond (accept=true) on a Requested class must return 204");
+
+        //  Step 3 — Staff approves (CoachApproved → Approved)
+        var staffJwt = await LoginAndGetCookie("staff_lc");
+        var approveResp = await _client.SendAsync(
+            MakeRequest(HttpMethod.Patch, $"/api/coachclasses/{classId}/staff-respond", staffJwt,
+                new { approve = true }));
+
+        approveResp.StatusCode.Should().Be(HttpStatusCode.NoContent,
+            because: "staff-respond (approve=true) on a CoachApproved class must return 204");
 
         //  Step 4 — Simulate worker transitioning Approved → Finished 
         // The /finish endpoint has been removed; the transition is now automated

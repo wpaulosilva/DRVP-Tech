@@ -25,7 +25,7 @@ namespace DanceSchoolApp.Server.Services
     ///      automatically advanced to Pending, even if some parties did not
     ///      respond. Staff are notified. This enforces the window deadline.
     ///
-    ///   3. Requested | StaffApproved → Cancelled: any class that never reached
+    ///   3. Requested | CoachApproved → Cancelled: any class that never reached
     ///      Approved and whose StartDatetime has already passed is cancelled.
     ///      Staff are notified. This cleans up stale approval requests that
     ///      outlived their effective date.
@@ -228,7 +228,7 @@ namespace DanceSchoolApp.Server.Services
             await db.SaveChangesAsync(ct);
         }
 
-        //  Rule 3: Requested | StaffApproved → Cancelled (stale, never reached Approved)
+        //  Rule 3: Requested | CoachApproved → Cancelled (stale, never reached Approved)
         // Any class still waiting for approval whose StartDatetime has already passed
         // is auto-cancelled. Staff are notified so the calendar stays clean.
         private static async Task AutoCancelStaleUnapprovedClassesAsync(
@@ -240,7 +240,7 @@ namespace DanceSchoolApp.Server.Services
             var staleStatuses = new byte[]
             {
                 (byte)CoachClassStatus.Requested,
-                (byte)CoachClassStatus.StaffApproved
+                (byte)CoachClassStatus.CoachApproved
             };
 
             var classes = await db.CoachClasses

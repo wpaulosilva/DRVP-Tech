@@ -38,6 +38,9 @@ public class CoachClassCreateTests
         db.SaveChanges();
         var parentUser = SeedData.SeedUserWithRole(db, "parent1", "parent");
         var student    = SeedData.SeedStudent(db, parentUser);
+        // Assign the student to the modality so class creation and enrollment validations pass
+        student.IdModalities.Add(modality);
+        db.SaveChanges();
 
         return (db, coach.CoachId, modality.ModalityId, parentUser.UserId, student.StudentId, coach);
     }

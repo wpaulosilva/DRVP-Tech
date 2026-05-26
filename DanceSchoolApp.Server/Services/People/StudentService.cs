@@ -1,6 +1,7 @@
 ﻿using DanceSchoolApp.Server.Data;
 using DanceSchoolApp.Server.DTOs.Classes;
 using DanceSchoolApp.Server.DTOs.People;
+using DanceSchoolApp.Server.DTOs.School;
 using DanceSchoolApp.Server.DTOs.Social;
 using DanceSchoolApp.Server.Models;
 using DanceSchoolApp.Server.Services.Social;
@@ -25,28 +26,38 @@ namespace DanceSchoolApp.Server.Services.People
 
         public async Task<List<StudentListResponse>> GetStudentsAsync()
         {
-            return await _context.Students
+            var students = await _context.Students
                 .Include(s => s.PersonInfo)
-                .Select(s => new StudentListResponse
-                {
-                    StudentId = s.StudentId,
-                    ParentUserId = s.ParentUserId,
-                    IsActive = s.IsActive,
-                    AcceptanceStatus = (StudentAcceptanceStatus)s.AcceptanceStatus,
-                    PersonInfo = s.PersonInfo == null ? null : new PersonListResponse
-                    {
-                        PersonId = s.PersonInfo.PersonId,
-                        FirstName = s.PersonInfo.FirstName,
-                        LastName = s.PersonInfo.LastName
-                    }
-                })
+                .Include(s => s.IdModalities)
                 .ToListAsync();
+
+            return students.Select(s => new StudentListResponse
+            {
+                StudentId = s.StudentId,
+                ParentUserId = s.ParentUserId,
+                IsActive = s.IsActive,
+                AcceptanceStatus = (StudentAcceptanceStatus)s.AcceptanceStatus,
+                PersonInfo = s.PersonInfo == null ? null : new PersonListResponse
+                {
+                    PersonId = s.PersonInfo.PersonId,
+                    FirstName = s.PersonInfo.FirstName,
+                    LastName = s.PersonInfo.LastName
+                },
+                Modalities = s.IdModalities.Select(m => new ModalityListResponse
+                {
+                    ModalityId = m.ModalityId,
+                    Name = m.Name,
+                    Description = m.Description,
+                    IsActive = m.IsActive
+                }).ToList()
+            }).ToList();
         }
 
         public async Task<StudentDetailResponse> GetStudentAsync(int id)
         {
             var student = await _context.Students
                 .Include(s => s.PersonInfo)
+                .Include(s => s.IdModalities)
                 .FirstOrDefaultAsync(s => s.StudentId == id);
 
             if (student is null)
@@ -67,7 +78,14 @@ namespace DanceSchoolApp.Server.Services.People
                     Phone = student.PersonInfo.Phone,
                     Address = student.PersonInfo.Address,
                     Nif = student.PersonInfo.Nif
-                }
+                },
+                Modalities = student.IdModalities.Select(m => new ModalityListResponse
+                {
+                    ModalityId = m.ModalityId,
+                    Name = m.Name,
+                    Description = m.Description,
+                    IsActive = m.IsActive
+                }).ToList()
             };
         }
 
@@ -79,23 +97,32 @@ namespace DanceSchoolApp.Server.Services.People
             if (!parentExists)
                 throw new KeyNotFoundException($"User with id {parentId} was not found.");
 
-            return await _context.Students
+            var students = await _context.Students
                 .Include(s => s.PersonInfo)
+                .Include(s => s.IdModalities)
                 .Where(s => s.ParentUserId == parentId)
-                .Select(s => new StudentListResponse
-                {
-                    StudentId = s.StudentId,
-                    ParentUserId = s.ParentUserId,
-                    IsActive = s.IsActive,
-                    AcceptanceStatus = (StudentAcceptanceStatus)s.AcceptanceStatus,
-                    PersonInfo = s.PersonInfo == null ? null : new PersonListResponse
-                    {
-                        PersonId = s.PersonInfo.PersonId,
-                        FirstName = s.PersonInfo.FirstName,
-                        LastName = s.PersonInfo.LastName
-                    }
-                })
                 .ToListAsync();
+
+            return students.Select(s => new StudentListResponse
+            {
+                StudentId = s.StudentId,
+                ParentUserId = s.ParentUserId,
+                IsActive = s.IsActive,
+                AcceptanceStatus = (StudentAcceptanceStatus)s.AcceptanceStatus,
+                PersonInfo = s.PersonInfo == null ? null : new PersonListResponse
+                {
+                    PersonId = s.PersonInfo.PersonId,
+                    FirstName = s.PersonInfo.FirstName,
+                    LastName = s.PersonInfo.LastName
+                },
+                Modalities = s.IdModalities.Select(m => new ModalityListResponse
+                {
+                    ModalityId = m.ModalityId,
+                    Name = m.Name,
+                    Description = m.Description,
+                    IsActive = m.IsActive
+                }).ToList()
+            }).ToList();
         }
 
         //  Commands 
@@ -115,6 +142,9 @@ namespace DanceSchoolApp.Server.Services.People
             if (request.BirthDate is not null)
                 ValidateBirthDate(request.BirthDate.Value);
 
+            // Validate requested modalities exist and are active
+            var modalities = await ResolveModalitiesAsync(request.ModalityIds);
+
             var student = new Student
             {
                 ParentUserId = request.ParentId,
@@ -130,6 +160,9 @@ namespace DanceSchoolApp.Server.Services.People
                 }
             };
 
+            foreach (var m in modalities)
+                student.IdModalities.Add(m);
+
             _context.Students.Add(student);
             await _context.SaveChangesAsync();
 
@@ -140,6 +173,7 @@ namespace DanceSchoolApp.Server.Services.People
         {
             var student = await _context.Students
                 .Include(s => s.PersonInfo)
+                .Include(s => s.IdModalities)
                 .FirstOrDefaultAsync(s => s.StudentId == id);
 
             if (student is null)
@@ -160,17 +194,24 @@ namespace DanceSchoolApp.Server.Services.People
             student.PersonInfo.Address = request.Address;
             student.PersonInfo.Nif = request.Nif;
 
+            // Replace modality assignments
+            var modalities = await ResolveModalitiesAsync(request.ModalityIds);
+            student.IdModalities.Clear();
+            foreach (var m in modalities)
+                student.IdModalities.Add(m);
+
             // When parent corrects data, reset to Pending so staff re-reviews
             student.AcceptanceStatus = (byte)StudentAcceptanceStatus.Pending;
 
             await _context.SaveChangesAsync();
         }
 
-        // Updates PersonInfo only — does NOT reset AcceptanceStatus.
+        // Updates PersonInfo and modalities only — does NOT reset AcceptanceStatus.
         public async Task UpdatePersonInfoAsync(int studentId, StudentUpdateRequest request)
         {
             var student = await _context.Students
                 .Include(s => s.PersonInfo)
+                .Include(s => s.IdModalities)
                 .FirstOrDefaultAsync(s => s.StudentId == studentId);
 
             if (student is null)
@@ -191,6 +232,12 @@ namespace DanceSchoolApp.Server.Services.People
             student.PersonInfo.Phone     = request.Phone;
             student.PersonInfo.Address   = request.Address;
             student.PersonInfo.Nif       = request.Nif;
+
+            // Replace modality assignments (staff can also adjust modalities)
+            var modalities = await ResolveModalitiesAsync(request.ModalityIds);
+            student.IdModalities.Clear();
+            foreach (var m in modalities)
+                student.IdModalities.Add(m);
 
             await _context.SaveChangesAsync();
         }
@@ -299,6 +346,23 @@ namespace DanceSchoolApp.Server.Services.People
             var hundredYearsAgo = today.AddYears(-100);
             if (birthDate < hundredYearsAgo)
                 throw new InvalidOperationException("BirthDate is too far in the past.");
+        }
+
+        private async Task<List<Modality>> ResolveModalitiesAsync(List<int> modalityIds)
+        {
+            if (!modalityIds.Any())
+                return new List<Modality>();
+
+            var found = await _context.Modalities
+                .Where(m => modalityIds.Contains(m.ModalityId) && m.IsActive)
+                .ToListAsync();
+
+            var missing = modalityIds.Except(found.Select(m => m.ModalityId)).ToList();
+            if (missing.Any())
+                throw new KeyNotFoundException(
+                    $"Modality id(s) {string.Join(", ", missing)} were not found or are inactive.");
+
+            return found;
         }
 
         private async Task EnsureNifUniqueAsync(string nif, int? excludePersonId = null)

@@ -15,7 +15,8 @@ namespace DanceSchoolApp.Server.Services
             ["validation_window_hours"] = "48",
             ["class_price_weekday"]     = "36.00",
             ["class_price_weekend"]     = "43.20",
-            ["max_participants"]        = "8"
+            ["max_participants"]        = "8",
+            ["join_class_enabled"]      = "true"
         };
 
         public AppSettingService(AppDbContext context)
@@ -35,6 +36,12 @@ namespace DanceSchoolApp.Server.Services
         {
             var raw = await GetValueAsync(key);
             return int.TryParse(raw, out var parsed) ? parsed : defaultValue;
+        }
+
+        public async Task<bool> GetBoolAsync(string key, bool defaultValue)
+        {
+            var raw = await GetValueAsync(key);
+            return bool.TryParse(raw, out var parsed) ? parsed : defaultValue;
         }
 
         public async Task<decimal> GetDecimalAsync(string key, decimal defaultValue)

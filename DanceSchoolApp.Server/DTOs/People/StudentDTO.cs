@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using DanceSchoolApp.Server.DTOs.Classes;
+using DanceSchoolApp.Server.DTOs.School;
 
 namespace DanceSchoolApp.Server.DTOs.People
 {
@@ -19,6 +20,7 @@ namespace DanceSchoolApp.Server.DTOs.People
         public bool IsActive { get; set; }
         public StudentAcceptanceStatus AcceptanceStatus { get; set; }
         public PersonListResponse? PersonInfo { get; set; }
+        public List<ModalityListResponse> Modalities { get; set; } = new();
     }
 
     public class StudentDetailResponse
@@ -28,6 +30,7 @@ namespace DanceSchoolApp.Server.DTOs.People
         public bool IsActive { get; set; }
         public StudentAcceptanceStatus AcceptanceStatus { get; set; }
         public PersonDetailResponse? PersonInfo { get; set; }
+        public List<ModalityListResponse> Modalities { get; set; } = new();
     }
 
 
@@ -56,6 +59,9 @@ namespace DanceSchoolApp.Server.DTOs.People
 
         [MaxLength(9)]
         public required string Nif { get; set; }
+
+        // IDs of modalities this student is enrolled in (must be active modalities).
+        public List<int> ModalityIds { get; set; } = new();
     }
 
     public class StudentUpdateRequest
@@ -78,6 +84,9 @@ namespace DanceSchoolApp.Server.DTOs.People
         [Required]
         [MaxLength(9)]
         public required string Nif { get; set; }
+
+        // IDs of modalities this student is enrolled in (replaces current assignment).
+        public List<int> ModalityIds { get; set; } = new();
     }
 
     public class StudentAcceptanceRejectRequest

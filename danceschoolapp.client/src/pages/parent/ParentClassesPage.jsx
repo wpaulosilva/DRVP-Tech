@@ -22,6 +22,7 @@ import {
     parentValidateParticipant,
     createClass,
     enrollInClass,
+    getJoinClassStatus,
 } from '../../services/classesService'
 import { getModalities } from '../../services/modalitiesService'
 import { getCoachesForParent } from '../../services/coachService'
@@ -164,16 +165,19 @@ function ParentClassesPage() {
     const [modalities, setModalities] = useState([])
     const [coaches, setCoaches]       = useState([])
     const [myStudents, setMyStudents] = useState([])
+    const [joinEnabled, setJoinEnabled] = useState(true)
 
     useEffect(() => {
         Promise.allSettled([
             getModalities(),
             getCoachesForParent(),
             getMyStudents(),
-        ]).then(([modsRes, coachesRes, studentsRes]) => {
+            getJoinClassStatus(),
+        ]).then(([modsRes, coachesRes, studentsRes, joinRes]) => {
             if (modsRes.status === 'fulfilled')     setModalities(normalizeItems(modsRes.value))
             if (coachesRes.status === 'fulfilled')  setCoaches(normalizeItems(coachesRes.value))
             if (studentsRes.status === 'fulfilled') setMyStudents(normalizeItems(studentsRes.value))
+            if (joinRes.status === 'fulfilled')     setJoinEnabled(joinRes.value?.enabled ?? joinRes.value?.Enabled ?? true)
         })
     }, [])
 
@@ -746,6 +750,16 @@ function ParentClassesPage() {
     // ===================================================
 
     const renderAulasExistentes = () => {
+        if (!joinEnabled) {
+            return (
+                <div className="validate-empty">
+                    <div className="validate-empty-icon">🔒</div>
+                    <h3>Inscrições desativadas</h3>
+                    <p>A funcionalidade de inscrição em aulas existentes está temporariamente desativada.</p>
+                </div>
+            )
+        }
+
         const selectedClasses = t3SelectedDate ? (t3ByDate[t3SelectedDate] ?? []) : []
         const hasAnyClasses   = Object.keys(t3ByDate).length > 0
 

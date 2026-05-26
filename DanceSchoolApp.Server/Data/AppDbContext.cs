@@ -512,6 +512,25 @@ public partial class AppDbContext : DbContext
                 .HasForeignKey(d => d.PersonInfoId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Student_PersonInfo");
+
+            entity.HasMany(d => d.IdModalities).WithMany(p => p.IdStudents)
+                .UsingEntity<Dictionary<string, object>>(
+                    "StudentModality",
+                    r => r.HasOne<Modality>().WithMany()
+                        .HasForeignKey("modality_id")
+                        .OnDelete(DeleteBehavior.ClientSetNull)
+                        .HasConstraintName("FK_StudentModality_Modality"),
+                    l => l.HasOne<Student>().WithMany()
+                        .HasForeignKey("student_id")
+                        .OnDelete(DeleteBehavior.ClientSetNull)
+                        .HasConstraintName("FK_StudentModality_Student"),
+                    j =>
+                    {
+                        j.HasKey("student_id", "modality_id").HasName("PK_Student_Modality");
+                        j.ToTable("Student_Modality");
+                        j.IndexerProperty<int>("student_id").HasColumnName("student_id");
+                        j.IndexerProperty<int>("modality_id").HasColumnName("modality_id");
+                    });
         });
 
         modelBuilder.Entity<Studio>(entity =>

@@ -11,7 +11,7 @@ namespace DanceSchoolApp.Tests.Unit;
 /// <summary>
 /// BPMN 1 — Create / Enroll in Classes
 /// Covers the staff-respond and coach-respond transitions, plus cancel.
-/// Happy paths: Requested→StaffApproved, StaffApproved→Approved/Rejected.
+/// Happy paths: Requested→CoachApproved, CoachApproved→Approved/Rejected.
 /// Sad  paths: wrong state, wrong coach identity.
 /// </summary>
 [Trait("Category", "Unit")]
@@ -59,12 +59,12 @@ public class CoachClassTransitionTests
     // ─── StaffRespondAsync ───────────────────────────────────────────────────
 
     [Fact]
-    public async Task StaffRespondAsync_Approve_SetsStatusToStaffApproved()
+    public async Task StaffRespondAsync_Approve_SetsStatusToApproved()
     {
-        // Arrange
+        // Arrange — staff acts on a CoachApproved class
         var (db, coach, _, _, modality, studio, parentUser) = SetupBase();
         var cls     = SeedClassWithStatus(db, coach, modality, studio, parentUser,
-                          CoachClassStatus.Requested);
+                          CoachClassStatus.CoachApproved);
         var service = CreateService(db);
 
         // Act
@@ -72,17 +72,17 @@ public class CoachClassTransitionTests
 
         // Assert — reload to verify the DB write
         var updated = db.CoachClasses.Find(cls.ClassId)!;
-        updated.Status.Should().Be((byte)CoachClassStatus.StaffApproved,
-            because: "staff approving a Requested class must move it to StaffApproved");
+        updated.Status.Should().Be((byte)CoachClassStatus.Approved,
+            because: "staff approving a CoachApproved class must move it to Approved");
     }
 
     [Fact]
     public async Task StaffRespondAsync_Reject_SetsStatusToRejected()
     {
-        // Arrange
+        // Arrange — staff acts on a CoachApproved class
         var (db, coach, _, _, modality, studio, parentUser) = SetupBase();
         var cls     = SeedClassWithStatus(db, coach, modality, studio, parentUser,
-                          CoachClassStatus.Requested);
+                          CoachClassStatus.CoachApproved);
         var service = CreateService(db);
 
         // Act
@@ -91,13 +91,13 @@ public class CoachClassTransitionTests
         // Assert
         var updated = db.CoachClasses.Find(cls.ClassId)!;
         updated.Status.Should().Be((byte)CoachClassStatus.Rejected,
-            because: "staff rejecting a Requested class must set status to Rejected");
+            because: "staff rejecting a CoachApproved class must set status to Rejected");
     }
 
     [Fact]
-    public async Task StaffRespondAsync_WhenClassNotRequested_ThrowsInvalidOperation()
+    public async Task StaffRespondAsync_WhenClassNotCoachApproved_ThrowsInvalidOperation()
     {
-        // Arrange — class is already Approved, not Requested
+        // Arrange — class is Approved (already past the coach-approval step)
         var (db, coach, _, _, modality, studio, parentUser) = SetupBase();
         var cls     = SeedClassWithStatus(db, coach, modality, studio, parentUser,
                           CoachClassStatus.Approved);
@@ -108,18 +108,18 @@ public class CoachClassTransitionTests
 
         // Assert
         await act.Should().ThrowAsync<InvalidOperationException>(
-            because: "staff-respond is only valid on Requested classes");
+            because: "staff-respond is only valid on CoachApproved classes");
     }
 
     // ─── CoachRespondAsync ───────────────────────────────────────────────────
 
     [Fact]
-    public async Task CoachRespondAsync_Accept_SetsStatusToApproved()
+    public async Task CoachRespondAsync_Accept_SetsStatusToCoachApproved()
     {
-        // Arrange
+        // Arrange — coach acts on a Requested class
         var (db, coach, coachUserId, _, modality, studio, parentUser) = SetupBase();
         var cls     = SeedClassWithStatus(db, coach, modality, studio, parentUser,
-                          CoachClassStatus.StaffApproved);
+                          CoachClassStatus.Requested);
         var service = CreateService(db);
 
         // Act
@@ -127,17 +127,17 @@ public class CoachClassTransitionTests
 
         // Assert
         var updated = db.CoachClasses.Find(cls.ClassId)!;
-        updated.Status.Should().Be((byte)CoachClassStatus.Approved,
-            because: "coach accepting a StaffApproved class must move it to Approved");
+        updated.Status.Should().Be((byte)CoachClassStatus.CoachApproved,
+            because: "coach accepting a Requested class must move it to CoachApproved");
     }
 
     [Fact]
     public async Task CoachRespondAsync_Reject_SetsStatusToRejected()
     {
-        // Arrange
+        // Arrange — coach acts on a Requested class
         var (db, coach, coachUserId, _, modality, studio, parentUser) = SetupBase();
         var cls     = SeedClassWithStatus(db, coach, modality, studio, parentUser,
-                          CoachClassStatus.StaffApproved);
+                          CoachClassStatus.Requested);
         var service = CreateService(db);
 
         // Act
@@ -147,7 +147,7 @@ public class CoachClassTransitionTests
         // Assert
         var updated = db.CoachClasses.Find(cls.ClassId)!;
         updated.Status.Should().Be((byte)CoachClassStatus.Rejected,
-            because: "coach rejecting a StaffApproved class must set status to Rejected");
+            because: "coach rejecting a Requested class must set status to Rejected");
     }
 
     [Fact]
@@ -156,7 +156,7 @@ public class CoachClassTransitionTests
         // Arrange — class belongs to coach1; caller is coach2
         var (db, coach, _, otherCoachUserId, modality, studio, parentUser) = SetupBase();
         var cls     = SeedClassWithStatus(db, coach, modality, studio, parentUser,
-                          CoachClassStatus.StaffApproved);
+                          CoachClassStatus.Requested);
         var service = CreateService(db);
 
         // Act
@@ -169,12 +169,12 @@ public class CoachClassTransitionTests
     }
 
     [Fact]
-    public async Task CoachRespondAsync_WhenClassNotStaffApproved_ThrowsInvalidOperation()
+    public async Task CoachRespondAsync_WhenClassNotRequested_ThrowsInvalidOperation()
     {
-        // Arrange — class is still Requested, not StaffApproved
+        // Arrange — class is already CoachApproved, not Requested
         var (db, coach, coachUserId, _, modality, studio, parentUser) = SetupBase();
         var cls     = SeedClassWithStatus(db, coach, modality, studio, parentUser,
-                          CoachClassStatus.Requested);
+                          CoachClassStatus.CoachApproved);
         var service = CreateService(db);
 
         // Act
@@ -183,7 +183,7 @@ public class CoachClassTransitionTests
 
         // Assert
         await act.Should().ThrowAsync<InvalidOperationException>(
-            because: "coach-respond requires the class to be in StaffApproved state");
+            because: "coach-respond requires the class to be in Requested state");
     }
 
     // ─── CancelAsync ────────────────────────────────────────────────────────

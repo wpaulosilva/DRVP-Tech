@@ -10,17 +10,17 @@ namespace DanceSchoolApp.Server.DTOs.Classes
         Denied    = 2
     }
 
-    //  Status enum 
+    //  Status enum
     public enum CoachClassStatus : byte
     {
         Requested     = 0,
-        Approved      = 1,  // coach accepted
+        Approved      = 1,  // fully approved (staff final step)
         Rejected      = 2,
         Cancelled     = 3,
         Finished      = 4,
         Validated     = 5,
         Pending       = 6,  // awaiting staff final sign-off
-        StaffApproved = 7   // staff approved, awaiting coach acceptance
+        CoachApproved = 7   // coach approved, awaiting staff acceptance
     }
 
     //  Responses 
