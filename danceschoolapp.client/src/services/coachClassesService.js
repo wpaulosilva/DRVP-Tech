@@ -16,3 +16,9 @@ export function coachReject(classId, reason) {
 export function coachValidate(classId, didTeach) {
     return patch(`/api/coachclasses/${classId}/coach-validate`, { didTeach })
 }
+export function getCoachAgenda({ from, to } = {}) {
+    const params = new URLSearchParams()
+    if (from) params.set('from', from)
+    if (to) params.set('to', to)
+    return get(`/api/coach/agenda?${params}`)
+}
