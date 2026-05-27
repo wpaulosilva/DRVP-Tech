@@ -112,3 +112,13 @@ export function getCommunityInventory({ categoryId, maxPrice, search, page = 1, 
     if (maxPrice)   p.set('maxPrice', maxPrice)
     return get(`/api/ee/inventory/community?${p}`)
 }
+
+// Marketplace unified endpoint (all items, staff can filter by fromSchool)
+export function getMarketplace({ fromSchool, categoryId, maxPrice, search, page = 1, pageSize = 12 } = {}) {
+    const p = new URLSearchParams({ page, pageSize })
+    if (fromSchool !== undefined && fromSchool !== null) p.set('fromSchool', fromSchool)
+    if (search) p.set('search', search)
+    if (categoryId) p.set('categoryId', categoryId)
+    if (maxPrice) p.set('maxPrice', maxPrice)
+    return get(`/api/items?${p}`)
+}
