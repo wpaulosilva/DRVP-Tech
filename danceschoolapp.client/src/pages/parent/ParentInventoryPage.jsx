@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useAuth } from '../../context/useAuth'
 import Modal from '../../components/common/Modal'
 import Tabs from '../../components/common/Tabs'
 import {
@@ -13,6 +14,7 @@ const PAGE_SIZE = 12
 
 const TABS = [
     { value: 'marketplace', label: 'Marketplace' },
+    { value: 'me', label: 'Meus Artigos' },
 ]
 
 const REQ_STATUS = {
@@ -37,6 +39,7 @@ function fmtPrice(v) {
 export default function ParentInventoryPage() {
     const navigate = useNavigate()
 
+    const { user } = useAuth()
     const [tab, setTab] = useState('marketplace')
 
     // ── Shared filter state ───────────────────────────────────────────────────
@@ -86,7 +89,8 @@ export default function ParentInventoryPage() {
 
     // ── Load marketplace (all items) ──────────────────────────────────────────
     const loadMarketplace = useCallback(async () => {
-        if (tab !== 'marketplace') return
+        // load for both marketplace and personal (me) tab so we can client-filter by owner
+        if (tab !== 'marketplace' && tab !== 'me') return
         setLoadingMarketplace(true)
         setMarketplaceError(null)
         try {
@@ -267,7 +271,14 @@ export default function ParentInventoryPage() {
                     ) : (
                         <>
                             <div className="inv-grid">
-                                {marketplaceItems.map(card => {
+                                {(
+                                    // when viewing 'me', filter items by owner id
+                                    (tab === 'me' ? marketplaceItems.filter(card => {
+                                        const owner = Number(card.idOwner ?? card.IdOwner ?? card.ownerId ?? card.OwnerId ?? 0)
+                                        const myId = Number(user?.UserId ?? user?.userId ?? 0)
+                                        return owner && myId && owner === myId
+                                    }) : marketplaceItems)
+                                ).map(card => {
                                     const id   = card.itemId ?? card.ItemId ?? card.itemId
                                     const img  = (card.images ?? card.Images ?? [])[0]?.imageUrl ?? card.imageUrl
                                     const name = card.name ?? card.Name ?? card.itemName

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Modal from '../../components/common/Modal'
 import Tabs from '../../components/common/Tabs'
+import { useAuth } from '../../context/useAuth'
 import {
     getItems, createSchoolItem,
     getCategories,
@@ -13,6 +14,7 @@ const PAGE_SIZE = 12
 
 const TABS = [
     { value: 'marketplace',  label: 'Marketplace' },
+    { value: 'me',           label: 'Artigos Escolares' },
     { value: 'requisitions', label: 'Requisições' },
 ]
 
@@ -37,6 +39,7 @@ function fmtDate(v) {
 
 export default function StaffInventoryPage() {
     const navigate = useNavigate()
+    const { user } = useAuth()
     const [tab, setTab] = useState('marketplace')
 
     // ── Item list state ──────────────────────────────────────────────────────
@@ -92,7 +95,7 @@ export default function StaffInventoryPage() {
         try {
             // marketplace: all items (no fromSchool filter)
             let result
-            if (tab === 'marketplace') {
+            if (tab === 'marketplace' || tab === 'me') {
                 // use unified marketplace endpoint
                 const { getMarketplace } = await import('../../services/inventoryService')
                 result = await getMarketplace({ search, categoryId: categoryId || undefined, page, pageSize: PAGE_SIZE })
@@ -101,7 +104,12 @@ export default function StaffInventoryPage() {
                 result = await getItems({ fromSchool, search, categoryId: categoryId || undefined, page, pageSize: PAGE_SIZE })
             }
             const list = result?.items ?? result?.Items ?? []
-            setItems(list)
+            // if viewing 'me' filter by owner id
+            const myId = Number(user?.UserId ?? user?.userId ?? 0)
+            const finalList = tab === 'me' && myId
+                ? list.filter(i => Number(i.idOwner ?? i.IdOwner ?? i.ownerId ?? i.OwnerId ?? 0) === myId)
+                : list
+            setItems(finalList)
             setTotalCount(result?.totalCount ?? result?.TotalCount ?? 0)
         } catch (e) {
             setItemError(e.message)
