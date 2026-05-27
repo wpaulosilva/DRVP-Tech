@@ -44,9 +44,13 @@ namespace DanceSchoolApp.Server.Services
             foreach (var cls in classes)
             {
                 decimal durationHours = DurationHours(cls);
-                bool isWeekend = cls.StartDatetime.DayOfWeek is
-                    DayOfWeek.Saturday or DayOfWeek.Sunday;
-                decimal rate   = isWeekend ? weekendRate : weekdayRate;
+                bool isSundayOrHoliday = cls.StartDatetime.DayOfWeek == DayOfWeek.Sunday;
+
+                // TODO: adicionar lógica de feriados aqui futuramente
+
+                decimal rate = isSundayOrHoliday
+                    ? weekendRate
+                    : weekdayRate;
                 decimal amount = durationHours * rate;
 
                 foreach (var p in cls.Participants)
@@ -58,14 +62,14 @@ namespace DanceSchoolApp.Server.Services
 
                     if (studentTotals.TryGetValue(sid, out var existing))
                     {
-                        if (isWeekend)
+                        if (isSundayOrHoliday)
                             studentTotals[sid] = (name, existing.HoursWeekday, existing.HoursWeekend + durationHours, existing.Amount + amount);
                         else
                             studentTotals[sid] = (name, existing.HoursWeekday + durationHours, existing.HoursWeekend, existing.Amount + amount);
                     }
                     else
                     {
-                        if (isWeekend)
+                        if (isSundayOrHoliday)
                             studentTotals[sid] = (name, 0m, durationHours, amount);
                         else
                             studentTotals[sid] = (name, durationHours, 0m, amount);

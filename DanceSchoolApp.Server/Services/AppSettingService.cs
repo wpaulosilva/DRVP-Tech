@@ -14,7 +14,7 @@ namespace DanceSchoolApp.Server.Services
         {
             ["validation_window_hours"] = "48",
             ["class_price_weekday"]     = "36.00",
-            ["class_price_weekend"]     = "43.20",
+            ["class_price_weekend"]     = "43.50",
             ["max_participants"]        = "8",
             ["join_class_enabled"]      = "true"
         };

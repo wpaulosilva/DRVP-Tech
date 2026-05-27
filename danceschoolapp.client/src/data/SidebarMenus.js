@@ -1,7 +1,8 @@
 export const sidebarMenus = {
     admin: [
         { label: 'Dashboard',     to: '/admin',               icon: 'dashboard'  },
-        { label: 'Utilizadores',  to: '/admin/utilizadores',  icon: 'direction'  },
+        { label: 'Utilizadores', to: '/admin/utilizadores', icon: 'direction' },
+        { label: 'Configurações', to: '/admin/configuracoes', icon: 'info' },
     ],
 
     staff: [

@@ -12,6 +12,7 @@ import ResetPasswordPage from './pages/public/ResetPasswordPage'
 // Admin
 import AdminDashboardPage from './pages/admin/AdminDashboardPage'
 import AdminUsersPage from './pages/admin/AdminUsersPage'
+import AdminAppSettingsPage from './pages/admin/AdminAppSettingsPage'
 
 // Staff
 import StaffDashboardPage from './pages/staff/StaffDashboardPage'
@@ -68,6 +69,7 @@ function App() {
             >
                 <Route path="/admin" element={<AdminDashboardPage />} />
                 <Route path="/admin/utilizadores" element={<AdminUsersPage />} />
+                <Route path="/admin/configuracoes" element={<AdminAppSettingsPage />} />
             </Route>
 
             {/* STAFF */}
