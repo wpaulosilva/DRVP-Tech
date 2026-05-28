@@ -5,27 +5,28 @@ import logo from '../../assets/logo-entartes.png'
 import { useAuth } from '../../context/useAuth'
 import Icon from '../../components/ui/Icon'
 
-/* Map server error strings to user-friendly Portuguese messages.
-   "This account is inactive." is intentionally made visible — for an
-   internal school system the UX benefit outweighs the minimal info leakage. */
 function mapLoginError(serverMessage) {
     if (!serverMessage) return 'Ocorreu um erro. Tente novamente.'
 
     const msg = serverMessage.toLowerCase()
+
     if (msg.includes('inactive') || msg.includes('account is inactive')) {
         return 'Esta conta está desativada. Contacte a direção da escola.'
     }
+
     if (msg.includes('invalid credentials') || msg.includes('invalid') || msg.includes('credentials')) {
         return 'Email ou palavra-passe incorretos.'
     }
+
     return 'Ocorreu um erro ao iniciar sessão. Tente novamente.'
 }
 
 function LoginPage() {
-    const [email,    setEmail]    = useState('')
+    const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
-    const [error,    setError]    = useState('')
-    const [loading,  setLoading]  = useState(false)
+    const [showPassword, setShowPassword] = useState(false)
+    const [error, setError] = useState('')
+    const [loading, setLoading] = useState(false)
 
     const { refreshSession } = useAuth()
     const navigate = useNavigate()
@@ -44,15 +45,15 @@ function LoginPage() {
             })
 
             if (!response.ok) {
-                // Try to read server's error message (may be plain string or JSON)
                 let serverMsg = ''
+
                 try {
                     const text = await response.text()
-                    // Server returns a JSON-encoded string (e.g. "This account is inactive.")
                     serverMsg = JSON.parse(text)
                 } catch {
                     serverMsg = ''
                 }
+
                 throw new Error(serverMsg)
             }
 
@@ -60,17 +61,18 @@ function LoginPage() {
             await refreshSession()
 
             localStorage.setItem('user', JSON.stringify({
-                id:       data.userId,
+                id: data.userId,
                 username: data.username,
-                roles:    data.roles,
+                roles: data.roles,
             }))
 
-            const roleNames = (data.roles || []).map(r => r.toLowerCase())
-            if (roleNames.includes('admin'))       navigate('/admin')
-            else if (roleNames.includes('staff'))  navigate('/staff')
-            else if (roleNames.includes('coach'))  navigate('/coach')
+            const roleNames = (data.roles || []).map((r) => r.toLowerCase())
+
+            if (roleNames.includes('admin')) navigate('/admin')
+            else if (roleNames.includes('staff')) navigate('/staff')
+            else if (roleNames.includes('coach')) navigate('/coach')
             else if (roleNames.includes('parent')) navigate('/parent')
-            else                                   navigate('/')
+            else navigate('/')
         } catch (err) {
             setError(mapLoginError(err.message))
         } finally {
@@ -82,6 +84,7 @@ function LoginPage() {
         <div className="login-page">
             <div className="login-card">
                 <img src={logo} alt="Ent'Artes" className="login-logo" />
+
                 <h1>Iniciar sessão</h1>
                 <p className="login-subtitle">Portal de gestão Ent&apos;Artes</p>
 
@@ -93,7 +96,7 @@ function LoginPage() {
                             type="email"
                             placeholder="nome@exemplo.com"
                             value={email}
-                            onChange={e => setEmail(e.target.value)}
+                            onChange={(e) => setEmail(e.target.value)}
                             required
                             autoComplete="email"
                         />
@@ -101,26 +104,34 @@ function LoginPage() {
 
                     <div className="form-group">
                         <label htmlFor="password">Palavra-passe</label>
-                        <input
-                            id="password"
-                            type="password"
-                            placeholder="••••••••"
-                            value={password}
-                            onChange={e => setPassword(e.target.value)}
-                            required
-                            autoComplete="current-password"
-                        />
+
+                        <div className="password-field">
+                            <input
+                                id="password"
+                                type={showPassword ? 'text' : 'password'}
+                                placeholder="••••••••"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                required
+                                autoComplete="current-password"
+                            />
+
+                            <button
+                                type="button"
+                                className="password-toggle"
+                                onClick={() => setShowPassword((prev) => !prev)}
+                                aria-label={showPassword ? 'Ocultar palavra-passe' : 'Mostrar palavra-passe'}
+                            >
+                                <Icon name={showPassword ? 'eyeOff' : 'eye'} size={18} />
+                            </button>
+                        </div>
                     </div>
 
                     <div className="login-links">
                         <Link to="/forgot-password">Esqueceste-te da palavra-passe?</Link>
                     </div>
 
-                    <button
-                        type="submit"
-                        className="login-btn"
-                        disabled={loading}
-                    >
+                    <button type="submit" className="login-btn" disabled={loading}>
                         {loading ? 'A entrar…' : 'Entrar'}
                     </button>
 

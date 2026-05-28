@@ -176,3 +176,33 @@
         padding: 2rem 1.25rem;
     }
 }
+.password-field {
+    position: relative;
+}
+
+    .password-field input {
+        padding-right: 2.8rem;
+    }
+
+.password-toggle {
+    position: absolute;
+    top: 50%;
+    right: 0.85rem;
+    transform: translateY(-50%);
+    border: none;
+    background: transparent;
+    color: var(--text-3);
+    cursor: pointer;
+    padding: 0.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+    .password-toggle:hover {
+        color: var(--accent);
+    }
+
+    .password-toggle:focus {
+        outline: none;
+    }
