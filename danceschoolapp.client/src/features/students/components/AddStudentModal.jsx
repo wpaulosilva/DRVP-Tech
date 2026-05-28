@@ -1,6 +1,8 @@
+import { useState } from 'react'
 import Button from '../../../components/common/Button'
 import Input from '../../../components/common/Input'
 import Modal from '../../../components/common/Modal'
+import Icon from '../../../components/ui/Icon'
 import '../../users/styles/CreateUserModal.css'
 
 function AddStudentModal({
@@ -29,6 +31,13 @@ function AddStudentModal({
     error,
     loading,
 }) {
+    const [modalitySearch, setModalitySearch] = useState('')
+
+    const filteredModalities = modalities.filter((m) => {
+        const name = m.name ?? m.Name ?? ''
+        return name.toLowerCase().includes(modalitySearch.toLowerCase())
+    })
+
     return (
         <Modal open={open} title={title} onClose={onClose}>
             <p>{description}</p>
@@ -105,41 +114,50 @@ function AddStudentModal({
             </div>
 
             {modalities.length > 0 && (
-                <div style={{ marginTop: '12px' }}>
-                    <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500 }}>
-                        Modalidades
-                    </label>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                        {modalities.map(m => {
+                <div className="student-modalities-section">
+                    <div className="student-modalities-header">
+                        <h4 className="student-modalities-title">
+                            Modalidades
+                        </h4>
+
+                        <div className="student-modalities-search-wrap">
+                            <Icon name="search" size={15} />
+                            <input
+                                type="text"
+                                className="student-modalities-search"
+                                placeholder="Pesquisar..."
+                                value={modalitySearch}
+                                onChange={(e) => setModalitySearch(e.target.value)}
+                            />
+                        </div>
+                    </div>
+
+                    <div className="student-modalities-list">
+                        {filteredModalities.map((m) => {
                             const id = m.modalityId ?? m.ModalityId
                             const name = m.name ?? m.Name ?? ''
                             const checked = selectedModalityIds.includes(id)
+
                             return (
                                 <label
                                     key={id}
-                                    style={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: '6px',
-                                        padding: '6px 12px',
-                                        border: `1.5px solid ${checked ? 'var(--accent)' : 'var(--border)'}`,
-                                        borderRadius: '8px',
-                                        cursor: 'pointer',
-                                        background: checked ? 'var(--accent-soft)' : 'transparent',
-                                        fontSize: '0.875rem',
-                                        userSelect: 'none',
-                                    }}
+                                    className={`student-modality-chip ${checked ? 'student-modality-chip--checked' : ''}`}
                                 >
                                     <input
                                         type="checkbox"
                                         checked={checked}
                                         onChange={() => onModalityToggle && onModalityToggle(id)}
-                                        style={{ accentColor: 'var(--accent)' }}
                                     />
                                     {name}
                                 </label>
                             )
                         })}
+
+                        {filteredModalities.length === 0 && (
+                            <p className="student-modalities-empty">
+                                Nenhuma modalidade encontrada.
+                            </p>
+                        )}
                     </div>
                 </div>
             )}
@@ -149,6 +167,7 @@ function AddStudentModal({
                     {error}
                 </div>
             )}
+
             <div className="modal-actions">
                 <Button variant="secondary" onClick={onClose}>
                     Cancelar
