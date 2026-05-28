@@ -1,5 +1,6 @@
 using DanceSchoolApp.Server.Data;
 using DanceSchoolApp.Server.DTOs.Classes;
+using DanceSchoolApp.Server.Services;
 using DanceSchoolApp.Server.Services.Classes;
 using DanceSchoolApp.Server.Services.Social;
 using DanceSchoolApp.Tests.Helpers;
@@ -11,7 +12,7 @@ namespace DanceSchoolApp.Tests.Unit;
 public class CoachClassCreateTests
 {
     private static CoachClassService CreateService(AppDbContext db) =>
-        new CoachClassService(db, new NotificationService(db));
+        new CoachClassService(db, new NotificationService(db), new AppSettingService(db));
 
     private static DateTime NextWeekdayAt(DayOfWeek target, int hour)
     {

@@ -4,7 +4,7 @@ import Modal from '../../components/common/Modal'
 import Button from '../../components/common/Button'
 import Select from '../../components/common/Select'
 import MonthCalendar, { isoDate, getMonthRange, fmtDateLong } from '../../components/common/MonthCalendar'
-import { getCoachValidate, coachAccept, coachReject, coachValidate, getStudentsByModality, coachCreateClass } from '../../services/coachClassesService'
+import { getCoachValidate, coachAccept, coachReject, coachValidate, getStudentsByModality, coachCreateClass, getMaxParticipants } from '../../services/coachClassesService'
 import { getModalities } from '../../services/modalitiesService'
 import '../../styles/ValidateClasses.css'
 import '../../styles/ParentClasses.css'
@@ -34,6 +34,7 @@ function CoachValidateClassesPage() {
     const [createSubmitting, setCreateSubmitting] = useState(false)
     const [createError, setCreateError]           = useState('')
     const [createSuccess, setCreateSuccess]       = useState(false)
+    const [maxParticipants, setMaxParticipants]   = useState(8)
 
     const fetchAulas = async (tab) => {
         setLoading(true)
@@ -116,11 +117,15 @@ function CoachValidateClassesPage() {
         }
     }
 
-    // Load modalities once
+    // Load modalities and max group size once
     useEffect(() => {
         getModalities().then(data => {
             const items = Array.isArray(data) ? data : (data?.Items ?? data?.items ?? [])
             setModalities(items)
+        }).catch(() => {})
+        getMaxParticipants().then(data => {
+            const v = data?.maxParticipants ?? data?.MaxParticipants
+            if (v) setMaxParticipants(v)
         }).catch(() => {})
     }, [])
 
@@ -163,8 +168,8 @@ function CoachValidateClassesPage() {
         try {
             await coachCreateClass({
                 modalityId:      Number(createModality),
-                startDatetime:   `${createSelectedDate}T${createStart}:00`,
-                endDatetime:     `${createSelectedDate}T${createEnd}:00`,
+                startDatetime:   new Date(`${createSelectedDate}T${createStart}:00`).toISOString(),
+                endDatetime:     new Date(`${createSelectedDate}T${createEnd}:00`).toISOString(),
                 maxParticipants: Number(createMaxParts),
                 studentIds:      [...selectedStudents],
             })
@@ -380,7 +385,7 @@ function CoachValidateClassesPage() {
                                             type="number"
                                             className="input"
                                             min={1}
-                                            max={20}
+                                            max={maxParticipants}
                                             value={createMaxParts}
                                             onChange={e => setCreateMaxParts(Number(e.target.value))}
                                         />

@@ -316,8 +316,8 @@ function ParentClassesPage() {
             await parentCreateClass({
                 coachId,
                 modalityId:    Number(bookingModalityId),
-                startDatetime: `${bookingDate}T${bookingStartTime}:00`,
-                endDatetime:   `${bookingDate}T${bookingEndTime}:00`,
+                startDatetime: new Date(`${bookingDate}T${bookingStartTime}:00`).toISOString(),
+                endDatetime:   new Date(`${bookingDate}T${bookingEndTime}:00`).toISOString(),
                 studentId:     Number(bookingStudentId),
             })
             setBookingSuccess(true)

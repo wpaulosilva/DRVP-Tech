@@ -49,13 +49,6 @@ export function parentCreateClass(body) {
     return post('/api/coachclasses', body)
 }
 
-/** POST /api/coachclasses/coach-create — coach creates individual or group class
- *  Body: { modalityId, startDatetime, endDatetime, maxParticipants, studentIds[] }
- */
-export function coachCreateClass(body) {
-    return post('/api/coachclasses/coach-create', body)
-}
-
 /** PATCH /api/participants/{id}/parent-approve-enrollment — parent approves/rejects enrollment in a coach-created class */
 export function approveEnrollment(participantId, approve) {
     return patch(`/api/participants/${participantId}/parent-approve-enrollment`, { approve })

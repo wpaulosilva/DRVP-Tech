@@ -1,5 +1,6 @@
 using DanceSchoolApp.Server.Data;
 using DanceSchoolApp.Server.DTOs.Classes;
+using DanceSchoolApp.Server.Services;
 using DanceSchoolApp.Server.Services.Classes;
 using DanceSchoolApp.Server.Services.Social;
 using DanceSchoolApp.Tests.Helpers;
@@ -15,7 +16,7 @@ namespace DanceSchoolApp.Tests.Unit;
 public class CoachClassCoachCreateTests
 {
     private static CoachClassService CreateClassService(AppDbContext db) =>
-        new CoachClassService(db, new NotificationService(db));
+        new CoachClassService(db, new NotificationService(db), new AppSettingService(db));
 
     private static ParticipantService CreateParticipantService(AppDbContext db) =>
         new ParticipantService(db, new NotificationService(db));

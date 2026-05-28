@@ -28,6 +28,11 @@ export function getStudentsByModality(modalityId) {
     return get(`/api/coach/students?modalityId=${modalityId}`)
 }
 
+/** GET /api/coachclasses/max-participants — system-configured max group size */
+export function getMaxParticipants() {
+    return get('/api/coachclasses/max-participants')
+}
+
 /** POST /api/coachclasses/coach-create — coach creates individual or group class
  *  Body: { modalityId, startDatetime, endDatetime, maxParticipants, studentIds[] }
  */

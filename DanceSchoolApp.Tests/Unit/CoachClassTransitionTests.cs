@@ -1,6 +1,7 @@
 using DanceSchoolApp.Server.Data;
 using DanceSchoolApp.Server.DTOs.Classes;
 using DanceSchoolApp.Server.Models;
+using DanceSchoolApp.Server.Services;
 using DanceSchoolApp.Server.Services.Classes;
 using DanceSchoolApp.Server.Services.Social;
 using DanceSchoolApp.Tests.Helpers;
@@ -18,7 +19,7 @@ namespace DanceSchoolApp.Tests.Unit;
 public class CoachClassTransitionTests
 {
     private static CoachClassService CreateService(AppDbContext db) =>
-        new CoachClassService(db, new NotificationService(db));
+        new CoachClassService(db, new NotificationService(db), new AppSettingService(db));
 
     private static (AppDbContext db, Coach coach, int coachUserId,
                     int otherCoachUserId, Modality modality, Studio studio, User parentUser)

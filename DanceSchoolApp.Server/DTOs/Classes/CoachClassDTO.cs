@@ -164,7 +164,7 @@ namespace DanceSchoolApp.Server.DTOs.Classes
         public DateTime EndDatetime { get; set; }
 
         [Required]
-        [Range(1, 8, ErrorMessage = "MaxParticipants must be between 1 and 8.")]
+        [Range(1, int.MaxValue, ErrorMessage = "MaxParticipants must be at least 1.")]
         public int MaxParticipants { get; set; }
 
         [Required]

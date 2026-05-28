@@ -79,6 +79,16 @@ namespace DanceSchoolApp.Server.Controllers.Classes
             return Ok(new { enabled });
         }
 
+        //  GET /api/coachclasses/max-participants
+        // Coach use — returns the maximum group size allowed by the max_participants setting.
+        [Authorize(Roles = "coach")]
+        [HttpGet("max-participants")]
+        public async Task<IActionResult> GetMaxParticipants()
+        {
+            var max = await _appSettingService.GetIntAsync("max_participants", defaultValue: 8);
+            return Ok(new { maxParticipants = max });
+        }
+
         //  GET /api/coachclasses/open
         // Parent use — Approved classes with available spots.
         [Authorize(Roles = "staff,parent")]

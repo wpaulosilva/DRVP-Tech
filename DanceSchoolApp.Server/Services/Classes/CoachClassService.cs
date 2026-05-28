@@ -3,6 +3,7 @@ using DanceSchoolApp.Server.DTOs;
 using DanceSchoolApp.Server.DTOs.Classes;
 using DanceSchoolApp.Server.DTOs.Social;
 using DanceSchoolApp.Server.Models;
+using DanceSchoolApp.Server.Services;
 using DanceSchoolApp.Server.Services.Social;
 using Microsoft.EntityFrameworkCore;
 
@@ -12,12 +13,15 @@ namespace DanceSchoolApp.Server.Services.Classes
     {
         private readonly AppDbContext _context;
         private readonly NotificationService _notificationService;
+        private readonly AppSettingService _appSettingService;
 
         public CoachClassService(AppDbContext context,
-            NotificationService notificationService)
+            NotificationService notificationService,
+            AppSettingService appSettingService)
         {
             _context = context;
             _notificationService = notificationService;
+            _appSettingService = appSettingService;
         }
 
         //  Queries
@@ -299,6 +303,11 @@ namespace DanceSchoolApp.Server.Services.Classes
                     $"Coach {coachUserId} does not teach modality {request.ModalityId}.");
 
             ValidateDuration(request.StartDatetime, request.EndDatetime);
+
+            int maxAllowed = await _appSettingService.GetIntAsync("max_participants", 8);
+            if (request.MaxParticipants > maxAllowed)
+                throw new InvalidOperationException(
+                    $"MaxParticipants cannot exceed the configured limit of {maxAllowed}.");
 
             int assignedStudioId = await SelectStudioAsync(request.ModalityId, request.StartDatetime, request.EndDatetime);
 
