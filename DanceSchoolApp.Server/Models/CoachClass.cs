@@ -21,6 +21,9 @@ public partial class CoachClass
 
     public byte Status { get; set; }
 
+    // 0 = ParentCreated (individual), 1 = CoachCreated (individual or group)
+    public byte ClassOrigin { get; set; }
+
     public int MaxParticipants { get; set; }
 
     public DateOnly CreatedAt { get; set; }

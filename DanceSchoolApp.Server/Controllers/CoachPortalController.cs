@@ -120,7 +120,28 @@ namespace DanceSchoolApp.Server.Controllers
             }
         }
 
-        //  Private helpers 
+        //  GET /api/coach/students?modalityId={id}
+        // Returns active+accepted students enrolled in the given modality.
+        // Used by the coach to populate the student picker when creating a class.
+        [HttpGet("students")]
+        public async Task<IActionResult> GetStudentsByModality([FromQuery] int modalityId)
+        {
+            if (modalityId <= 0)
+                return BadRequest("modalityId is required.");
+
+            try
+            {
+                var result = await _coachPortalService.GetStudentsByModalityAsync(modalityId);
+                if (!result.Any()) return NoContent();
+                return Ok(result);
+            }
+            catch (Exception)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, "An unexpected error occurred.");
+            }
+        }
+
+        //  Private helpers
 
         private int GetUserId() =>
             int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);

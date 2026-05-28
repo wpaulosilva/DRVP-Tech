@@ -1,8 +1,8 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 
 namespace DanceSchoolApp.Server.DTOs.Classes
 {
-    //  Coach validation status enum 
+    //  Coach validation status enum
     public enum CoachValidationStatus : byte
     {
         Pending   = 0,
@@ -20,16 +20,26 @@ namespace DanceSchoolApp.Server.DTOs.Classes
         Finished      = 4,
         Validated     = 5,
         Pending       = 6,  // awaiting staff final sign-off
-        CoachApproved = 7   // coach approved, awaiting staff acceptance
+        CoachApproved = 7   // coach approved / all parents approved — awaiting staff acceptance
     }
 
-    //  Responses 
+    // Who originated the class.
+    // 0 = ParentCreated — individual class, flows through coach-respond then staff-respond.
+    // 1 = CoachCreated  — individual or group, flows through parent enrollment approval then staff-respond.
+    public enum ClassOrigin : byte
+    {
+        ParentCreated = 0,
+        CoachCreated  = 1
+    }
+
+    //  Responses
 
     public class CoachClassListResponse
     {
         public int ClassId { get; set; }
         public CoachClassStatus Status { get; set; }
         public CoachValidationStatus CoachValidationStatus { get; set; }
+        public ClassOrigin ClassOrigin { get; set; }
         public DateTime StartDatetime { get; set; }
         public DateTime EndDatetime { get; set; }
         public int ModalityId { get; set; }
@@ -47,6 +57,7 @@ namespace DanceSchoolApp.Server.DTOs.Classes
         public int ClassId { get; set; }
         public CoachClassStatus Status { get; set; }
         public CoachValidationStatus CoachValidationStatus { get; set; }
+        public ClassOrigin ClassOrigin { get; set; }
         public DateTime StartDatetime { get; set; }
         public DateTime EndDatetime { get; set; }
 
@@ -71,8 +82,7 @@ namespace DanceSchoolApp.Server.DTOs.Classes
         public List<ClassParticipantSummary> Participants { get; set; } = new();
     }
 
-    // Slim participant view embedded in class detail — full participant
-    // detail belongs in the Participant controller.
+    // Slim participant view embedded in class detail.
     public class ClassParticipantSummary
     {
         public int ParticipantId { get; set; }
@@ -80,10 +90,10 @@ namespace DanceSchoolApp.Server.DTOs.Classes
         public string StudentName { get; set; } = null!;
         public DateOnly JoinedAt { get; set; }
         public byte ValidationStatus { get; set; }
+        public byte ParentEnrollmentStatus { get; set; }
     }
 
     // Lightweight participant entry for portal validation views.
-    // ParentName is only populated in the staff view.
     public class ParticipantSummaryItem
     {
         public int ParticipantId { get; set; }
@@ -105,9 +115,11 @@ namespace DanceSchoolApp.Server.DTOs.Classes
         public int SpotsAvailable { get; set; }
     }
 
-    //  Requests 
+    //  Requests
 
-    public class CoachClassCreateRequest : IValidatableObject
+    // Parent creates an individual class (exactly one student, MaxParticipants fixed at 1).
+    // The requested student must belong to the calling parent.
+    public class CoachClassParentCreateRequest : IValidatableObject
     {
         [Required]
         public int ModalityId { get; set; }
@@ -122,13 +134,41 @@ namespace DanceSchoolApp.Server.DTOs.Classes
         public DateTime EndDatetime { get; set; }
 
         [Required]
+        public int StudentId { get; set; }
+
+        public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+        {
+            if (EndDatetime <= StartDatetime)
+                yield return new ValidationResult(
+                    "EndDatetime must be after StartDatetime.",
+                    new[] { nameof(EndDatetime) });
+
+            if (StartDatetime < DateTime.Now)
+                yield return new ValidationResult(
+                    "StartDatetime cannot be in the past.",
+                    new[] { nameof(StartDatetime) });
+        }
+    }
+
+    // Coach creates an individual or group class, pre-selecting students by their modality.
+    // CoachId is derived from the JWT — not sent in the body.
+    public class CoachClassCoachCreateRequest : IValidatableObject
+    {
+        [Required]
+        public int ModalityId { get; set; }
+
+        [Required]
+        public DateTime StartDatetime { get; set; }
+
+        [Required]
+        public DateTime EndDatetime { get; set; }
+
+        [Required]
         [Range(1, 8, ErrorMessage = "MaxParticipants must be between 1 and 8.")]
         public int MaxParticipants { get; set; }
 
-        // Must contain at least 1 student — a class cannot be created empty.
-        // Size is validated against MaxParticipants in IValidatableObject.
         [Required]
-        [MinLength(1, ErrorMessage = "At least one student is required to create a class.")]
+        [MinLength(1, ErrorMessage = "At least one student is required.")]
         public List<int> StudentIds { get; set; } = new();
 
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
@@ -154,6 +194,7 @@ namespace DanceSchoolApp.Server.DTOs.Classes
                     new[] { nameof(StudentIds) });
         }
     }
+
     public class StaffRespondRequest
     {
         [Required]
@@ -167,7 +208,6 @@ namespace DanceSchoolApp.Server.DTOs.Classes
         public bool Accept { get; set; }
         public string? Reason { get; set; }
     }
-
 
     public class CoachValidateRequest
     {
@@ -184,7 +224,6 @@ namespace DanceSchoolApp.Server.DTOs.Classes
     }
 
     // Staff can adjust logistical details (studio, schedule) before accepting a class request.
-    // All fields are optional — only provided fields are updated.
     public class CoachClassUpdateDetailsRequest
     {
         public int? StudioId { get; set; }

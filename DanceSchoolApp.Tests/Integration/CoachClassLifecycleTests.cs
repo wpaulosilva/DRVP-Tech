@@ -133,10 +133,9 @@ public class CoachClassLifecycleTests : IClassFixture<CustomWebApplicationFactor
             {
                 coachId,
                 modalityId,
-                startDatetime  = startDt.ToString("O"),
-                endDatetime    = endDt.ToString("O"),
-                maxParticipants = 4,
-                studentIds     = new[] { studentId }
+                startDatetime = startDt.ToString("O"),
+                endDatetime   = endDt.ToString("O"),
+                studentId
             }));
 
         createResp.StatusCode.Should().Be(HttpStatusCode.Created,

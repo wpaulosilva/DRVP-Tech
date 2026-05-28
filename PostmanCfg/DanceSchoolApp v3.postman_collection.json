@@ -2,7 +2,7 @@
   "info": {
     "_postman_id": "5515005d-8fe5-41a3-a3a6-ab020070e9b6",
     "name": "DanceSchoolApp v3",
-    "description": "FlowArtes / Ent'Artes Dance School API\n\n## Setup\n\n1. Select the **DanceSchoolApp** environment\n    \n2. Set `base_url` if needed (default: [https://localhost:7003](https://localhost:7003))\n    \n3. Run **POST Login** — the test script auto-saves `userId`, `roles`, and `expiresAt`\n    \n4. All requests use the shared cookie jar automatically (JWT is HttpOnly cookie)\n    \n\n## Test Users\n\n| ID | Username | Email | Password |\n| --- | --- | --- | --- |\n| 9 | admin | [admin@admin.com](https://mailto:admin@admin.com) | 12345678 |\n| 8 | staff | [staff@staff.com](https://mailto:staff@staff.com) | 12345678 |\n| 10 | parent | [parent@parent.com](https://mailto:parent@parent.com) | 12345678 |\n| 11 | coach | [coach@coach.com](https://mailto:coach@coach.com) | 12345678 |\n\nLogin accepts **email OR username** + password.\n\n## Variables\n\n- `base_url` — server base (change to switch between local/staging)\n    \n- `userId` — auto-set by Login\n    \n- `roles` — auto-set by Login\n    \n- `user_id`, `student_id`, `coach_id`, `class_id`, `participant_id`, `studio_id`, `modality_id`, `item_id` — set manually or auto-captured by POST scripts\n    \n\n## Enumerators\n\n### CoachClass Status\n\n| Value | Name | Description |\n| --- | --- | --- |\n| 0 | Requested | Parent created the class request |\n| 1 | Approved | Coach accepted — class is live |\n| 2 | Rejected | Rejected by staff or coach |\n| 3 | Cancelled | Cancelled (was Requested or Approved) |\n| 4 | Finished | End time passed — validation window open |\n| 5 | Validated | Staff final sign-off complete |\n| 6 | Pending | All validations done — awaiting staff |\n| 7 | StaffApproved | Staff approved, awaiting coach acceptance |\n\n### CoachClass Lifecycle Endpoints\n\n| Action | Endpoint | Body |\n| --- | --- | --- |\n| Staff approve | `PATCH /api/coachclasses/{id}/staff-respond` | `{ \"approve\": true }` |\n| Staff reject | `PATCH /api/coachclasses/{id}/staff-respond` | `{ \"approve\": false, \"reason\"?: \"...\" }` |\n| Coach accept | `PATCH /api/coachclasses/{id}/coach-respond` | `{ \"accept\": true }` |\n| Coach reject | `PATCH /api/coachclasses/{id}/coach-respond` | `{ \"accept\": false, \"reason\"?: \"...\" }` |\n| Coach validate | `PATCH /api/coachclasses/{id}/coach-validate` | `{ \"didTeach\": true/false }` |\n| Staff final validate | `PATCH /api/coachclasses/{id}/staff-validate` | _(no body)_ |\n| Cancel | `PATCH /api/coachclasses/{id}/cancel` | _(no body)_ |\n| Finish | ⚙ **AUTOMATED** by ClassLifecycleWorker | No endpoint — polls every 5 min |\n\n### StudentAcceptance Status\n\n| Value | Name |\n| --- | --- |\n| 0 | Pending |\n| 1 | Accepted |\n| 2 | Rejected |\n\n### Roles\n\n| Value | Name |\n| --- | --- |\n| 0 | Admin |\n| 1 | Staff |\n| 2 | Coach |\n| 3 | Parent |\n\n### BlockedPeriod Scope\n\n| Value | Name | Description |\n| --- | --- | --- |\n| 0 | Undefined | Fallback — do not use when creating |\n| 1 | NormalClass | Regular school classes occupy studios |\n| 2 | Studio | Specific studio is blocked |\n| 3 | Coach | Specific coach is unavailable |\n| 4 | Event | School event — may block everything |\n| 5 | Holiday | School break / public holiday |\n\n> When `scope=2` (Studio), `studioId` is **required**. When `scope=3` (Coach), `coachId` is **required**. \n  \n\n### ItemRequisition Status\n\n| Value | Name | Description |\n| --- | --- | --- |\n| 0 | Pending | Waiting for staff review |\n| 1 | Approved | Staff approved, item reserved |\n| 2 | Rejected | Staff rejected |\n| 3 | Returned | Item returned |\n| 4 | Cancelled | Cancelled by parent or staff |\n\n### CoachValidation Status (on Participant)\n\n| Value | Name | Description |\n| --- | --- | --- |\n| 0 | Pending | Parent hasn't responded yet |\n| 1 | ParentConfirmed | Parent confirmed student attended |\n| 2 | Disputed | Parent says student did not attend |",
+    "description": "FlowArtes / Ent'Artes Dance School API\n\n## Setup\n\n1. Select the **DanceSchoolApp** environment\n    \n2. Set `base_url` if needed (default: [https://localhost:7003](https://localhost:7003))\n    \n3. Run **POST Login** — the test script auto-saves `userId`, `roles`, and `expiresAt`\n    \n4. All requests use the shared cookie jar automatically (JWT is HttpOnly cookie)\n    \n\n## Test Users\n\n| ID | Username | Email | Password |\n| --- | --- | --- | --- |\n| 9 | admin | [admin@admin.com](https://mailto:admin@admin.com) | 12345678 |\n| 8 | staff | [staff@staff.com](https://mailto:staff@staff.com) | 12345678 |\n| 10 | parent | [parent@parent.com](https://mailto:parent@parent.com) | 12345678 |\n| 11 | coach | [coach@coach.com](https://mailto:coach@coach.com) | 12345678 |\n\nLogin accepts **email OR username** + password.\n\n## Variables\n\n- `base_url` — server base (change to switch between local/staging)\n    \n- `userId` — auto-set by Login\n    \n- `roles` — auto-set by Login\n    \n- `user_id`, `student_id`, `coach_id`, `class_id`, `participant_id`, `studio_id`, `modality_id`, `item_id` — set manually or auto-captured by POST scripts\n    \n\n## Enumerators\n\n### CoachClass Status\n\n| Value | Name | Description |\n| --- | --- | --- |\n| 0 | Requested | Parent created the class request |\n| 1 | Approved | Coach accepted — class is live |\n| 2 | Rejected | Rejected by staff or coach |\n| 3 | Cancelled | Cancelled (was Requested or Approved) |\n| 4 | Finished | End time passed — validation window open |\n| 5 | Validated | Staff final sign-off complete |\n| 6 | Pending | All validations done — awaiting staff |\n| 7 | StaffApproved | Staff approved, awaiting coach acceptance |\n| 8 | CoachApproved | All parents approved enrollment (coach-created flow) — awaiting staff sign-off |\n\n### CoachClass ClassOrigin\n\n| Value | Name | Description |\n| --- | --- | --- |\n| 0 | ParentCreated | Parent requested an individual class — follows Staff→Coach approval flow |\n| 1 | CoachCreated | Coach created group or individual class — parents approve enrollment first |\n\n### ParentEnrollmentStatus (on Participant)\n\n| Value | Name | Description |\n| --- | --- | --- |\n| 0 | NotRequired | Parent-created class — no enrollment approval step |\n| 1 | Pending | Coach-created class — parent has not yet responded |\n| 2 | Approved | Parent approved the enrollment |\n| 3 | Rejected | Parent rejected the enrollment |\n\n### CoachClass Lifecycle Endpoints\n\n**Parent-created flow:** `Requested(0) → StaffApproved(7) → [coach-respond] → Approved(1) → Finished(4) → Pending(6) → Validated(5)`\n\n**Coach-created flow:** `Requested(0) → [parent-approve-enrollment per student] → CoachApproved(8) → [staff-respond] → Approved(1) → Finished(4) → Pending(6) → Validated(5)`\n\n| Action | Endpoint | Body | Applies to |\n| --- | --- | --- | --- |\n| Parent create individual | `POST /api/coachclasses` | `{ coachId, modalityId, startDatetime, endDatetime, studentId }` | parent |\n| Coach create group/individual | `POST /api/coachclasses/coach-create` | `{ modalityId, startDatetime, endDatetime, maxParticipants, studentIds[] }` | coach |\n| Parent approve enrollment | `PATCH /api/participants/{id}/parent-approve-enrollment` | `{ \"approve\": bool }` | parent |\n| Staff approve | `PATCH /api/coachclasses/{id}/staff-respond` | `{ \"approve\": true }` | staff |\n| Staff reject | `PATCH /api/coachclasses/{id}/staff-respond` | `{ \"approve\": false, \"reason\"?: \"...\" }` | staff |\n| Coach accept | `PATCH /api/coachclasses/{id}/coach-respond` | `{ \"accept\": true }` | coach (parent-created only) |\n| Coach reject | `PATCH /api/coachclasses/{id}/coach-respond` | `{ \"accept\": false, \"reason\"?: \"...\" }` | coach (parent-created only) |\n| Coach validate | `PATCH /api/coachclasses/{id}/coach-validate` | `{ \"didTeach\": true/false }` | coach |\n| Staff final validate | `PATCH /api/coachclasses/{id}/staff-validate` | _(no body)_ | staff |\n| Cancel | `PATCH /api/coachclasses/{id}/cancel` | _(no body)_ | staff |\n| Finish | ⚙ **AUTOMATED** by ClassLifecycleWorker | No endpoint — polls every 5 min | — |\n\n### StudentAcceptance Status\n\n| Value | Name |\n| --- | --- |\n| 0 | Pending |\n| 1 | Accepted |\n| 2 | Rejected |\n\n### Roles\n\n| Value | Name |\n| --- | --- |\n| 0 | Admin |\n| 1 | Staff |\n| 2 | Coach |\n| 3 | Parent |\n\n### BlockedPeriod Scope\n\n| Value | Name | Description |\n| --- | --- | --- |\n| 0 | Undefined | Fallback — do not use when creating |\n| 1 | NormalClass | Regular school classes occupy studios |\n| 2 | Studio | Specific studio is blocked |\n| 3 | Coach | Specific coach is unavailable |\n| 4 | Event | School event — may block everything |\n| 5 | Holiday | School break / public holiday |\n\n> When `scope=2` (Studio), `studioId` is **required**. When `scope=3` (Coach), `coachId` is **required**. \n  \n\n### ItemRequisition Status\n\n| Value | Name | Description |\n| --- | --- | --- |\n| 0 | Pending | Waiting for staff review |\n| 1 | Approved | Staff approved, item reserved |\n| 2 | Rejected | Staff rejected |\n| 3 | Returned | Item returned |\n| 4 | Cancelled | Cancelled by parent or staff |\n\n### CoachValidation Status (on Participant)\n\n| Value | Name | Description |\n| --- | --- | --- |\n| 0 | Pending | Parent hasn't responded yet |\n| 1 | ParentConfirmed | Parent confirmed student attended |\n| 2 | Disputed | Parent says student did not attend |",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
     "_exporter_id": "52952904",
     "_collection_link": "https://go.postman.co/collection/52952904-5515005d-8fe5-41a3-a3a6-ab020070e9b6?source=collection_link"
@@ -1248,7 +1248,7 @@
                   "response": []
                 },
                 {
-                  "name": "POST Create Class",
+                  "name": "POST Create Class (parent — individual)",
                   "event": [
                     {
                       "listen": "test",
@@ -1258,7 +1258,7 @@
                           "if (pm.response.code === 201) {",
                           "    const body = pm.response.json();",
                           "    pm.collectionVariables.set(\"class_id\", body.classId);",
-                          "    console.log(\"Created classId:\", body.classId, \"| Status: Requested(0) | Studio auto-assigned\");",
+                          "    console.log(\"Created classId:\", body.classId, \"| ClassOrigin: ParentCreated(0) | MaxParticipants: 1 | Status: Requested(0)\");",
                           "}"
                         ],
                         "type": "text/javascript"
@@ -1275,7 +1275,7 @@
                     ],
                     "body": {
                       "mode": "raw",
-                      "raw": "{\n    \"modalityId\": {{modality_id}},\n    \"coachId\": {{coach_id}},\n    \"startDatetime\": \"2026-05-10T10:00:00Z\",\n    \"endDatetime\": \"2026-05-10T11:00:00Z\",\n    \"maxParticipants\": 4,\n    \"studentIds\": [{{student_id}}]\n}",
+                      "raw": "{\n    \"modalityId\": {{modality_id}},\n    \"coachId\": {{coach_id}},\n    \"startDatetime\": \"2026-05-10T10:00:00Z\",\n    \"endDatetime\": \"2026-05-10T11:00:00Z\",\n    \"studentId\": {{student_id}}\n}",
                       "options": {
                         "raw": {
                           "language": "json"
@@ -1292,7 +1292,151 @@
                         "coachclasses"
                       ]
                     },
-                    "description": "[staff,parent] Creates class request. NOTE: No studioId — backend auto-assigns using load-balancing. All students must be Accepted(1) and belong to the requesting parent. Status starts as Requested(0)."
+                    "description": "[parent] Creates an individual class request (ClassOrigin=ParentCreated). MaxParticipants is always 1. studentId is a single integer (not array). Student must be Accepted(1) and belong to the requesting parent. Coach availability is validated. Lifecycle: Requested(0) → StaffApproved(7) → [Coach accepts] → Approved(1)."
+                  },
+                  "response": []
+                },
+                {
+                  "name": "POST Coach-Create Class (coach — individual or group)",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "exec": [
+                          "pm.test(\"Class created\", () => pm.response.to.have.status(201));",
+                          "if (pm.response.code === 201) {",
+                          "    const body = pm.response.json();",
+                          "    pm.collectionVariables.set(\"class_id\", body.classId);",
+                          "    console.log(\"Created classId:\", body.classId, \"| ClassOrigin: CoachCreated(1) | Status: Requested(0) — parents notified\");",
+                          "}"
+                        ],
+                        "type": "text/javascript"
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n    \"modalityId\": {{modality_id}},\n    \"startDatetime\": \"2026-05-10T10:00:00Z\",\n    \"endDatetime\": \"2026-05-10T11:00:00Z\",\n    \"maxParticipants\": 4,\n    \"studentIds\": [{{student_id}}]\n}",
+                      "options": {
+                        "raw": {
+                          "language": "json"
+                        }
+                      }
+                    },
+                    "url": {
+                      "raw": "{{base_url}}/api/coachclasses/coach-create",
+                      "host": [
+                        "{{base_url}}"
+                      ],
+                      "path": [
+                        "api",
+                        "coachclasses",
+                        "coach-create"
+                      ]
+                    },
+                    "description": "[coach] Creates a group or individual class (ClassOrigin=CoachCreated). All studentIds must be Accepted(1) and enrolled in the modality. Participants are created with ParentEnrollmentStatus=Pending(1). Parents are notified to approve/reject. When all parents respond: ≥1 approved → CoachApproved; all rejected → Cancelled. coach-respond is BLOCKED for coach-created classes."
+                  },
+                  "response": []
+                },
+                {
+                  "name": "PATCH Parent Approve Enrollment (approve)",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "exec": [
+                          "pm.test(\"Enrollment approved\", () => pm.response.to.have.status(204));",
+                          "console.log(\"Participant\", pm.collectionVariables.get(\"participant_id\"), \"enrollment approved. Class may auto-advance to CoachApproved.\");"
+                        ],
+                        "type": "text/javascript"
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "PATCH",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n    \"approve\": true\n}",
+                      "options": {
+                        "raw": {
+                          "language": "json"
+                        }
+                      }
+                    },
+                    "url": {
+                      "raw": "{{base_url}}/api/participants/{{participant_id}}/parent-approve-enrollment",
+                      "host": [
+                        "{{base_url}}"
+                      ],
+                      "path": [
+                        "api",
+                        "participants",
+                        "{{participant_id}}",
+                        "parent-approve-enrollment"
+                      ]
+                    },
+                    "description": "[parent] Approves a student's enrollment in a coach-created class. Only valid while class is Requested(0) and participant's ParentEnrollmentStatus is Pending(1). When all parents respond: ≥1 Approved → class auto-advances to CoachApproved; all Rejected → class Cancelled."
+                  },
+                  "response": []
+                },
+                {
+                  "name": "PATCH Parent Reject Enrollment (reject)",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "exec": [
+                          "pm.test(\"Enrollment rejected\", () => pm.response.to.have.status(204));",
+                          "console.log(\"Participant\", pm.collectionVariables.get(\"participant_id\"), \"enrollment rejected.\");"
+                        ],
+                        "type": "text/javascript"
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "PATCH",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n    \"approve\": false\n}",
+                      "options": {
+                        "raw": {
+                          "language": "json"
+                        }
+                      }
+                    },
+                    "url": {
+                      "raw": "{{base_url}}/api/participants/{{participant_id}}/parent-approve-enrollment",
+                      "host": [
+                        "{{base_url}}"
+                      ],
+                      "path": [
+                        "api",
+                        "participants",
+                        "{{participant_id}}",
+                        "parent-approve-enrollment"
+                      ]
+                    },
+                    "description": "[parent] Rejects a student's enrollment in a coach-created class. If all participants are rejected, class auto-cancels."
                   },
                   "response": []
                 },

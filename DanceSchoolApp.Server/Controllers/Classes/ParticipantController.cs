@@ -155,6 +155,29 @@ namespace DanceSchoolApp.Server.Controllers.Classes
             }
         }
 
+        //  PATCH /api/participants/{id}/parent-approve-enrollment
+        // Parent use — approve or reject their student's enrollment in a coach-created class.
+        // Only valid while the class is in Requested status.
+        // When all parents have responded the class auto-advances to CoachApproved (or auto-cancels).
+        [Authorize(Roles = "parent")]
+        [HttpPatch("{id}/parent-approve-enrollment")]
+        public async Task<IActionResult> ParentApproveEnrollment(
+            int id, [FromBody] ParticipantEnrollmentApproveRequest request)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            try
+            {
+                await _participantService.ParentApproveEnrollmentAsync(id, request.Approve, GetUserId());
+                return NoContent();
+            }
+            catch (KeyNotFoundException ex) { return NotFound(ex.Message); }
+            catch (UnauthorizedAccessException ex) { return StatusCode(403, ex.Message); }
+            catch (InvalidOperationException ex) { return Conflict(ex.Message); }
+            catch (Exception) { return StatusCode(500, "An unexpected error occurred."); }
+        }
+
         //  DELETE /api/participants/{id} 
         // Parent or staff use — remove a student from a class.
         // Only allowed when class is Requested or Approved.

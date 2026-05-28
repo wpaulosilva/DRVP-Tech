@@ -119,7 +119,8 @@ public static class SeedData
         User createdByUser,
         DateTime? start = null,
         int durationMinutes = 60,
-        byte status = 0)
+        byte status = 0,
+        byte classOrigin = 0)
     {
         if (start is null)
         {
@@ -131,15 +132,16 @@ public static class SeedData
 
         var coachClass = new CoachClass
         {
-            IdCoach = coach.CoachId,
-            IdModality = modality.ModalityId,
-            IdStudio = studio.StudioId,
-            CreatedBy = createdByUser.UserId,
-            StartDatetime = start.Value,
-            EndDatetime = start.Value.AddMinutes(durationMinutes),
-            Status = status,
+            IdCoach         = coach.CoachId,
+            IdModality      = modality.ModalityId,
+            IdStudio        = studio.StudioId,
+            CreatedBy       = createdByUser.UserId,
+            StartDatetime   = start.Value,
+            EndDatetime     = start.Value.AddMinutes(durationMinutes),
+            Status          = status,
+            ClassOrigin     = classOrigin,
             MaxParticipants = 10,
-            CreatedAt = DateOnly.FromDateTime(DateTime.UtcNow),
+            CreatedAt       = DateOnly.FromDateTime(DateTime.UtcNow),
         };
         db.CoachClasses.Add(coachClass);
         db.SaveChanges();

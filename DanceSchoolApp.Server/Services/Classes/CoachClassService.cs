@@ -20,7 +20,7 @@ namespace DanceSchoolApp.Server.Services.Classes
             _notificationService = notificationService;
         }
 
-        //  Queries 
+        //  Queries
 
         public async Task<PagedResult<CoachClassListResponse>> GetAllAsync(PagedQuery query)
         {
@@ -71,6 +71,7 @@ namespace DanceSchoolApp.Server.Services.Classes
                 ClassId = coachClass.ClassId,
                 Status = (CoachClassStatus)coachClass.Status,
                 CoachValidationStatus = (CoachValidationStatus)coachClass.CoachValidationStatus,
+                ClassOrigin = (ClassOrigin)coachClass.ClassOrigin,
                 StartDatetime = coachClass.StartDatetime,
                 EndDatetime = coachClass.EndDatetime,
                 ModalityId = coachClass.IdModality,
@@ -91,16 +92,14 @@ namespace DanceSchoolApp.Server.Services.Classes
                     StudentId = p.IdStudent,
                     StudentName = ResolveStudentName(p.IdStudentNavigation),
                     JoinedAt = p.JoinedAt,
-                    ValidationStatus = p.ValidationStatus
+                    ValidationStatus = p.ValidationStatus,
+                    ParentEnrollmentStatus = p.ParentEnrollmentStatus
                 }).ToList()
             };
         }
 
         public async Task<List<OpenClassResponse>> GetOpenClassesAsync()
         {
-            // Open = Approved status with available spots.
-            // Materialise first because EF cannot translate the Count comparison
-            // on a navigation collection to SQL in all versions.
             var classes = await _context.CoachClasses
                 .Include(c => c.IdModalityNavigation)
                 .Include(c => c.IdStudioNavigation)
@@ -178,7 +177,6 @@ namespace DanceSchoolApp.Server.Services.Classes
             if (!parentExists)
                 throw new KeyNotFoundException($"User with id {parentUserId} was not found.");
 
-            // Return classes where any enrolled student belongs to this parent.
             var classes = await _context.CoachClasses
                 .Include(c => c.IdModalityNavigation)
                 .Include(c => c.IdStudioNavigation)
@@ -195,11 +193,95 @@ namespace DanceSchoolApp.Server.Services.Classes
             return classes.Select(MapToListResponse).ToList();
         }
 
-        //  Commands 
+        //  Commands
 
-        public async Task<int> CreateAsync(CoachClassCreateRequest request, int createdByUserId)
+        // Parent creates an individual class for one of their own students.
+        // MaxParticipants is always 1. Flow: Requested → CoachApproved → Approved.
+        public async Task<int> ParentCreateAsync(CoachClassParentCreateRequest request, int parentUserId)
         {
-            //  1. Validate all referenced entities exist 
+            await ValidateModalityAndCoach(request.ModalityId, request.CoachId);
+            ValidateDuration(request.StartDatetime, request.EndDatetime);
+
+            int assignedStudioId = await SelectStudioAsync(request.ModalityId, request.StartDatetime, request.EndDatetime);
+
+            await CheckBlockedPeriodsAsync(request.StartDatetime, request.EndDatetime, request.CoachId, assignedStudioId);
+            await CheckCoachConflictAsync(request.CoachId, request.StartDatetime, request.EndDatetime);
+            await CheckCoachAvailabilityAsync(request.CoachId, request.StartDatetime, request.EndDatetime);
+
+            // Student must belong to calling parent, be active, accepted, and have the modality
+            var student = await _context.Students
+                .Include(s => s.IdModalities)
+                .FirstOrDefaultAsync(s => s.StudentId == request.StudentId
+                                       && s.ParentUserId == parentUserId
+                                       && s.IsActive);
+
+            if (student is null)
+                throw new KeyNotFoundException(
+                    $"Student with id {request.StudentId} was not found, does not belong to you, or is inactive.");
+
+            if (student.AcceptanceStatus != 1)
+                throw new InvalidOperationException(
+                    $"Student {request.StudentId} has not been accepted by staff yet and cannot be enrolled in classes.");
+
+            if (!student.IdModalities.Any(m => m.ModalityId == request.ModalityId))
+                throw new InvalidOperationException(
+                    $"Student {request.StudentId} is not assigned to modality {request.ModalityId}.");
+
+            await CheckStudentTimeConflictAsync(request.StudentId, request.StartDatetime, request.EndDatetime);
+
+            using var tx = await _context.Database.BeginTransactionAsync();
+
+            var coachClass = new CoachClass
+            {
+                IdModality      = request.ModalityId,
+                IdStudio        = assignedStudioId,
+                IdCoach         = request.CoachId,
+                CreatedBy       = parentUserId,
+                StartDatetime   = request.StartDatetime,
+                EndDatetime     = request.EndDatetime,
+                MaxParticipants = 1,
+                Status          = (byte)CoachClassStatus.Requested,
+                ClassOrigin     = (byte)ClassOrigin.ParentCreated,
+                CreatedAt       = DateOnly.FromDateTime(DateTime.Now)
+            };
+
+            _context.CoachClasses.Add(coachClass);
+            await _context.SaveChangesAsync();
+
+            _context.Participants.Add(new Participant
+            {
+                IdCoachClass          = coachClass.ClassId,
+                IdStudent             = request.StudentId,
+                JoinedAt              = DateOnly.FromDateTime(DateTime.Now),
+                ValidationStatus      = (byte)ParticipantValidationStatus.Pending,
+                ParentEnrollmentStatus = (byte)ParentEnrollmentStatus.NotRequired
+            });
+
+            await _context.SaveChangesAsync();
+            await tx.CommitAsync();
+
+            // Notify coach of the new request
+            await _notificationService.SendAsync(
+                userId: request.CoachId,
+                title: "Novo pedido de aula",
+                message: $"Um encarregado pediu uma aula para {request.StartDatetime:dd/MM/yyyy 'às' HH:mm}. Por favor, aceite ou rejeite.",
+                type: NotificationType.ClassUpdate,
+                entityType: "CoachClass",
+                entityId: coachClass.ClassId);
+
+            return coachClass.ClassId;
+        }
+
+        // Coach creates an individual or group class, selecting students with the requested modality.
+        // Flow: Requested → [all parents approve enrollment] → CoachApproved → Approved.
+        public async Task<int> CoachCreateAsync(CoachClassCoachCreateRequest request, int coachUserId)
+        {
+            bool coachActive = await _context.Coaches
+                .AnyAsync(c => c.CoachId == coachUserId);
+
+            if (!coachActive)
+                throw new KeyNotFoundException($"Coach with id {coachUserId} was not found.");
+
             bool modalityActive = await _context.Modalities
                 .AnyAsync(m => m.ModalityId == request.ModalityId && m.IsActive);
 
@@ -207,196 +289,120 @@ namespace DanceSchoolApp.Server.Services.Classes
                 throw new KeyNotFoundException(
                     $"Modality with id {request.ModalityId} was not found or is inactive.");
 
-            bool coachActive = await _context.Coaches
-                .AnyAsync(c => c.CoachId == request.CoachId);
-
-            if (!coachActive)
-                throw new KeyNotFoundException(
-                    $"Coach with id {request.CoachId} was not found.");
-
-            // Ensure the coach actually teaches the requested modality
             bool coachTeachesModality = await _context.Coaches
                 .Include(c => c.IdModalities)
-                .Where(c => c.CoachId == request.CoachId)
+                .Where(c => c.CoachId == coachUserId)
                 .AnyAsync(c => c.IdModalities.Any(m => m.ModalityId == request.ModalityId));
 
             if (!coachTeachesModality)
                 throw new InvalidOperationException(
-                    $"Coach with id {request.CoachId} does not teach modality {request.ModalityId}.");
+                    $"Coach {coachUserId} does not teach modality {request.ModalityId}.");
 
-            // Validate start/end chronology and duration limits (30 to 120 minutes)
-            if (request.EndDatetime <= request.StartDatetime)
-                throw new InvalidOperationException(
-                    "The class end time must be after the start time.");
+            ValidateDuration(request.StartDatetime, request.EndDatetime);
 
-            var durationMinutes = (request.EndDatetime - request.StartDatetime).TotalMinutes;
-            if (durationMinutes < 30 || durationMinutes > 120)
-                throw new InvalidOperationException(
-                    "Classes must have a duration between 30 and 120 minutes.");
+            int assignedStudioId = await SelectStudioAsync(request.ModalityId, request.StartDatetime, request.EndDatetime);
 
-            //  2. Auto-select studio 
-            var candidateStudios = await _context.Studios
+            await CheckBlockedPeriodsAsync(request.StartDatetime, request.EndDatetime, coachUserId, assignedStudioId);
+            await CheckCoachConflictAsync(coachUserId, request.StartDatetime, request.EndDatetime);
+            await CheckCoachAvailabilityAsync(coachUserId, request.StartDatetime, request.EndDatetime);
+
+            // Validate each student: active, accepted, has the modality
+            var students = await _context.Students
                 .Include(s => s.IdModalities)
-                .Include(s => s.CoachClasses)
-                .Where(s => s.IsActive && s.IdModalities.Any(m => m.ModalityId == request.ModalityId))
+                .Where(s => request.StudentIds.Contains(s.StudentId) && s.IsActive)
                 .ToListAsync();
 
-            if (!candidateStudios.Any())
-                throw new InvalidOperationException(
-                    $"No active studios support modality {request.ModalityId}.");
+            var missingStudents = request.StudentIds
+                .Except(students.Select(s => s.StudentId))
+                .ToList();
 
-            var blockedStudioIds = await _context.BlockedPeriods
-                .Where(b => b.Scope == 2 &&
-                            b.StartDatetime < request.EndDatetime &&
-                            b.EndDatetime > request.StartDatetime)
-                .Select(b => b.IdStudio)
-                .ToListAsync();
+            if (missingStudents.Any())
+                throw new KeyNotFoundException(
+                    $"Student id(s) {string.Join(", ", missingStudents)} were not found or are inactive.");
 
-            var bookedStudioIds = await _context.CoachClasses
-                .Where(c => c.Status != (byte)CoachClassStatus.Rejected &&
-                            c.Status != (byte)CoachClassStatus.Cancelled &&
-                            c.StartDatetime < request.EndDatetime &&
-                            c.EndDatetime > request.StartDatetime)
-                .Select(c => c.IdStudio)
-                .ToListAsync();
-
-            var requestDate = request.StartDatetime.Date;
-
-            var selectedStudio = candidateStudios
-                .Where(s => !blockedStudioIds.Contains(s.StudioId) &&
-                            !bookedStudioIds.Contains(s.StudioId))
-                .OrderBy(s => s.CoachClasses
-                    .Count(c => c.StartDatetime.Date == requestDate &&
-                                c.Status != (byte)CoachClassStatus.Cancelled &&
-                                c.Status != (byte)CoachClassStatus.Rejected))
-                .FirstOrDefault();
-
-            if (selectedStudio is null)
-                throw new InvalidOperationException(
-                    "No studios are available for the requested time window and modality.");
-
-            int assignedStudioId = selectedStudio.StudioId;
-
-            //  3. Blocked period check 
-            await CheckBlockedPeriodsAsync(
-                request.StartDatetime, request.EndDatetime,
-                request.CoachId, assignedStudioId);
-
-            //  4. (Studio availability already handled above) 
-
-            //  5. Coach not double-booked 
-            bool coachConflict = await _context.CoachClasses
-                .AnyAsync(c =>
-                    c.IdCoach == request.CoachId &&
-                    c.Status != (byte)CoachClassStatus.Rejected &&
-                    c.Status != (byte)CoachClassStatus.Cancelled &&
-                    c.StartDatetime < request.EndDatetime &&
-                    c.EndDatetime > request.StartDatetime);
-
-            if (coachConflict)
-                throw new InvalidOperationException(
-                    "The coach is already booked during this time window.");
-
-            //  5b. Coach availability covers the requested slot 
-            var classDate    = DateOnly.FromDateTime(request.StartDatetime);
-            var classWeekday = (byte)request.StartDatetime.DayOfWeek;
-            var classStart   = TimeOnly.FromTimeSpan(request.StartDatetime.TimeOfDay);
-            var classEnd     = TimeOnly.FromTimeSpan(request.EndDatetime.TimeOfDay);
-
-            bool hasAvailability = await _context.CoachAvailabilities
-                .AnyAsync(a =>
-                    a.IdCoach   == request.CoachId  &&
-                    a.Weekday   == classWeekday      &&
-                    a.StartTime <= classStart        &&
-                    a.EndTime   >= classEnd          &&
-                    (a.ValidFrom  == null || a.ValidFrom  <= classDate) &&
-                    (a.ValidUntil == null || a.ValidUntil >= classDate));
-
-            if (!hasAvailability)
-                throw new InvalidOperationException(
-                    "The coach does not have an availability slot covering the requested time window.");
-
-            //  6. Validate all student ids belong to this parent 
-            var parentStudents = await _context.Students
-                .Where(s => s.ParentUserId == createdByUserId && s.IsActive)
-                .ToListAsync();
-
-            var parentStudentIds = parentStudents.Select(s => s.StudentId).ToList();
-
-            var invalidStudents = request.StudentIds.Except(parentStudentIds).ToList();
-            if (invalidStudents.Any())
-                throw new InvalidOperationException(
-                    $"Student id(s) {string.Join(", ", invalidStudents)} do not belong " +
-                    $"to parent {createdByUserId} or are inactive.");
-
-            var notAccepted = parentStudents
-                .Where(s => request.StudentIds.Contains(s.StudentId)
-                         && s.AcceptanceStatus != 1)
+            var notAccepted = students
+                .Where(s => s.AcceptanceStatus != 1)
                 .Select(s => s.StudentId)
                 .ToList();
 
             if (notAccepted.Any())
                 throw new InvalidOperationException(
-                    $"Student id(s) {string.Join(", ", notAccepted)} have not been " +
-                    $"accepted by staff yet and cannot be enrolled in classes.");
+                    $"Student id(s) {string.Join(", ", notAccepted)} have not been accepted by staff yet.");
 
-            // Verify each enrolled student is assigned to the requested modality
-            var studentsWithModality = await _context.Students
-                .Include(s => s.IdModalities)
-                .Where(s => request.StudentIds.Contains(s.StudentId))
-                .ToListAsync();
-
-            var notInModality = studentsWithModality
+            var notInModality = students
                 .Where(s => !s.IdModalities.Any(m => m.ModalityId == request.ModalityId))
                 .Select(s => s.StudentId)
                 .ToList();
 
             if (notInModality.Any())
                 throw new InvalidOperationException(
-                    $"Student id(s) {string.Join(", ", notInModality)} are not assigned " +
-                    $"to modality {request.ModalityId} and cannot be enrolled in this class.");
+                    $"Student id(s) {string.Join(", ", notInModality)} are not assigned to modality {request.ModalityId}.");
 
-            //  7. Create class + participants atomically
+            foreach (var studentId in request.StudentIds)
+                await CheckStudentTimeConflictAsync(studentId, request.StartDatetime, request.EndDatetime);
+
+            using var tx = await _context.Database.BeginTransactionAsync();
+
             var coachClass = new CoachClass
             {
-                IdModality = request.ModalityId,
-                IdStudio = assignedStudioId,
-                IdCoach = request.CoachId,
-                CreatedBy = createdByUserId,
-                StartDatetime = request.StartDatetime,
-                EndDatetime = request.EndDatetime,
+                IdModality      = request.ModalityId,
+                IdStudio        = assignedStudioId,
+                IdCoach         = coachUserId,
+                CreatedBy       = coachUserId,
+                StartDatetime   = request.StartDatetime,
+                EndDatetime     = request.EndDatetime,
                 MaxParticipants = request.MaxParticipants,
-                Status = (byte)CoachClassStatus.Requested,
-                CreatedAt = DateOnly.FromDateTime(DateTime.Now)
+                Status          = (byte)CoachClassStatus.Requested,
+                ClassOrigin     = (byte)ClassOrigin.CoachCreated,
+                CreatedAt       = DateOnly.FromDateTime(DateTime.Now)
             };
 
             _context.CoachClasses.Add(coachClass);
-
-            // Explicit transaction: first save generates ClassId, second save inserts
-            // participants. Without this, a failure on the second save would leave an
-            // orphan CoachClass with no participants.
-            using var tx = await _context.Database.BeginTransactionAsync();
             await _context.SaveChangesAsync();
 
             foreach (var studentId in request.StudentIds)
             {
                 _context.Participants.Add(new Participant
                 {
-                    IdCoachClass = coachClass.ClassId,
-                    IdStudent = studentId,
-                    JoinedAt = DateOnly.FromDateTime(DateTime.Now),
-                    ValidationStatus = 0  // pending validation
+                    IdCoachClass           = coachClass.ClassId,
+                    IdStudent              = studentId,
+                    JoinedAt               = DateOnly.FromDateTime(DateTime.Now),
+                    ValidationStatus       = (byte)ParticipantValidationStatus.Pending,
+                    ParentEnrollmentStatus = (byte)ParentEnrollmentStatus.Pending
                 });
             }
 
             await _context.SaveChangesAsync();
             await tx.CommitAsync();
 
+            // Notify each student's parent to approve enrollment
+            var enrolledStudents = await _context.Students
+                .Include(s => s.PersonInfo)
+                .Where(s => request.StudentIds.Contains(s.StudentId))
+                .ToListAsync();
+
+            var scheduledAt = coachClass.StartDatetime.ToString("dd/MM/yyyy 'às' HH:mm");
+
+            var parentIds = enrolledStudents
+                .Select(s => s.ParentUserId)
+                .Distinct();
+
+            foreach (var parentId in parentIds)
+            {
+                await _notificationService.SendAsync(
+                    userId: parentId,
+                    title: "Inscrição em aula pelo professor",
+                    message: $"O seu educando foi inscrito numa aula de {scheduledAt}. Por favor confirme a sua participação.",
+                    type: NotificationType.ValidationRequest,
+                    entityType: "CoachClass",
+                    entityId: coachClass.ClassId);
+            }
+
             return coachClass.ClassId;
         }
 
-       
-        // Coach responds first: Requested → CoachApproved (accept) or Rejected (reject).
+        // Coach responds to a parent-created class: Requested → CoachApproved or Rejected.
+        // Blocked for coach-created classes (no coach approval step there).
         public async Task CoachRespondAsync(int classId, int coachUserId, bool accept, string? reason)
         {
             var coachClass = await _context.CoachClasses
@@ -405,12 +411,16 @@ namespace DanceSchoolApp.Server.Services.Classes
             if (coachClass is null)
                 throw new KeyNotFoundException($"Class with id {classId} was not found.");
 
+            if (coachClass.ClassOrigin == (byte)ClassOrigin.CoachCreated)
+                throw new InvalidOperationException(
+                    "This class is coach-created. Coach approval is not applicable — parents approve enrollment instead.");
+
             if (coachClass.IdCoach != coachUserId)
                 throw new UnauthorizedAccessException("You are not the coach for this class.");
 
             if (coachClass.StartDatetime <= DateTime.Now)
                 throw new InvalidOperationException(
-                    "It´s not possible to approve or reject classes whose date has already passed.");
+                    "It is not possible to approve or reject classes whose date has already passed.");
 
             if (coachClass.Status != (byte)CoachClassStatus.Requested)
                 throw new InvalidOperationException(
@@ -426,7 +436,6 @@ namespace DanceSchoolApp.Server.Services.Classes
             {
                 var scheduledAt = coachClass.StartDatetime.ToString("dd/MM/yyyy 'às' HH:mm");
 
-                // Notify all staff to review the coach-approved class
                 var staffIds = await _context.Users
                     .Include(u => u.IdRoles)
                     .Where(u => u.IdRoles.Any(r => r.RoleId == 1) && u.IsActive)
@@ -461,7 +470,6 @@ namespace DanceSchoolApp.Server.Services.Classes
         // Staff responds second: CoachApproved → Approved (approve) or Rejected (reject).
         public async Task StaffRespondAsync(int classId, bool approve, string? reason)
         {
-            // 1. Fetch first — validate existence and date before mutating anything
             var coachClass = await _context.CoachClasses
                 .FirstOrDefaultAsync(c => c.ClassId == classId);
 
@@ -470,9 +478,8 @@ namespace DanceSchoolApp.Server.Services.Classes
 
             if (coachClass.StartDatetime <= DateTime.Now)
                 throw new InvalidOperationException(
-                    "It´s not possible to approve or reject classes whose date has already passed.");
+                    "It is not possible to approve or reject classes whose date has already passed.");
 
-            // 2. Transition the status
             await TransitionStatusAsync(
                 classId,
                 allowedFrom: new[] { CoachClassStatus.CoachApproved },
@@ -486,21 +493,35 @@ namespace DanceSchoolApp.Server.Services.Classes
                     userId: coachClass.CreatedBy,
                     title: "Aula rejeitada pelo staff",
                     message: reason is not null
-                        ? $"O seu pedido de aula foi rejeitado pelo staff. Razão: {reason}"
-                        : "O seu pedido de aula foi rejeitado pelo staff.",
+                        ? $"O pedido de aula foi rejeitado pelo staff. Razão: {reason}"
+                        : "O pedido de aula foi rejeitado pelo staff.",
                     type: NotificationType.Warning,
                     entityType: "CoachClass",
                     entityId: classId);
+
+                // Also notify coach when a coach-created class is rejected
+                if (coachClass.ClassOrigin == (byte)ClassOrigin.CoachCreated)
+                {
+                    await _notificationService.SendAsync(
+                        userId: coachClass.IdCoach,
+                        title: "Aula rejeitada pelo staff",
+                        message: reason is not null
+                            ? $"A sua aula de {coachClass.StartDatetime:dd/MM/yyyy HH:mm} foi rejeitada pelo staff. Razão: {reason}"
+                            : $"A sua aula de {coachClass.StartDatetime:dd/MM/yyyy HH:mm} foi rejeitada pelo staff.",
+                        type: NotificationType.Warning,
+                        entityType: "CoachClass",
+                        entityId: classId);
+                }
             }
             else
             {
                 var scheduledAt = coachClass.StartDatetime.ToString("dd/MM/yyyy 'às' HH:mm");
 
-                // Notify the parent that their class is now fully approved
+                // For parent-created: notify the parent. For coach-created: notify the coach.
                 await _notificationService.SendAsync(
                     userId: coachClass.CreatedBy,
                     title: "Aula aprovada",
-                    message: $"O seu pedido de aula agendado para {scheduledAt} foi aprovado pelo staff e está confirmado.",
+                    message: $"A aula agendada para {scheduledAt} foi aprovada pelo staff e está confirmada.",
                     type: NotificationType.Success,
                     entityType: "CoachClass",
                     entityId: classId);
@@ -510,25 +531,69 @@ namespace DanceSchoolApp.Server.Services.Classes
         public async Task UpdateDetailsAsync(int classId, CoachClassUpdateDetailsRequest request)
         {
             var coachClass = await _context.CoachClasses
+                .Include(c => c.Participants)
+                    .ThenInclude(p => p.IdStudentNavigation)
                 .FirstOrDefaultAsync(c => c.ClassId == classId);
 
             if (coachClass is null)
                 throw new KeyNotFoundException($"Class with id {classId} was not found.");
 
+            bool changed = false;
+
             if (request.StudioId.HasValue)
+            {
                 coachClass.IdStudio = request.StudioId.Value;
+                changed = true;
+            }
 
             if (request.StartDatetime.HasValue)
+            {
                 coachClass.StartDatetime = request.StartDatetime.Value;
+                changed = true;
+            }
 
             if (request.EndDatetime.HasValue)
             {
                 if (request.EndDatetime.Value <= (request.StartDatetime ?? coachClass.StartDatetime))
                     throw new InvalidOperationException("EndDatetime must be after StartDatetime.");
                 coachClass.EndDatetime = request.EndDatetime.Value;
+                changed = true;
             }
 
             await _context.SaveChangesAsync();
+
+            if (changed)
+            {
+                var scheduledAt = coachClass.StartDatetime.ToString("dd/MM/yyyy 'às' HH:mm");
+
+                // Notify coach
+                await _notificationService.SendAsync(
+                    userId: coachClass.IdCoach,
+                    title: "Aula atualizada pelo staff",
+                    message: $"Os detalhes da sua aula de {scheduledAt} foram alterados pelo staff.",
+                    type: NotificationType.ClassUpdate,
+                    entityType: "CoachClass",
+                    entityId: classId);
+
+                // Notify parents of active participants
+                var parentIds = coachClass.Participants
+                    .Where(p => p.ParentEnrollmentStatus != (byte)ParentEnrollmentStatus.Rejected)
+                    .Select(p => p.IdStudentNavigation.ParentUserId)
+                    .Distinct();
+
+                foreach (var parentId in parentIds)
+                {
+                    if (parentId == coachClass.IdCoach) continue; // skip if coach is also the creator
+
+                    await _notificationService.SendAsync(
+                        userId: parentId,
+                        title: "Aula atualizada pelo staff",
+                        message: $"Os detalhes da aula agendada para {scheduledAt} foram alterados pelo staff.",
+                        type: NotificationType.ClassUpdate,
+                        entityType: "CoachClass",
+                        entityId: classId);
+                }
+            }
         }
 
         public async Task CancelAsync(int classId)
@@ -550,11 +615,11 @@ namespace DanceSchoolApp.Server.Services.Classes
             var scheduledAt = coachClass.StartDatetime.ToString("dd/MM/yyyy 'às' HH:mm");
 
             var parentsToNotify = coachClass.Participants
-                .Where(p => p.IdCoachClass == classId)
+                .Where(p => p.ParentEnrollmentStatus != (byte)ParentEnrollmentStatus.Rejected)
                 .Select(p => p.IdStudentNavigation.ParentUserId)
                 .Distinct()
                 .ToList();
-                
+
             foreach (var parentId in parentsToNotify)
             {
                 await _notificationService.SendAsync(
@@ -563,8 +628,7 @@ namespace DanceSchoolApp.Server.Services.Classes
                     message: $"A aula agendada para {scheduledAt} foi cancelada.",
                     type: NotificationType.Warning,
                     entityType: "CoachClass",
-                    entityId: classId
-                );
+                    entityId: classId);
             }
 
             await _notificationService.SendAsync(
@@ -573,8 +637,7 @@ namespace DanceSchoolApp.Server.Services.Classes
                 message: $"A aula agendada para {scheduledAt} foi cancelada.",
                 type: NotificationType.Warning,
                 entityType: "CoachClass",
-                entityId: classId
-            );
+                entityId: classId);
         }
 
         public async Task FinishAsync(int classId)
@@ -596,7 +659,9 @@ namespace DanceSchoolApp.Server.Services.Classes
             coachClass.FinishedAt = DateTime.Now;
             await _context.SaveChangesAsync();
 
+            // Only notify parents of active (non-rejected) participants
             var distinctParentIds = coachClass.Participants
+                .Where(p => p.ParentEnrollmentStatus != (byte)ParentEnrollmentStatus.Rejected)
                 .Select(p => p.IdStudentNavigation.ParentUserId)
                 .Distinct();
 
@@ -620,7 +685,7 @@ namespace DanceSchoolApp.Server.Services.Classes
                 entityId: classId);
         }
 
-        //  Validation workflow 
+        //  Validation workflow
 
         public async Task CoachValidateAsync(int classId, int coachUserId, bool didTeach)
         {
@@ -648,9 +713,9 @@ namespace DanceSchoolApp.Server.Services.Classes
             coachClass.CoachValidatedAt = DateTime.Now;
             await _context.SaveChangesAsync();
 
-            // If all participants have already responded, advance immediately to Pending
-            // so staff can do the final sign-off — mirrors the path where the parent validates last.
+            // Only count active participants for the "all responded" check
             bool allResponded = coachClass.Participants
+                .Where(p => p.ParentEnrollmentStatus != (byte)ParentEnrollmentStatus.Rejected)
                 .All(p => p.ValidationStatus != (byte)ParticipantValidationStatus.Pending);
 
             if (allResponded)
@@ -659,8 +724,6 @@ namespace DanceSchoolApp.Server.Services.Classes
                 await _context.SaveChangesAsync();
             }
         }
-
-     
 
         public async Task StaffValidateAsync(int classId, bool confirmed, string? reason)
         {
@@ -684,6 +747,7 @@ namespace DanceSchoolApp.Server.Services.Classes
             await _context.SaveChangesAsync();
 
             var parentIds = coachClass.Participants
+                .Where(p => p.ParentEnrollmentStatus != (byte)ParentEnrollmentStatus.Rejected)
                 .Select(p => p.IdStudentNavigation.ParentUserId)
                 .Distinct();
 
@@ -714,52 +778,171 @@ namespace DanceSchoolApp.Server.Services.Classes
             }
         }
 
-        //  Private helpers 
+        //  Private helpers
+
+        private async Task ValidateModalityAndCoach(int modalityId, int coachId)
+        {
+            bool modalityActive = await _context.Modalities
+                .AnyAsync(m => m.ModalityId == modalityId && m.IsActive);
+
+            if (!modalityActive)
+                throw new KeyNotFoundException(
+                    $"Modality with id {modalityId} was not found or is inactive.");
+
+            bool coachActive = await _context.Coaches
+                .AnyAsync(c => c.CoachId == coachId);
+
+            if (!coachActive)
+                throw new KeyNotFoundException(
+                    $"Coach with id {coachId} was not found.");
+
+            bool coachTeachesModality = await _context.Coaches
+                .Include(c => c.IdModalities)
+                .Where(c => c.CoachId == coachId)
+                .AnyAsync(c => c.IdModalities.Any(m => m.ModalityId == modalityId));
+
+            if (!coachTeachesModality)
+                throw new InvalidOperationException(
+                    $"Coach with id {coachId} does not teach modality {modalityId}.");
+        }
+
+        private static void ValidateDuration(DateTime start, DateTime end)
+        {
+            if (end <= start)
+                throw new InvalidOperationException(
+                    "The class end time must be after the start time.");
+
+            var durationMinutes = (end - start).TotalMinutes;
+            if (durationMinutes < 30 || durationMinutes > 120)
+                throw new InvalidOperationException(
+                    "Classes must have a duration between 30 and 120 minutes.");
+        }
+
+        private async Task<int> SelectStudioAsync(int modalityId, DateTime start, DateTime end)
+        {
+            var candidateStudios = await _context.Studios
+                .Include(s => s.IdModalities)
+                .Include(s => s.CoachClasses)
+                .Where(s => s.IsActive && s.IdModalities.Any(m => m.ModalityId == modalityId))
+                .ToListAsync();
+
+            if (!candidateStudios.Any())
+                throw new InvalidOperationException(
+                    $"No active studios support modality {modalityId}.");
+
+            var blockedStudioIds = await _context.BlockedPeriods
+                .Where(b => b.Scope == 2 && b.StartDatetime < end && b.EndDatetime > start)
+                .Select(b => b.IdStudio)
+                .ToListAsync();
+
+            var bookedStudioIds = await _context.CoachClasses
+                .Where(c => c.Status != (byte)CoachClassStatus.Rejected &&
+                            c.Status != (byte)CoachClassStatus.Cancelled &&
+                            c.StartDatetime < end && c.EndDatetime > start)
+                .Select(c => c.IdStudio)
+                .ToListAsync();
+
+            var requestDate = start.Date;
+
+            var selected = candidateStudios
+                .Where(s => !blockedStudioIds.Contains(s.StudioId) &&
+                            !bookedStudioIds.Contains(s.StudioId))
+                .OrderBy(s => s.CoachClasses
+                    .Count(c => c.StartDatetime.Date == requestDate &&
+                                c.Status != (byte)CoachClassStatus.Cancelled &&
+                                c.Status != (byte)CoachClassStatus.Rejected))
+                .FirstOrDefault();
+
+            if (selected is null)
+                throw new InvalidOperationException(
+                    "No studios are available for the requested time window and modality.");
+
+            return selected.StudioId;
+        }
+
+        private async Task CheckCoachConflictAsync(int coachId, DateTime start, DateTime end)
+        {
+            bool coachConflict = await _context.CoachClasses
+                .AnyAsync(c =>
+                    c.IdCoach == coachId &&
+                    c.Status != (byte)CoachClassStatus.Rejected &&
+                    c.Status != (byte)CoachClassStatus.Cancelled &&
+                    c.StartDatetime < end && c.EndDatetime > start);
+
+            if (coachConflict)
+                throw new InvalidOperationException(
+                    "The coach is already booked during this time window.");
+        }
+
+        private async Task CheckCoachAvailabilityAsync(int coachId, DateTime start, DateTime end)
+        {
+            var classDate    = DateOnly.FromDateTime(start);
+            var classWeekday = (byte)start.DayOfWeek;
+            var classStart   = TimeOnly.FromTimeSpan(start.TimeOfDay);
+            var classEnd     = TimeOnly.FromTimeSpan(end.TimeOfDay);
+
+            bool hasAvailability = await _context.CoachAvailabilities
+                .AnyAsync(a =>
+                    a.IdCoach   == coachId   &&
+                    a.Weekday   == classWeekday &&
+                    a.StartTime <= classStart   &&
+                    a.EndTime   >= classEnd     &&
+                    (a.ValidFrom  == null || a.ValidFrom  <= classDate) &&
+                    (a.ValidUntil == null || a.ValidUntil >= classDate));
+
+            if (!hasAvailability)
+                throw new InvalidOperationException(
+                    "The coach does not have an availability slot covering the requested time window.");
+        }
+
+        private async Task CheckStudentTimeConflictAsync(int studentId, DateTime start, DateTime end)
+        {
+            bool timeConflict = await _context.Participants
+                .Include(p => p.IdCoachClassNavigation)
+                .AnyAsync(p =>
+                    p.IdStudent == studentId &&
+                    p.ParentEnrollmentStatus != (byte)ParentEnrollmentStatus.Rejected &&
+                    p.IdCoachClassNavigation.Status != (byte)CoachClassStatus.Rejected &&
+                    p.IdCoachClassNavigation.Status != (byte)CoachClassStatus.Cancelled &&
+                    p.IdCoachClassNavigation.StartDatetime < end &&
+                    p.IdCoachClassNavigation.EndDatetime > start);
+
+            if (timeConflict)
+                throw new InvalidOperationException(
+                    $"Student {studentId} is already enrolled in another class at this time.");
+        }
 
         private async Task CheckBlockedPeriodsAsync(
             DateTime start, DateTime end, int coachId, int studioId)
         {
-            // Any global block (Undefined=0, NormalClass=1, Event=4, Holiday=5)
-            // that overlaps the requested window blocks all bookings.
             bool globalBlock = await _context.BlockedPeriods
                 .AnyAsync(b =>
                     (b.Scope == 0 || b.Scope == 1 || b.Scope == 4 || b.Scope == 5) &&
-                    b.StartDatetime < end &&
-                    b.EndDatetime > start);
+                    b.StartDatetime < end && b.EndDatetime > start);
 
             if (globalBlock)
                 throw new InvalidOperationException(
-                    "The requested time window falls within a global blocked period " +
-                    "(school event, holiday, or normal class block).");
+                    "The requested time window falls within a global blocked period.");
 
-            // Studio-specific block
             bool studioBlock = await _context.BlockedPeriods
                 .AnyAsync(b =>
-                    b.Scope == 2 &&
-                    b.IdStudio == studioId &&
-                    b.StartDatetime < end &&
-                    b.EndDatetime > start);
+                    b.Scope == 2 && b.IdStudio == studioId &&
+                    b.StartDatetime < end && b.EndDatetime > start);
 
             if (studioBlock)
                 throw new InvalidOperationException(
                     "The studio is blocked during this time window.");
 
-            // Coach-specific block
             bool coachBlock = await _context.BlockedPeriods
                 .AnyAsync(b =>
-                    b.Scope == 3 &&
-                    b.IdCoach == coachId &&
-                    b.StartDatetime < end &&
-                    b.EndDatetime > start);
+                    b.Scope == 3 && b.IdCoach == coachId &&
+                    b.StartDatetime < end && b.EndDatetime > start);
 
             if (coachBlock)
                 throw new InvalidOperationException(
                     "The coach is unavailable during this time window.");
         }
 
-        // Generic status transition — enforces allowed-from states so invalid
-        // transitions (e.g. approving an already-validated class) are caught
-        // in one place rather than duplicated per method.
         private async Task TransitionStatusAsync(
             int classId,
             CoachClassStatus[] allowedFrom,
@@ -787,6 +970,7 @@ namespace DanceSchoolApp.Server.Services.Classes
                 ClassId = c.ClassId,
                 Status = (CoachClassStatus)c.Status,
                 CoachValidationStatus = (CoachValidationStatus)c.CoachValidationStatus,
+                ClassOrigin = (ClassOrigin)c.ClassOrigin,
                 StartDatetime = c.StartDatetime,
                 EndDatetime = c.EndDatetime,
                 ModalityId = c.IdModality,
@@ -797,6 +981,7 @@ namespace DanceSchoolApp.Server.Services.Classes
                 CurrentParticipants = c.Participants.Count,
                 CreatedAt = c.CreatedAt,
                 StudentNames = c.Participants
+                    .Where(p => p.ParentEnrollmentStatus != (byte)ParentEnrollmentStatus.Rejected)
                     .Select(p => ResolveStudentName(p.IdStudentNavigation))
                     .ToList()
             };
@@ -809,7 +994,7 @@ namespace DanceSchoolApp.Server.Services.Classes
                 : coach.CoachNavigation?.Username ?? $"Coach {coach.CoachId}";
         }
 
-        private static string ResolveStudentName(Student student)
+        internal static string ResolveStudentName(Student student)
         {
             var person = student.PersonInfo;
             return person is not null

@@ -24,7 +24,15 @@ namespace DanceSchoolApp.Server.DTOs.Coach
         public CoachClassStatus Status { get; set; }
     }
 
-    //  Validate / requests tab 
+    //  Coach-create — student picker
+
+    public class CoachStudentPickerItem
+    {
+        public int StudentId { get; set; }
+        public string StudentName { get; set; } = null!;
+    }
+
+    //  Validate / requests tab
 
     public class CoachPendingRequestItem
     {
