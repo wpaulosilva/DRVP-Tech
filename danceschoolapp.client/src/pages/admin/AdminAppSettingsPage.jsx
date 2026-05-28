@@ -243,11 +243,9 @@ function AdminAppSettingsPage() {
                         <span>Atualizado em</span>
                     </div>
 
-                    {settings
-                        .filter((s) => SETTING_META[s.key])
-                        .map((s) => (
+                        {settings.map((s) => (
                             <SettingRow key={s.settingId ?? s.key} setting={s} />
-                    ))}
+                        ))}
                 </div>
             )}
         </PageCard>
