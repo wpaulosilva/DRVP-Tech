@@ -186,6 +186,9 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.StaffValidatedAt).HasColumnName("staff_validated_at");
             entity.Property(e => e.StartDatetime).HasColumnName("start_datetime");
             entity.Property(e => e.Status).HasColumnName("status");
+            entity.Property(e => e.ClassOrigin)
+                  .HasDefaultValue((byte)0)
+                  .HasColumnName("class_origin");
 
             entity.HasOne(d => d.CreatedByNavigation).WithMany(p => p.CoachClasses)
                 .HasForeignKey(d => d.CreatedBy)
@@ -434,6 +437,10 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.JoinedAt).HasColumnName("joined_at");
             entity.Property(e => e.ParentValidatedAt).HasColumnName("parent_validated_at");
             entity.Property(e => e.ValidationStatus).HasColumnName("validation_status");
+            entity.Property(e => e.ParentEnrollmentStatus)
+                  .HasDefaultValue((byte)0)
+                  .HasColumnName("parent_enrollment_status");
+            entity.Property(e => e.ParentEnrollmentAt).HasColumnName("parent_enrollment_at");
 
             entity.HasOne(d => d.IdCoachClassNavigation).WithMany(p => p.Participants)
                 .HasForeignKey(d => d.IdCoachClass)

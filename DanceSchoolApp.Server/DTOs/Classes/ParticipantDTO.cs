@@ -1,17 +1,30 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 
 namespace DanceSchoolApp.Server.DTOs.Classes
 {
-    //  Validation status enum 
-    // Per-participant attendance confirmation, separate from CoachClassStatus.
+    //  Validation status enum
+    // Per-participant post-class attendance confirmation.
     public enum ParticipantValidationStatus : byte
     {
-        Pending = 0,  // neither party has responded yet
-        ParentConfirmed = 1,  // parent confirmed student attended
-        Disputed = 2   // parent said student did not attend
+        Pending         = 0,
+        ParentConfirmed = 1,
+        Disputed        = 2
     }
 
-    //  Responses 
+    // Pre-class enrollment approval — only used when ClassOrigin = CoachCreated.
+    // 0=NotRequired: used for parent-created classes (no separate approval needed).
+    // 1=Pending: coach-created, waiting for parent response.
+    // 2=Approved: parent approved the child's enrollment.
+    // 3=Rejected: parent rejected the child's enrollment.
+    public enum ParentEnrollmentStatus : byte
+    {
+        NotRequired = 0,
+        Pending     = 1,
+        Approved    = 2,
+        Rejected    = 3
+    }
+
+    //  Responses
 
     public class ParticipantListResponse
     {
@@ -23,9 +36,11 @@ namespace DanceSchoolApp.Server.DTOs.Classes
         public DateOnly JoinedAt { get; set; }
         public ParticipantValidationStatus ValidationStatus { get; set; }
         public DateTime? ParentValidatedAt { get; set; }
+        public ParentEnrollmentStatus ParentEnrollmentStatus { get; set; }
+        public DateTime? ParentEnrollmentAt { get; set; }
     }
 
-    //  Requests 
+    //  Requests
 
     public class ParticipantJoinRequest
     {
@@ -34,12 +49,17 @@ namespace DanceSchoolApp.Server.DTOs.Classes
 
         [Required]
         public int StudentId { get; set; }
-
     }
 
     public class ParticipantValidateRequest
     {
         [Required]
         public bool Attended { get; set; }
+    }
+
+    public class ParticipantEnrollmentApproveRequest
+    {
+        [Required]
+        public bool Approve { get; set; }
     }
 }
