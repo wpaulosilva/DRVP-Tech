@@ -1,23 +1,37 @@
 import { useEffect, useState, useCallback } from 'react'
 import Modal from '../../components/common/Modal'
 import {
-    getAllEvents, createEvent, updateEvent,
-    activateEvent, deactivateEvent, deleteEvent
+    getAllEvents,
+    createEvent,
+    updateEvent,
+    activateEvent,
+    deactivateEvent,
+    deleteEvent
 } from '../../services/eventsService'
 import '../../styles/ManageCards.css'
 
 const fmt = {
     datetime: v => v
         ? new Date(v).toLocaleDateString('pt-PT', {
-            day: '2-digit', month: 'short', year: 'numeric',
-            hour: '2-digit', minute: '2-digit'
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
         })
         : '—',
 }
 
-// ─── Event card ────────────────────────────────────────────────────────────────
 function EventCard({ event, onEdit, onToggleActive, onDelete }) {
-    const { eventId, title, description, startDatetime, endDatetime, isActive, createdByName } = event
+    const {
+        eventId,
+        title,
+        description,
+        startDatetime,
+        endDatetime,
+        isActive,
+        createdByName
+    } = event
 
     return (
         <div className={`mc-card${isActive ? '' : ' mc-card--inactive'}`}>
@@ -27,22 +41,27 @@ function EventCard({ event, onEdit, onToggleActive, onDelete }) {
                     {isActive ? 'Ativo' : 'Inativo'}
                 </span>
             </div>
+
             {description && <p className="mc-card-desc">{description}</p>}
+
             <div className="mc-card-meta">
                 <span>Início: {fmt.datetime(startDatetime)}</span>
                 <span>Fim: {fmt.datetime(endDatetime)}</span>
                 {createdByName && <span>Criado por: {createdByName}</span>}
             </div>
+
             <div className="mc-card-actions">
                 <button className="btn btn-secondary" onClick={() => onEdit(eventId)}>
                     Editar
                 </button>
+
                 <button
                     className={`btn ${isActive ? 'btn-secondary' : 'btn-primary'}`}
                     onClick={() => onToggleActive(eventId, isActive)}
                 >
                     {isActive ? 'Desativar' : 'Ativar'}
                 </button>
+
                 <button className="btn btn-danger" onClick={() => onDelete(eventId)}>
                     Apagar
                 </button>
@@ -51,50 +70,61 @@ function EventCard({ event, onEdit, onToggleActive, onDelete }) {
     )
 }
 
-// ─── Form modal (create + edit) ────────────────────────────────────────────────
 function EventFormModal({ open, editEvent, onClose, onSaved }) {
     const isEdit = !!editEvent
-    const empty = { title: '', description: '', startDatetime: '', endDatetime: '', imageUrl: '' }
+    const empty = {
+        title: '',
+        description: '',
+        startDatetime: '',
+        endDatetime: ''
+    }
+
     const [form, setForm] = useState(empty)
     const [saving, setSaving] = useState(false)
     const [error, setError] = useState('')
 
     useEffect(() => {
         if (!open) return
+
         if (isEdit) {
             const toLocal = v => v ? new Date(v).toISOString().slice(0, 16) : ''
+
             setForm({
                 title: editEvent.title ?? '',
                 description: editEvent.description ?? '',
                 startDatetime: toLocal(editEvent.startDatetime),
-                endDatetime: toLocal(editEvent.endDatetime),
-                imageUrl: editEvent.imageUrl ?? '',
+                endDatetime: toLocal(editEvent.endDatetime)
             })
         } else {
             setForm(empty)
         }
+
         setError('')
     }, [open, editEvent])
 
-    const set = (field, value) => setForm(p => ({ ...p, [field]: value }))
+    const set = (field, value) => {
+        setForm(prev => ({ ...prev, [field]: value }))
+    }
 
-    const handleSubmit = async (e) => {
+    const handleSubmit = async e => {
         e.preventDefault()
         setSaving(true)
         setError('')
+
         try {
             const body = {
                 title: form.title.trim(),
                 description: form.description.trim() || null,
                 startDatetime: form.startDatetime,
-                endDatetime: form.endDatetime,
-                imageUrl: form.imageUrl.trim() || null,
+                endDatetime: form.endDatetime
             }
+
             if (isEdit) {
                 await updateEvent(editEvent.eventId, body)
             } else {
                 await createEvent(body)
             }
+
             onSaved()
         } catch (err) {
             setError(err.message)
@@ -108,32 +138,59 @@ function EventFormModal({ open, editEvent, onClose, onSaved }) {
             <form onSubmit={handleSubmit}>
                 <div className="mc-form-group">
                     <label className="mc-label">Título *</label>
-                    <input className="mc-input" required maxLength={64}
-                        value={form.title} onChange={e => set('title', e.target.value)} />
+                    <input
+                        className="mc-input"
+                        required
+                        maxLength={64}
+                        value={form.title}
+                        onChange={e => set('title', e.target.value)}
+                    />
                 </div>
+
                 <div className="mc-form-group">
                     <label className="mc-label">Descrição</label>
-                    <textarea className="mc-textarea" maxLength={256} rows={3}
-                        value={form.description} onChange={e => set('description', e.target.value)} />
+                    <textarea
+                        className="mc-textarea"
+                        maxLength={256}
+                        rows={3}
+                        value={form.description}
+                        onChange={e => set('description', e.target.value)}
+                    />
                 </div>
+
                 <div className="mc-form-group">
                     <label className="mc-label">Data de Início *</label>
-                    <input className="mc-input" type="datetime-local" required
-                        value={form.startDatetime} onChange={e => set('startDatetime', e.target.value)} />
+                    <input
+                        className="mc-input"
+                        type="datetime-local"
+                        required
+                        value={form.startDatetime}
+                        onChange={e => set('startDatetime', e.target.value)}
+                    />
                 </div>
+
                 <div className="mc-form-group">
                     <label className="mc-label">Data de Fim *</label>
-                    <input className="mc-input" type="datetime-local" required
-                        value={form.endDatetime} onChange={e => set('endDatetime', e.target.value)} />
+                    <input
+                        className="mc-input"
+                        type="datetime-local"
+                        required
+                        value={form.endDatetime}
+                        onChange={e => set('endDatetime', e.target.value)}
+                    />
                 </div>
-                <div className="mc-form-group">
-                    <label className="mc-label">URL da Imagem</label>
-                    <input className="mc-input" maxLength={256} placeholder="https://..."
-                        value={form.imageUrl} onChange={e => set('imageUrl', e.target.value)} />
-                </div>
-                {error && <p style={{ color: 'var(--danger)', fontSize: '0.88rem', margin: '0 0 12px' }}>{error}</p>}
+
+                {error && (
+                    <p style={{ color: 'var(--danger)', fontSize: '0.88rem', margin: '0 0 12px' }}>
+                        {error}
+                    </p>
+                )}
+
                 <div className="modal-actions">
-                    <button type="button" className="btn btn-secondary" onClick={onClose}>Cancelar</button>
+                    <button type="button" className="btn btn-secondary" onClick={onClose}>
+                        Cancelar
+                    </button>
+
                     <button type="submit" className="btn btn-primary" disabled={saving}>
                         {saving ? 'A guardar...' : 'Guardar'}
                     </button>
@@ -143,13 +200,16 @@ function EventFormModal({ open, editEvent, onClose, onSaved }) {
     )
 }
 
-// ─── Confirm modal ─────────────────────────────────────────────────────────────
 function ConfirmModal({ open, message, onClose, onConfirm, loading }) {
     return (
         <Modal open={open} title="Confirmar" onClose={onClose}>
             <p className="mc-confirm-text">{message}</p>
+
             <div className="modal-actions">
-                <button className="btn btn-secondary" onClick={onClose}>Cancelar</button>
+                <button className="btn btn-secondary" onClick={onClose}>
+                    Cancelar
+                </button>
+
                 <button className="btn btn-danger" onClick={onConfirm} disabled={loading}>
                     {loading ? 'A processar...' : 'Confirmar'}
                 </button>
@@ -158,18 +218,19 @@ function ConfirmModal({ open, message, onClose, onConfirm, loading }) {
     )
 }
 
-// ─── Page ──────────────────────────────────────────────────────────────────────
 function StaffEventsPage() {
     const [events, setEvents] = useState([])
     const [loading, setLoading] = useState(false)
 
     const [formOpen, setFormOpen] = useState(false)
     const [editEvent, setEditEvent] = useState(null)
-    const [confirm, setConfirm] = useState(null) // { id, type: 'toggle'|'delete', isActive }
+
+    const [confirm, setConfirm] = useState(null)
     const [confirming, setConfirming] = useState(false)
 
     const fetchAll = useCallback(async () => {
         setLoading(true)
+
         try {
             const res = await getAllEvents()
             setEvents(Array.isArray(res) ? res : [])
@@ -180,24 +241,50 @@ function StaffEventsPage() {
         }
     }, [])
 
-    useEffect(() => { fetchAll() }, [fetchAll])
+    useEffect(() => {
+        fetchAll()
+    }, [fetchAll])
 
-    const openCreate = () => { setEditEvent(null); setFormOpen(true) }
-    const openEdit = id => { setEditEvent(events.find(e => e.eventId === id) ?? null); setFormOpen(true) }
-    const closeForm = () => { setFormOpen(false); setEditEvent(null) }
-    const handleSaved = () => { closeForm(); fetchAll() }
+    const openCreate = () => {
+        setEditEvent(null)
+        setFormOpen(true)
+    }
+
+    const openEdit = id => {
+        setEditEvent(events.find(e => e.eventId === id) ?? null)
+        setFormOpen(true)
+    }
+
+    const closeForm = () => {
+        setFormOpen(false)
+        setEditEvent(null)
+    }
+
+    const handleSaved = () => {
+        closeForm()
+        fetchAll()
+    }
 
     const handleToggleActive = (id, isActive) => {
-        setConfirm({ id, type: 'toggle', isActive })
+        setConfirm({
+            id,
+            type: 'toggle',
+            isActive
+        })
     }
 
     const handleDelete = id => {
-        setConfirm({ id, type: 'delete' })
+        setConfirm({
+            id,
+            type: 'delete'
+        })
     }
 
     const handleConfirm = async () => {
         if (!confirm) return
+
         setConfirming(true)
+
         try {
             if (confirm.type === 'toggle') {
                 if (confirm.isActive) {
@@ -208,6 +295,7 @@ function StaffEventsPage() {
             } else if (confirm.type === 'delete') {
                 await deleteEvent(confirm.id)
             }
+
             setConfirm(null)
             fetchAll()
         } catch (e) {
@@ -226,6 +314,7 @@ function StaffEventsPage() {
                         Administrar e agendar eventos escolares.
                     </p>
                 </div>
+
                 <button className="btn btn-primary" onClick={openCreate}>
                     Novo Evento
                 </button>
@@ -236,8 +325,11 @@ function StaffEventsPage() {
             {!loading && (
                 <div className="mc-grid">
                     {events.length === 0 && (
-                        <div className="mc-empty"><p>Nenhum evento registado.</p></div>
+                        <div className="mc-empty">
+                            <p>Nenhum evento registado.</p>
+                        </div>
                     )}
+
                     {events.map(ev => (
                         <EventCard
                             key={ev.eventId}
@@ -250,7 +342,6 @@ function StaffEventsPage() {
                 </div>
             )}
 
-            {/* FORMULÁRIO ADICIONADO PARA RESOLVER O ERRO DE UNUSED VARS */}
             <EventFormModal
                 open={formOpen}
                 editEvent={editEvent}
