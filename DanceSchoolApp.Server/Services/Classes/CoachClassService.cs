@@ -413,7 +413,7 @@ namespace DanceSchoolApp.Server.Services.Classes
 
             if (coachClass.ClassOrigin == (byte)ClassOrigin.CoachCreated)
                 throw new InvalidOperationException(
-                    "This class was created by the coach. Coach approval is not applicable — parents approve enrollment instead.");
+                    "This class is coach-created. Coach approval is not applicable — parents approve enrollment instead.");
 
             if (coachClass.IdCoach != coachUserId)
                 throw new UnauthorizedAccessException("You are not the coach for this class.");

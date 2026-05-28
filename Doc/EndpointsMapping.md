@@ -290,16 +290,36 @@ The header mounts once per session. It does NOT call an endpoint on every naviga
 
 ### `/coach/validate` — Validar Aulas
 
+#### Tab: Pedidos de Coaching (default)
+
 | Element | Call |
 |---|---|
 | Page mount | `GET /api/auth/me` |
-| Tab "Pedidos de Aula" (default) | `GET /api/coach/validate?tab=requests&page=1&pageSize=10` |
-| Tab "Validações" | `GET /api/coach/validate?tab=validations&page=1&pageSize=10` |
-| Pagination | re-calls with `&page={n}` |
+| Tab mount | `GET /api/coach/validate?tab=requests&page=1&pageSize=10` |
 | "Aceitar Aula" button | `PATCH /api/coachclasses/{id}/coach-respond` body: `{ "accept": true }` |
 | "Recusar Aula" button | `PATCH /api/coachclasses/{id}/coach-respond` body: `{ "accept": false, "reason"?: "..." }` |
-| "Realizada" button (validations tab) | `PATCH /api/coachclasses/{id}/coach-validate` body: `{ didTeach: true }` |
-| "Não Realizada" button (validations tab) | `PATCH /api/coachclasses/{id}/coach-validate` body: `{ didTeach: false }` |
+
+> Note: `coach-respond` is **only valid for parent-created classes** (`ClassOrigin=0`). For coach-created classes, the endpoint throws 400 — the coach does not approve their own classes.
+
+#### Tab: Validações
+
+| Element | Call |
+|---|---|
+| Tab mount | `GET /api/coach/validate?tab=validations&page=1&pageSize=10` |
+| "Realizada" button | `PATCH /api/coachclasses/{id}/coach-validate` body: `{ didTeach: true }` |
+| "Não Realizada" button | `PATCH /api/coachclasses/{id}/coach-validate` body: `{ didTeach: false }` |
+
+#### Tab: Criar Aula (coach-initiated group or individual class)
+
+Coach selects modality, students, date, and time. Parents of selected students receive enrollment approval notifications.
+
+| Element | Call |
+|---|---|
+| Modality dropdown populate | `GET /api/modalities` |
+| Student list (filtered by modality) | `GET /api/coach/students?modalityId={id}` — returns active+accepted students in that modality |
+| "Criar Aula" submit | `POST /api/coachclasses/coach-create` body: `{ modalityId, startDatetime, endDatetime, maxParticipants, studentIds[] }` |
+
+> `ClassOrigin` is set to `1=CoachCreated`. Participants are created with `ParentEnrollmentStatus=1=Pending`. When all parents respond (≥1 approved) → auto-advances to `CoachApproved`; all rejected → auto-cancels.
 
 ### `/coach/agenda` — Agenda
 
@@ -340,7 +360,9 @@ The header mounts once per session. It does NOT call an endpoint on every naviga
 | Navigation arrows (prev/next week) | `GET /api/ee/classes/my?from={newStart}&to={newEnd}` |
 | Day click → detail list below | uses data already in response |
 
-#### Tab: Criar Aula
+#### Tab: Criar Coaching (individual)
+
+Parent can only request **individual** classes (MaxParticipants = 1, single student that is their own child).
 
 | Element | Call |
 |---|---|
@@ -348,11 +370,24 @@ The header mounts once per session. It does NOT call an endpoint on every naviga
 | Coach dropdown populate | `GET /api/ee/coaches` (parent-facing endpoint — returns active coaches with modalities) |
 | Calendar slot grid (on dropdown change or initial) | `GET /api/ee/classes/available-slots?from={weekStart}&to={weekEnd}&modalityId={id}&coachId={id}` |
 | Navigation arrows on slot calendar | re-calls with new date range |
-| "Pedir Aula" button on a slot → modal open | no API call yet (just opens modal) |
+| "Pedir Coaching" button on a slot → modal open | no API call yet (just opens modal) |
 | Modal — student dropdown | `GET /api/ee/students` (already loaded or re-fetch) |
-| Modal — "Confirmar Pedido" submit | `POST /api/coachclasses` body: `{ coachId, modalityId, startDatetime, endDatetime, maxParticipants, studentIds[] }` |
+| Modal — "Confirmar Pedido" submit | `POST /api/coachclasses` body: `{ coachId, modalityId, startDatetime, endDatetime, studentId }` |
 
-> Gap: `GET /api/coaches` is currently `[Authorize(Roles = "staff")]`. The parent needs a read-only coach list to populate the dropdown. **Fix:** add `parent` to the roles on `GET /api/coaches`, OR create `GET /api/coaches/available` under `/api/ee/` that returns only active coaches with their modalities. The latter is cleaner.
+> Note: MaxParticipants is hardcoded to 1 on the backend for parent-created classes. `studentId` is a single integer (not an array). `ClassOrigin` is set to `0=ParentCreated`.
+
+#### Tab: Inscrições (coach-created enrollment approvals)
+
+Shown when a coach created a class and the parent's student was included. Parent must approve or reject before the class advances.
+
+| Element | Call |
+|---|---|
+| Tab mount — load pending enrollments | `GET /api/coachclasses/parent/{userId}` to find `ClassOrigin=1 + Status=Requested` classes, then `GET /api/coachclasses/{id}` per class to get participant detail |
+| "Aceitar" button | `PATCH /api/participants/{participantId}/parent-approve-enrollment` body: `{ "approve": true }` |
+| "Rejeitar" button | `PATCH /api/participants/{participantId}/parent-approve-enrollment` body: `{ "approve": false }` |
+
+> When all parents respond: if ≥1 approved → class auto-advances to `CoachApproved(8)`; if all rejected → class auto-cancels to `Cancelled(3)`.
+> `ParentEnrollmentStatus` values: `0=NotRequired` (parent-created), `1=Pending`, `2=Approved`, `3=Rejected`.
 
 #### Tab: Aulas Existentes
 

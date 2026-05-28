@@ -1,12 +1,15 @@
-// Tabs: minhas-marcacoes | marcar | grupo | validar
-// Tab 1 — GET /api/ee/classes/my?from=&to=  (monthly calendar, ParentUpcomingClass[])
+// Tabs: minhas-marcacoes | marcar | grupo | inscricoes | validar
+// Tab 1 — GET /api/coachclasses/parent/{userId}  (all classes for parent's students)
 // Tab 2 — GET /api/ee/classes/available-slots?from=&to=&modalityId=&coachId=
 //          Response: DaySlotResponse[] → [{ Date:"YYYY-MM-DD", Slots:[{ CoachId, CoachName, StartTime, EndTime, ModalityIds, ModalityNames }] }]
-//          POST /api/coachclasses body: { coachId, modalityId, startDatetime, endDatetime, maxParticipants, studentIds[] }
+//          POST /api/coachclasses body: { coachId, modalityId, startDatetime, endDatetime, studentId }  (individual, no maxParticipants)
 // Tab 3 — GET /api/ee/classes/open?page=1&pageSize=50
 //          Response: PagedResult<OpenClassItem> → { Items:[...], TotalCount }
 //          POST /api/participants body: { classId, studentId }
-// Tab 4 — GET /api/ee/classes/validate  (PagedResult<ParentValidateItem>)
+// Tab 4 — Coach-created enrollment approvals
+//          GET /api/coachclasses/{id} for each CoachCreated+Requested class → ClassParticipantSummary[]
+//          PATCH /api/participants/{id}/parent-approve-enrollment body: { approve: bool }
+// Tab 5 — GET /api/ee/classes/validate  (PagedResult<ParentValidateItem>)
 //          PATCH /api/participants/{id}/parent-validate body: { attended: bool }
 import { useEffect, useMemo, useState } from 'react'
 import PageCard from '../../components/common/PageCard'
@@ -20,10 +23,12 @@ import {
     getOpenClasses,
     getValidateClasses,
     parentValidateParticipant,
-    createClass,
+    parentCreateClass,
     enrollInClass,
     enrollByInvite,
     getJoinClassStatus,
+    getClassById,
+    approveEnrollment,
 } from '../../services/classesService'
 import { getModalities } from '../../services/modalitiesService'
 import { getCoachesForParent } from '../../services/coachService'
@@ -116,11 +121,15 @@ function statusCardClass(s) {
 const DAYS_PT = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
 
 const TABS = [
-    { id: 'minhas-marcacoes', label: 'Minhas Marcações', activeExtra: '' },
+    { id: 'minhas-marcacoes', label: 'Minhas Marcações',     activeExtra: '' },
     { id: 'marcar',           label: 'Criar Coaching',       activeExtra: '' },
     { id: 'grupo',            label: 'Coachings Existentes', activeExtra: '-teal' },
+    { id: 'inscricoes',       label: 'Inscrições',           activeExtra: '-orange' },
     { id: 'validar',          label: 'Validar Coachings',    activeExtra: '-orange' },
 ]
+
+// ParentEnrollmentStatus enum (mirrors backend)
+const ENROLLMENT_STATUS = { NotRequired: 0, Pending: 1, Approved: 2, Rejected: 3 }
 
 // ---- Shared MonthCalendar ----
 
@@ -293,7 +302,6 @@ function ParentClassesPage() {
     const [bookingDate, setBookingDate]           = useState('')     // "YYYY-MM-DD"
     const [bookingModalityId, setBookingModalityId] = useState('')
     const [bookingStudentId, setBookingStudentId]   = useState('')
-    const [bookingMaxParts, setBookingMaxParts]     = useState(1)
     const [bookingStartTime, setBookingStartTime]   = useState('')  // "HH:MM"
     const [bookingEndTime, setBookingEndTime]       = useState('')  // "HH:MM"
     const [bookingSubmitting, setBookingSubmitting] = useState(false)
@@ -335,7 +343,6 @@ function ParentClassesPage() {
         const firstModalityId = (slot.ModalityIds ?? slot.modalityIds ?? [])[0]
         setBookingModalityId(firstModalityId ? String(firstModalityId) : '')
         setBookingStudentId('')
-        setBookingMaxParts(1)
         setBookingStartTime(fmtTime24(slot.StartTime ?? slot.startTime))
         setBookingEndTime(fmtTime24(slot.EndTime ?? slot.endTime))
         setBookingError('')
@@ -361,13 +368,12 @@ function ParentClassesPage() {
         setBookingSubmitting(true); setBookingError('')
         try {
             const coachId = bookingSlot.CoachId ?? bookingSlot.coachId
-            await createClass({
+            await parentCreateClass({
                 coachId,
-                modalityId:      Number(bookingModalityId),
-                startDatetime:   `${bookingDate}T${bookingStartTime}:00`,
-                endDatetime:     `${bookingDate}T${bookingEndTime}:00`,
-                maxParticipants: Number(bookingMaxParts),
-                studentIds:      [Number(bookingStudentId)],
+                modalityId:    Number(bookingModalityId),
+                startDatetime: `${bookingDate}T${bookingStartTime}:00`,
+                endDatetime:   `${bookingDate}T${bookingEndTime}:00`,
+                studentId:     Number(bookingStudentId),
             })
             setBookingSuccess(true)
             setTimeout(() => {
@@ -522,6 +528,76 @@ function ParentClassesPage() {
             setInviteError(err.message)
         } finally {
             setInviteSubmitting(false)
+        }
+    }
+
+    // ===================================================
+    // TAB 4 — Inscrições (coach-created enrollment approvals)
+    // For each CoachCreated+Requested class, load detail to get participant IDs.
+    // Filter participants where student belongs to this parent + status=Pending(1).
+    // ===================================================
+    const [t5Items, setT5Items]     = useState([])  // [{ classId, modalityName, coachName, start, end, participantId, studentName, studentId }]
+    const [t5Loading, setT5Loading] = useState(false)
+    const [t5Error, setT5Error]     = useState('')
+
+    const loadEnrollments = async () => {
+        if (!user?.userId) return
+        setT5Loading(true); setT5Error('')
+        try {
+            // Use the already-loaded class list; if not loaded yet, fetch it
+            let classes = t1AllClasses
+            if (classes.length === 0) {
+                const data = await getClassesByParent(user.userId)
+                classes = normalizeItems(data)
+                setT1AllClasses(classes)
+            }
+            const myStudentIds = new Set(myStudents.map(s => s.StudentId ?? s.studentId))
+            const coachCreatedRequested = classes.filter(c =>
+                (c.ClassOrigin ?? c.classOrigin) === 1 &&
+                (c.Status ?? c.status) === 0
+            )
+            const results = []
+            await Promise.all(coachCreatedRequested.map(async cls => {
+                try {
+                    const detail = await getClassById(cls.ClassId ?? cls.classId)
+                    const participants = detail?.Participants ?? detail?.participants ?? []
+                    for (const p of participants) {
+                        const sId = p.StudentId ?? p.studentId
+                        const enrollStatus = p.ParentEnrollmentStatus ?? p.parentEnrollmentStatus ?? 0
+                        if (myStudentIds.has(sId) && enrollStatus === ENROLLMENT_STATUS.Pending) {
+                            results.push({
+                                classId:       cls.ClassId ?? cls.classId,
+                                modalityName:  cls.ModalityName ?? cls.modalityName ?? '',
+                                coachName:     cls.CoachName ?? cls.coachName ?? '',
+                                start:         cls.StartDatetime ?? cls.startDatetime,
+                                end:           cls.EndDatetime ?? cls.endDatetime,
+                                participantId: p.ParticipantId ?? p.participantId,
+                                studentId:     sId,
+                                studentName:   p.StudentName ?? p.studentName ?? '',
+                            })
+                        }
+                    }
+                } catch { /* ignore individual class errors */ }
+            }))
+            setT5Items(results)
+        } catch (e) {
+            setT5Error(e.message)
+        } finally {
+            setT5Loading(false)
+        }
+    }
+
+    useEffect(() => {
+        if (activeTab === 'inscricoes') loadEnrollments()
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [activeTab])
+
+    const handleEnrollmentApprove = async (participantId, approve) => {
+        try {
+            await approveEnrollment(participantId, approve)
+            setT5Items(prev => prev.filter(i => i.participantId !== participantId))
+        } catch (err) {
+            alert(err.message)
         }
     }
 
@@ -963,7 +1039,70 @@ function ParentClassesPage() {
     }
 
     // ===================================================
-    // RENDER — TAB 4
+    // RENDER — TAB 4 — Inscrições
+    // ===================================================
+
+    const renderInscricoes = () => {
+        if (t5Loading) return <div className="validate-empty"><p>Carregando...</p></div>
+        if (t5Error)   return <p className="admin-error">{t5Error}</p>
+        if (t5Items.length === 0) return (
+            <div className="validate-empty">
+                <div className="validate-empty-icon">✓</div>
+                <h3>Sem inscrições pendentes</h3>
+                <p>Não há convites de aulas aguardando a sua resposta.</p>
+            </div>
+        )
+        return (
+            <div>
+                <p className="tab-description">
+                    O professor criou aulas com os seus educandos. Aprove ou rejeite a inscrição de cada aluno.
+                </p>
+                <div className="validate-warning">
+                    <span className="validate-warning-icon">!</span>
+                    <p>
+                        <strong>Atenção:</strong> Tem {t5Items.length} inscrição{t5Items.length > 1 ? 'ões' : ''} pendente{t5Items.length > 1 ? 's' : ''}.
+                    </p>
+                </div>
+                {t5Items.map(item => (
+                    <div key={item.participantId} className="class-card class-card--amber">
+                        <div className="class-card-header" style={{ cursor: 'default' }}>
+                            <div style={{ flex: '1 1 auto', minWidth: 0 }}>
+                                <div className="class-card-title-row">
+                                    <h3 className="class-card-title">{item.modalityName}</h3>
+                                    <span className="status-pill" style={STATUS_CHIP[0]}>Aguarda resposta</span>
+                                </div>
+                                <div className="class-card-info-grid">
+                                    <div>
+                                        <span className="label">Data: </span>
+                                        {fmtDate(item.start)} · {fmtTime(item.start)} – {fmtTime(item.end)}
+                                    </div>
+                                    {item.coachName && <div><span className="label">Coach: </span>{item.coachName}</div>}
+                                    <div><span className="label">Aluno: </span>{item.studentName}</div>
+                                </div>
+                            </div>
+                            <div style={{ display: 'flex', gap: '8px', flexShrink: 0 }}>
+                                <Button
+                                    variant="secondary"
+                                    onClick={() => handleEnrollmentApprove(item.participantId, false)}
+                                >
+                                    Rejeitar
+                                </Button>
+                                <Button
+                                    variant="primary"
+                                    onClick={() => handleEnrollmentApprove(item.participantId, true)}
+                                >
+                                    Aceitar
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+                ))}
+            </div>
+        )
+    }
+
+    // ===================================================
+    // RENDER — TAB 5
     // ===================================================
 
     const renderValidarAulas = () => {
@@ -1076,6 +1215,7 @@ function ParentClassesPage() {
                 {activeTab === 'minhas-marcacoes' && renderMinhasMarcacoes()}
                 {activeTab === 'marcar'           && renderCriarAula()}
                 {activeTab === 'grupo'            && renderAulasExistentes()}
+                {activeTab === 'inscricoes'       && renderInscricoes()}
                 {activeTab === 'validar'          && renderValidarAulas()}
             </div>
 
@@ -1144,18 +1284,6 @@ function ParentClassesPage() {
                                     required
                                 />
                             </div>
-                        </div>
-
-                        <div className="modal-field">
-                            <label className="modal-label">Número máximo de alunos (1–8)</label>
-                            <input
-                                type="number"
-                                className="input"
-                                min={1}
-                                max={8}
-                                value={bookingMaxParts}
-                                onChange={e => setBookingMaxParts(Number(e.target.value))}
-                            />
                         </div>
 
                         {bookingError && <p className="admin-error">{bookingError}</p>}
