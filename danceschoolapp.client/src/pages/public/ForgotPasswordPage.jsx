@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import '../../styles/LoginPage.css'
-import logo from '../../assets/logo-entartes.png'
+import logo from '../../assets/logo-entartes.svg'
 
 function ForgotPasswordPage() {
     const [email, setEmail] = useState('')
