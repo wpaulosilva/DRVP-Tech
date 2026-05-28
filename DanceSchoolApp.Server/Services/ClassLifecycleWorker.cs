@@ -115,7 +115,7 @@ namespace DanceSchoolApp.Server.Services
                 await notifications.SendAsync(
                     userId: cls.IdCoach,
                     title: "Validação de Aula Necessária",
-                    message: $"Por favor, confirme que lecionou a aula de {cls.StartDatetime:dd/MM/yyyy HH:mm}. Você tem 48 horas para responder.",
+                    message: $"Por favor, confirme que lecionou a aula de {cls.StartDatetime:dd/MM/yyyy HH:mm}. Tem 48 horas para responder.",
                     type: NotificationType.ValidationRequest,
                     entityType: "CoachClass",
                     entityId: cls.ClassId);
@@ -129,7 +129,7 @@ namespace DanceSchoolApp.Server.Services
                     await notifications.SendAsync(
                         userId: parentId,
                         title: "Validação de Aula Necessária",
-                        message: $"Por favor, confirme a presença na aula de {cls.StartDatetime:dd/MM/yyyy HH:mm}. Você tem 48 horas para responder.",
+                        message: $"Por favor, confirme a presença na aula de {cls.StartDatetime:dd/MM/yyyy HH:mm}. Tem 48 horas para responder.",
                         type: NotificationType.ValidationRequest,
                         entityType: "CoachClass",
                         entityId: cls.ClassId);
@@ -216,8 +216,7 @@ namespace DanceSchoolApp.Server.Services
                     await notifications.SendAsync(
                         userId: staffId,
                         title: "Janela de Validação Expirada",
-                        message: $"A janela de validação de 48 horas para a aula ID {cls.ClassId}" +
-                                 $"(agendada para {cls.StartDatetime:dd/MM/yyyy HH:mm}) expirou." +
+                        message: $"A janela de validação de 48 horas para a aula agendada para {cls.StartDatetime:dd/MM/yyyy HH:mm} expirou." +
                                  nonRespondersSummary,
                         type: NotificationType.Warning,
                         entityType: "CoachClass",
@@ -271,7 +270,7 @@ namespace DanceSchoolApp.Server.Services
                     await notifications.SendAsync(
                         userId: staffId,
                         title: "Aula Cancelada Automaticamente",
-                        message: $"A aula ID {cls.ClassId} (agendada para {cls.StartDatetime:dd/MM/yyyy HH:mm}) foi cancelada automaticamente — a data efetiva passou sem aprovação completa.",
+                        message: $"A aula agendada para {cls.StartDatetime:dd/MM/yyyy HH:mm}) foi cancelada automaticamente — a data efetiva passou sem aprovação completa.",
                         type: NotificationType.Warning,
                         entityType: "CoachClass",
                         entityId: cls.ClassId);
