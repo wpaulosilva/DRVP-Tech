@@ -91,6 +91,24 @@ namespace DanceSchoolApp.Server.Controllers.Inventory
             }
         }
 
+        //  GET /api/items/mine
+        [HttpGet("mine")]
+        [Authorize(Roles = "parent,staff,admin")]
+        public async Task<IActionResult> GetMyItems([FromQuery] PagedQuery? query = null, [FromQuery] int? categoryId = null, [FromQuery] string? search = null)
+        {
+            try
+            {
+                var userId = GetUserId();
+                var result = await _itemService.GetItemsByOwnerAsync(userId, query ?? new PagedQuery(), categoryId, search);
+                // Always return OK with the result (empty lists should be an empty array, not 204)
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, "An unexpected error occurred.");
+            }
+        }
+
         //  GET /api/items/{id} 
         [HttpGet("{id:int}")]
         [Authorize]
