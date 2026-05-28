@@ -3,18 +3,11 @@ import ClassValidationCard from '../../components/common/ClassValidationCard'
 import Modal from '../../components/common/Modal'
 import Button from '../../components/common/Button'
 import Select from '../../components/common/Select'
+import MonthCalendar, { isoDate, getMonthRange, fmtDateLong } from '../../components/common/MonthCalendar'
 import { getCoachValidate, coachAccept, coachReject, coachValidate, getStudentsByModality, coachCreateClass } from '../../services/coachClassesService'
 import { getModalities } from '../../services/modalitiesService'
 import '../../styles/ValidateClasses.css'
-
-function isoDate(d) {
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-}
-
-function tomorrowIso() {
-    const d = new Date(); d.setDate(d.getDate() + 1)
-    return isoDate(d)
-}
+import '../../styles/ParentClasses.css'
 
 function CoachValidateClassesPage() {
     const [activeTab, setActiveTab] = useState('requests')
@@ -30,11 +23,12 @@ function CoachValidateClassesPage() {
     // ===== Coach-create class state =====
     const [modalities, setModalities]         = useState([])
     const [createModality, setCreateModality] = useState('')
-    const [createDate, setCreateDate]         = useState(tomorrowIso())
+    const [createMonth, setCreateMonth]       = useState(new Date())
+    const [createSelectedDate, setCreateSelectedDate] = useState(null)  // "YYYY-MM-DD"
     const [createStart, setCreateStart]       = useState('10:00')
     const [createEnd, setCreateEnd]           = useState('11:00')
     const [createMaxParts, setCreateMaxParts] = useState(1)
-    const [allStudents, setAllStudents]       = useState([])   // students for selected modality
+    const [allStudents, setAllStudents]       = useState([])
     const [selectedStudents, setSelectedStudents] = useState(new Set())
     const [studentsLoading, setStudentsLoading]   = useState(false)
     const [createSubmitting, setCreateSubmitting] = useState(false)
@@ -152,23 +146,31 @@ function CoachValidateClassesPage() {
         })
     }
 
+    const prevCreateMonth = () => setCreateMonth(prev => {
+        const d = new Date(prev); d.setDate(1); d.setMonth(d.getMonth() - 1); return d
+    })
+    const nextCreateMonth = () => setCreateMonth(prev => {
+        const d = new Date(prev); d.setDate(1); d.setMonth(d.getMonth() + 1); return d
+    })
+
     const handleCoachCreate = async (e) => {
         e.preventDefault()
-        if (!createModality)           { setCreateError('Selecione uma modalidade.'); return }
+        if (!createModality)             { setCreateError('Selecione uma modalidade.'); return }
+        if (!createSelectedDate)         { setCreateError('Selecione um dia no calendário.'); return }
         if (selectedStudents.size === 0) { setCreateError('Selecione pelo menos um aluno.'); return }
-        if (!createDate)               { setCreateError('Defina a data.'); return }
-        if (createEnd <= createStart)  { setCreateError('A hora de fim deve ser depois da hora de início.'); return }
+        if (createEnd <= createStart)    { setCreateError('A hora de fim deve ser depois da hora de início.'); return }
         setCreateSubmitting(true); setCreateError('')
         try {
             await coachCreateClass({
-                modalityId:     Number(createModality),
-                startDatetime:  `${createDate}T${createStart}:00`,
-                endDatetime:    `${createDate}T${createEnd}:00`,
+                modalityId:      Number(createModality),
+                startDatetime:   `${createSelectedDate}T${createStart}:00`,
+                endDatetime:     `${createSelectedDate}T${createEnd}:00`,
                 maxParticipants: Number(createMaxParts),
-                studentIds:     [...selectedStudents],
+                studentIds:      [...selectedStudents],
             })
             setCreateSuccess(true)
             setSelectedStudents(new Set())
+            setCreateSelectedDate(null)
         } catch (err) {
             setCreateError(err.message)
         } finally {
@@ -218,7 +220,7 @@ function CoachValidateClassesPage() {
                     className={`validate-tab ${activeTab === 'criar' ? 'validate-tab--active' : ''}`}
                     onClick={() => { setActiveTab('criar'); setCreateSuccess(false); setCreateError('') }}
                 >
-                    Criar Aula
+                    Criar Coaching
                 </button>
             </div>
 
@@ -264,116 +266,163 @@ function CoachValidateClassesPage() {
                 </>
             )}
 
-            {/* ===== Criar Aula tab content ===== */}
+            {/* ===== Criar Coaching tab content ===== */}
             {activeTab === 'criar' && (
-                <div style={{ marginTop: '16px', maxWidth: '520px' }}>
+                <div style={{ marginTop: '16px' }}>
                     {createSuccess ? (
                         <div className="validate-empty" style={{ padding: '24px' }}>
                             <div className="validate-empty-icon">✓</div>
-                            <h3>Aula criada!</h3>
-                            <p>Os pais dos alunos serão notificados para aprovar a inscrição.</p>
+                            <h3>Coaching criado!</h3>
+                            <p>Os EE dos alunos serão notificados para aprovar a inscrição.</p>
                             <Button variant="secondary" onClick={() => setCreateSuccess(false)} style={{ marginTop: '12px' }}>
-                                Criar outra aula
+                                Criar outro coaching
                             </Button>
                         </div>
                     ) : (
-                        <form onSubmit={handleCoachCreate} className="modal-form">
-                            <p className="tab-description" style={{ marginBottom: '16px' }}>
-                                Selecione a modalidade, os alunos e o horário. Os EE serão notificados para confirmar a inscrição.
+                        <>
+                            <p className="tab-description">
+                                Selecione a modalidade e clique num dia para definir o horário e os alunos. Os EE serão notificados para confirmar.
                             </p>
 
-                            <div className="modal-field">
-                                <label className="modal-label">Modalidade *</label>
-                                <Select
-                                    value={createModality}
-                                    onChange={v => { setCreateModality(v); setCreateError('') }}
-                                    placeholder="Selecione a modalidade"
-                                    options={modalityOptions}
-                                />
+                            {/* Modality filter */}
+                            <div className="pc-filter-bar">
+                                <div className="pc-filter-group">
+                                    <label className="pc-filter-label">Modalidade *</label>
+                                    <Select
+                                        value={createModality}
+                                        onChange={v => { setCreateModality(v); setCreateSelectedDate(null); setCreateError('') }}
+                                        placeholder="Selecione a modalidade"
+                                        options={modalityOptions}
+                                    />
+                                </div>
                             </div>
 
-                            {createModality && (
-                                <div className="modal-field">
-                                    <label className="modal-label">Alunos *</label>
-                                    {studentsLoading ? (
-                                        <p style={{ fontSize: '0.875rem', color: 'var(--text-2)' }}>Carregando alunos...</p>
-                                    ) : allStudents.length === 0 ? (
-                                        <p style={{ fontSize: '0.875rem', color: 'var(--text-2)' }}>Nenhum aluno inscrito nesta modalidade.</p>
-                                    ) : (
-                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', maxHeight: '200px', overflowY: 'auto', padding: '4px 0' }}>
-                                            {allStudents.map(s => {
-                                                const sid = s.StudentId ?? s.studentId
-                                                return (
-                                                    <label key={sid} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.9rem' }}>
-                                                        <input
-                                                            type="checkbox"
-                                                            checked={selectedStudents.has(sid)}
-                                                            onChange={() => toggleStudent(sid)}
-                                                        />
-                                                        {s.StudentName ?? s.studentName}
-                                                    </label>
-                                                )
-                                            })}
+                            {/* Month calendar — all future days clickable */}
+                            {(() => {
+                                const todayIso = isoDate(new Date())
+                                const renderDay = (key, dayNum) => {
+                                    const isPast     = key < todayIso
+                                    const isSelected = key === createSelectedDate
+                                    return (
+                                        <div
+                                            key={key}
+                                            className={[
+                                                'pc-day-cell',
+                                                isPast     ? 'pc-day-cell--past'     : 'pc-day-cell--has-slot',
+                                                isSelected ? 'pc-day-cell--selected' : '',
+                                            ].join(' ').trim()}
+                                            onClick={() => {
+                                                if (isPast) return
+                                                setCreateSelectedDate(isSelected ? null : key)
+                                                setCreateError('')
+                                            }}
+                                        >
+                                            <span className="pc-day-num">{dayNum}</span>
                                         </div>
-                                    )}
+                                    )
+                                }
+                                return (
+                                    <MonthCalendar
+                                        month={createMonth}
+                                        onPrev={() => { prevCreateMonth(); setCreateSelectedDate(null) }}
+                                        onNext={() => { nextCreateMonth(); setCreateSelectedDate(null) }}
+                                        renderDay={renderDay}
+                                        loading={false}
+                                    />
+                                )
+                            })()}
+
+                            {!createSelectedDate && (
+                                <div className="validate-empty" style={{ padding: '20px' }}>
+                                    <p style={{ color: '#6b7280' }}>Clique num dia para definir o horário do coaching.</p>
                                 </div>
                             )}
 
-                            <div className="modal-field">
-                                <label className="modal-label">Número máximo de alunos *</label>
-                                <input
-                                    type="number"
-                                    className="input"
-                                    min={1}
-                                    max={20}
-                                    value={createMaxParts}
-                                    onChange={e => setCreateMaxParts(Number(e.target.value))}
-                                />
-                            </div>
+                            {/* Form shown after day is selected */}
+                            {createSelectedDate && (
+                                <form onSubmit={handleCoachCreate} className="modal-form" style={{ marginTop: '16px', maxWidth: '520px' }}>
+                                    <h3 className="validate-section-heading" style={{ marginBottom: '12px' }}>
+                                        {fmtDateLong(createSelectedDate)}
+                                    </h3>
 
-                            <div className="modal-field">
-                                <label className="modal-label">Data *</label>
-                                <input
-                                    type="date"
-                                    className="input"
-                                    value={createDate}
-                                    min={isoDate(new Date())}
-                                    onChange={e => setCreateDate(e.target.value)}
-                                    required
-                                />
-                            </div>
+                                    {/* Students */}
+                                    <div className="modal-field">
+                                        <label className="modal-label">Alunos *</label>
+                                        {!createModality ? (
+                                            <p style={{ fontSize: '0.875rem', color: 'var(--text-2)' }}>Selecione uma modalidade primeiro.</p>
+                                        ) : studentsLoading ? (
+                                            <p style={{ fontSize: '0.875rem', color: 'var(--text-2)' }}>Carregando alunos...</p>
+                                        ) : allStudents.length === 0 ? (
+                                            <p style={{ fontSize: '0.875rem', color: 'var(--text-2)' }}>Nenhum aluno inscrito nesta modalidade.</p>
+                                        ) : (
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', maxHeight: '200px', overflowY: 'auto', padding: '4px 0' }}>
+                                                {allStudents.map(s => {
+                                                    const sid = s.StudentId ?? s.studentId
+                                                    return (
+                                                        <label key={sid} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.9rem' }}>
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={selectedStudents.has(sid)}
+                                                                onChange={() => toggleStudent(sid)}
+                                                            />
+                                                            {s.StudentName ?? s.studentName}
+                                                        </label>
+                                                    )
+                                                })}
+                                            </div>
+                                        )}
+                                    </div>
 
-                            <div style={{ display: 'flex', gap: '12px' }}>
-                                <div className="modal-field" style={{ flex: 1 }}>
-                                    <label className="modal-label">Hora início *</label>
-                                    <input
-                                        type="time"
-                                        className="input"
-                                        value={createStart}
-                                        onChange={e => setCreateStart(e.target.value)}
-                                        required
-                                    />
-                                </div>
-                                <div className="modal-field" style={{ flex: 1 }}>
-                                    <label className="modal-label">Hora fim *</label>
-                                    <input
-                                        type="time"
-                                        className="input"
-                                        value={createEnd}
-                                        onChange={e => setCreateEnd(e.target.value)}
-                                        required
-                                    />
-                                </div>
-                            </div>
+                                    {/* Max participants */}
+                                    <div className="modal-field">
+                                        <label className="modal-label">Número máximo de alunos *</label>
+                                        <input
+                                            type="number"
+                                            className="input"
+                                            min={1}
+                                            max={20}
+                                            value={createMaxParts}
+                                            onChange={e => setCreateMaxParts(Number(e.target.value))}
+                                        />
+                                    </div>
 
-                            {createError && <p className="admin-error">{createError}</p>}
+                                    {/* Time range */}
+                                    <div style={{ display: 'flex', gap: '12px' }}>
+                                        <div className="modal-field" style={{ flex: 1 }}>
+                                            <label className="modal-label">Hora início *</label>
+                                            <input
+                                                type="time"
+                                                className="input"
+                                                value={createStart}
+                                                onChange={e => setCreateStart(e.target.value)}
+                                                required
+                                            />
+                                        </div>
+                                        <div className="modal-field" style={{ flex: 1 }}>
+                                            <label className="modal-label">Hora fim *</label>
+                                            <input
+                                                type="time"
+                                                className="input"
+                                                value={createEnd}
+                                                onChange={e => setCreateEnd(e.target.value)}
+                                                required
+                                            />
+                                        </div>
+                                    </div>
 
-                            <div className="modal-actions" style={{ marginTop: '16px' }}>
-                                <Button type="submit" variant="primary" disabled={createSubmitting}>
-                                    {createSubmitting ? 'A criar...' : 'Criar Aula'}
-                                </Button>
-                            </div>
-                        </form>
+                                    {createError && <p className="admin-error">{createError}</p>}
+
+                                    <div className="modal-actions" style={{ marginTop: '16px' }}>
+                                        <Button type="button" variant="secondary" onClick={() => setCreateSelectedDate(null)}>
+                                            Cancelar
+                                        </Button>
+                                        <Button type="submit" variant="primary" disabled={createSubmitting}>
+                                            {createSubmitting ? 'A criar...' : 'Criar Coaching'}
+                                        </Button>
+                                    </div>
+                                </form>
+                            )}
+                        </>
                     )}
                 </div>
             )}

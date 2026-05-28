@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import '../../styles/LoginPage.css'
-import logo from '../../assets/logo-entartes.png'
+import logo from '../../assets/logo-entartes.svg'
 import { resetPassword } from '@/services/authService'
 
 function ResetPasswordPage() {

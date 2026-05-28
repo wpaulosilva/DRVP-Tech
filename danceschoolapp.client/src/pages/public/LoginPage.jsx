@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import '../../styles/LoginPage.css'
-import logo from '../../assets/logo-entartes.png'
+import logo from '../../assets/logo-entartes.svg'
 import { useAuth } from '../../context/useAuth'
 import Icon from '../../components/ui/Icon'
 

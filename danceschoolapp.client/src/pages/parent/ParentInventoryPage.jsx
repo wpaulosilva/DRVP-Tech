@@ -57,6 +57,9 @@ export default function ParentInventoryPage() {
     const [marketplacePage, setMarketplacePage]       = useState(1)
     const [loadingMarketplace, setLoadingMarketplace] = useState(false)
     const [marketplaceError, setMarketplaceError]     = useState(null)
+    const [debugVisible, setDebugVisible] = useState(false)
+    const [lastMyItemsResponse, setLastMyItemsResponse] = useState(null)
+    const [lastMarketplaceResponse, setLastMarketplaceResponse] = useState(null)
 
     // (community tab removed)
 
@@ -89,16 +92,52 @@ export default function ParentInventoryPage() {
 
     // ── Load marketplace (all items) ──────────────────────────────────────────
     const loadMarketplace = useCallback(async () => {
-        // load for both marketplace and personal (me) tab so we can client-filter by owner
+        // load for both marketplace and personal (me) tab
         if (tab !== 'marketplace' && tab !== 'me') return
         setLoadingMarketplace(true)
         setMarketplaceError(null)
         try {
-            const { getMarketplace } = await import('../../services/inventoryService')
-            const result = await getMarketplace({ search, categoryId: categoryId || undefined, page: marketplacePage, pageSize: PAGE_SIZE })
-            const list = result?.items ?? result?.Items ?? []
-            setMarketplaceItems(list)
-            setMarketplaceTotal(result?.totalCount ?? result?.TotalCount ?? 0)
+            if (tab === 'marketplace') {
+                const { getMarketplace } = await import('../../services/inventoryService')
+                const result = await getMarketplace({ search, categoryId: categoryId || undefined, page: marketplacePage, pageSize: PAGE_SIZE })
+                const list = result?.items ?? result?.Items ?? []
+                setMarketplaceItems(list)
+                setMarketplaceTotal(result?.totalCount ?? result?.TotalCount ?? 0)
+            } else {
+                const { getMyItems } = await import('../../services/inventoryService')
+                const result = await getMyItems({ search, categoryId: categoryId || undefined, page: marketplacePage, pageSize: PAGE_SIZE })
+                setLastMyItemsResponse(result ?? null)
+                const list = result?.items ?? result?.Items ?? []
+                // Debug logs to diagnose missing personal items
+                try {
+                    console.debug('[INV][me] user:', user)
+                    console.debug('[INV][me] getMyItems result status:', result)
+                    console.debug('[INV][me] list length:', list.length)
+                    if (list.length > 0) console.debug('[INV][me] first item owners:', list.map(i => ({ id: i.itemId ?? i.ItemId, owner: i.idOwner ?? i.IdOwner })))
+                } catch (e) {}
+                // If server returned nothing but user exists, fallback to scanning marketplace and filter by owner
+                if ((list.length === 0 || result == null) && user && user.UserId) {
+                    try {
+                        const { getMarketplace } = await import('../../services/inventoryService')
+                        // request larger page to increase chance to find personal items
+                        const all = await getMarketplace({ search, categoryId: categoryId || undefined, page: 1, pageSize: 1000 })
+                        setLastMarketplaceResponse(all ?? null)
+                        const allList = all?.items ?? all?.Items ?? []
+                        try { console.debug('[INV][me] fallback marketplace size:', allList.length) } catch (e) {}
+                        const myId = Number(user.UserId ?? user.userId ?? user.id)
+                        const filtered = allList.filter(i => Number(i.idOwner ?? i.IdOwner ?? i.ownerId ?? i.OwnerId ?? 0) === myId)
+                        try { console.debug('[INV][me] filtered count:', filtered.length, 'myId:', myId, 'sample owners:', filtered.map(i => ({ id: i.itemId ?? i.ItemId, owner: i.idOwner ?? i.IdOwner }))) } catch (e) {}
+                        setMarketplaceItems(filtered)
+                        setMarketplaceTotal(filtered.length)
+                    } catch (ex) {
+                        setMarketplaceItems([])
+                        setMarketplaceTotal(0)
+                    }
+                } else {
+                    setMarketplaceItems(list)
+                    setMarketplaceTotal(result?.totalCount ?? result?.TotalCount ?? 0)
+                }
+            }
         } catch (e) {
             setMarketplaceError(e.message)
         } finally {
@@ -213,6 +252,11 @@ export default function ParentInventoryPage() {
 
     // ── Derived ───────────────────────────────────────────────────────────────
     const marketplacePages = Math.ceil(marketplaceTotal / PAGE_SIZE)
+    const myId = Number(user?.UserId ?? user?.userId ?? user?.id ?? 0)
+    const myItems = marketplaceItems.filter(card => {
+        const owner = Number(card.idOwner ?? card.IdOwner ?? card.ownerId ?? card.OwnerId ?? 0)
+        return owner && myId && owner === myId
+    })
 
     const setAF = (k, v) => setAnnounceForm(f => ({ ...f, [k]: v }));
 
@@ -227,12 +271,16 @@ export default function ParentInventoryPage() {
 
             <Tabs tabs={TABS} activeTab={tab} onTabChange={handleTabChange} />
 
+            {/* debug panel removed */}
+
             {/* legacy school tab removed */}
 
-            {/* ═══════════════════════════ MARKETPLACE TAB ═════════════════════════════ */}
-            {tab === 'marketplace' && (
+            {/* ═══════════════════════════ MARKETPLACE / MEUS ARTIGOS TAB ═════════════════════════════ */}
+            {(tab === 'marketplace' || tab === 'me') && (
                 <>
             <div className="inv-filter-bar" style={{ marginTop: 8 }}>
+                {tab === 'marketplace' ? (
+                    <>
                         <input
                             className="inv-search-input"
                             placeholder="Pesquisar artigos no marketplace..."
@@ -249,15 +297,20 @@ export default function ParentInventoryPage() {
                                 <option key={c.categoryId} value={c.categoryId}>{c.catgName}</option>
                             ))}
                         </select>
-                <button
-                    type="button"
-                    className="btn btn-primary"
-                    onClick={() => { setAnnounceForm(emptyItemForm); setAnnounceError(null); setShowAnnounce(true) }}
-                    style={{ marginLeft: 8 }}
-                >
-                    + Anunciar
-                </button>
+                    </>
+                ) : (
+                    // tab === 'me' — sem filtros, apenas botão para anunciar
+                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                        <button
+                            type="button"
+                            className="btn btn-primary"
+                            onClick={() => { setAnnounceForm(emptyItemForm); setAnnounceError(null); setShowAnnounce(true) }}
+                        >
+                            + Anunciar
+                        </button>
                     </div>
+                )}
+            </div>
 
                     {loadingMarketplace ? (
                         <p className="inv-loading">A carregar...</p>
@@ -271,14 +324,7 @@ export default function ParentInventoryPage() {
                     ) : (
                         <>
                             <div className="inv-grid">
-                                {(
-                                    // when viewing 'me', filter items by owner id
-                                    (tab === 'me' ? marketplaceItems.filter(card => {
-                                        const owner = Number(card.idOwner ?? card.IdOwner ?? card.ownerId ?? card.OwnerId ?? 0)
-                                        const myId = Number(user?.UserId ?? user?.userId ?? 0)
-                                        return owner && myId && owner === myId
-                                    }) : marketplaceItems)
-                                ).map(card => {
+                                {(tab === 'me' ? myItems : marketplaceItems).map(card => {
                                     const id   = card.itemId ?? card.ItemId ?? card.itemId
                                     const img  = (card.images ?? card.Images ?? [])[0]?.imageUrl ?? card.imageUrl
                                     const name = card.name ?? card.Name ?? card.itemName
