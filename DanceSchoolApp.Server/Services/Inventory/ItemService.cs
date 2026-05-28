@@ -15,6 +15,79 @@ namespace DanceSchoolApp.Server.Services.Inventory
             _context = context;
         }
 
+        // Returns items owned by a specific user (personal items)
+        public async Task<PagedResult<ItemListResponse>> GetItemsByOwnerAsync(
+            int ownerUserId, PagedQuery query, int? categoryId = null, string? search = null)
+        {
+            var owner = await _context.Users
+                .Include(u => u.PersonInfo)
+                .FirstOrDefaultAsync(u => u.UserId == ownerUserId);
+
+            var ownerEmail = owner?.Email?.Trim().ToLower();
+            var ownerUsername = owner?.Username?.Trim().ToLower();
+            var ownerPersonEmail = owner?.PersonInfo?.Phone?.Trim().ToLower(); // note: PersonInfo may hold phone; keep variable for clarity
+            var ownerPersonPhone = owner?.PersonInfo?.Phone?.Trim().ToLower();
+
+            // Match items where IdOwner matches OR where contact fields match the user's email/phone/username
+            var dbQuery = _context.Items
+                .Include(i => i.IdCategoryNavigation)
+                .Include(i => i.ItemImages)
+                .Where(i => i.IsActive && (
+                    i.IdOwner == ownerUserId ||
+                    (i.IdOwner == null && (
+                        (i.ContactEmail != null && (i.ContactEmail.ToLower() == ownerEmail || i.ContactEmail.ToLower() == ownerUsername || i.ContactEmail.ToLower() == ownerPersonEmail)) ||
+                        (i.ContactPhone != null && ownerPersonPhone != null && i.ContactPhone.ToLower() == ownerPersonPhone)
+                    ))
+                ))
+                .AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                var term = search.Trim().ToLower();
+                dbQuery = dbQuery.Where(i => i.Name.ToLower().Contains(term));
+            }
+
+            if (categoryId.HasValue)
+                dbQuery = dbQuery.Where(i => i.IdCategory == categoryId.Value);
+
+            var total = await dbQuery.CountAsync();
+
+            var items = await dbQuery
+                .OrderByDescending(i => i.CreatedAt)
+                .Skip((query.Page - 1) * query.PageSize)
+                .Take(query.PageSize)
+                .Select(i => new ItemListResponse
+                {
+                    ItemId = i.ItemId,
+                    Name = i.Name,
+                    Description = i.Description,
+                    FromSchool = i.FromSchool,
+                    IdOwner = i.IdOwner,
+                    IsActive = i.IsActive,
+                    CreatedAt = i.CreatedAt,
+                    Category = i.IdCategoryNavigation == null ? null : new ItemCategorySummaryResponse
+                    {
+                        CategoryId = i.IdCategoryNavigation.CategoryId,
+                        CatgName = i.IdCategoryNavigation.CatgName
+                    },
+                    Images = i.ItemImages.Select(img => new ItemImageResponse
+                    {
+                        ImageId = img.ImageId,
+                        ImageUrl = img.ImageUrl
+                    }).ToList(),
+                    VariantCount = i.ItemVariants.Count(v => v.IsActive == true)
+                })
+                .ToListAsync();
+
+            return new PagedResult<ItemListResponse>
+            {
+                Items = items,
+                TotalCount = total,
+                Page = query.Page,
+                PageSize = query.PageSize
+            };
+        }
+
         //  Item Queries 
 
         public async Task<PagedResult<ItemListResponse>> GetItemsAsync(

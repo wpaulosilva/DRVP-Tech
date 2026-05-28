@@ -122,3 +122,10 @@ export function getMarketplace({ fromSchool, categoryId, maxPrice, search, page 
     if (maxPrice) p.set('maxPrice', maxPrice)
     return get(`/api/items?${p}`)
 }
+
+export function getMyItems({ categoryId, search, page = 1, pageSize = 12 } = {}) {
+    const p = new URLSearchParams({ page, pageSize })
+    if (search) p.set('search', search)
+    if (categoryId) p.set('categoryId', categoryId)
+    return get(`/api/items/mine?${p}`)
+}
