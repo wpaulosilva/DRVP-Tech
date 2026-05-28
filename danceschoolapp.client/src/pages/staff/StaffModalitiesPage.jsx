@@ -13,33 +13,36 @@ function ModalityCard({ modality, coaches, onEdit, onToggleActive }) {
 
     return (
         <div className={`mc-card${active ? '' : ' mc-card--inactive'}`}>
-            <div className="mc-card-top">
-                <p className="mc-card-name">{name}</p>
-                <span className={`mc-badge ${active ? 'mc-badge--active' : 'mc-badge--inactive'}`}>
-                    {active ? 'Ativa' : 'Inativa'}
-                </span>
-            </div>
-            {desc && <p className="mc-card-desc">{desc}</p>}
-            {coaches.length > 0 && (
-                <div className="mc-tag-row">
-                    {coaches.map(c => (
-                        <span key={c.CoachId} className="mc-tag mc-tag--coach">
-                            {c.Name}
-                        </span>
-                    ))}
+            <div>
+                <div className="mc-card-top">
+                    <p className="mc-card-name">{name}</p>
+                    <span className={`mc-badge ${active ? 'mc-badge--active' : 'mc-badge--inactive'}`}>
+                        {active ? 'Ativa' : 'Inativa'}
+                    </span>
                 </div>
-            )}
-            <div className="mc-card-actions">
-                <button type="button" className="btn btn-secondary" onClick={() => onEdit(id)}>
-                    Editar
-                </button>
-                <button
-                    type="button"
-                    className={`btn ${active ? 'btn-danger' : 'btn-secondary'}`}
-                    onClick={() => onToggleActive(id, active)}
-                >
-                    {active ? 'Desativar' : 'Ativar'}
-                </button>
+
+                {desc && <p className="mc-card-desc">{desc}</p>}
+            </div>
+
+            <div className="mc-card-bottom">
+                <div className="mc-tag-row">
+                    <span className="mc-tag mc-tag--coach">
+                        Professores: {coaches.length}
+                    </span>
+                </div>
+
+                <div className="mc-card-actions">
+                    <button type="button" className="btn btn-secondary" onClick={() => onEdit(id)}>
+                        Editar
+                    </button>
+                    <button
+                        type="button"
+                        className={`btn ${active ? 'btn-danger' : 'btn-secondary'}`}
+                        onClick={() => onToggleActive(id, active)}
+                    >
+                        {active ? 'Desativar' : 'Ativar'}
+                    </button>
+                </div>
             </div>
         </div>
     )

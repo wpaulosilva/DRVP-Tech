@@ -267,3 +267,23 @@
     line-height: 1.6;
     margin: 0 0 16px;
 }
+.mc-card {
+    display: flex;
+    flex-direction: column;
+}
+
+.mc-card-bottom {
+    margin-top: 18px;
+}
+
+.mc-card-desc {
+    margin-bottom: 0;
+}
+
+.mc-card-bottom {
+    margin-top: auto;
+}
+
+    .mc-card-bottom .mc-tag-row {
+        margin-bottom: 12px;
+    }
