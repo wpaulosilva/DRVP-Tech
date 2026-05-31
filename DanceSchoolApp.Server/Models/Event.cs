@@ -11,6 +11,8 @@ public partial class Event
 
     public string? Description { get; set; }
 
+    public string? SecretDescription { get; set; }
+
     public DateTime? StartDatetime { get; set; }
 
     public DateTime? EndDatetime { get; set; }
@@ -22,4 +24,8 @@ public partial class Event
     public int? CreatedBy { get; set; }
 
     public virtual User? CreatedByNavigation { get; set; }
+
+    public virtual ICollection<Modality> IdModalities { get; set; } = new List<Modality>();
+
+    public virtual ICollection<Coach> IdCoaches { get; set; } = new List<Coach>();
 }

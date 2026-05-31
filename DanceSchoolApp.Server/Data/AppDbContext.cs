@@ -222,6 +222,8 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.Description)
                 .HasMaxLength(256)
                 .HasColumnName("description");
+            entity.Property(e => e.SecretDescription)
+                .HasColumnName("secret_description");
             entity.Property(e => e.EndDatetime).HasColumnName("end_datetime");
             entity.Property(e => e.ImageUrl)
                 .HasMaxLength(256)
@@ -237,6 +239,44 @@ public partial class AppDbContext : DbContext
             entity.HasOne(d => d.CreatedByNavigation).WithMany(p => p.Events)
                 .HasForeignKey(d => d.CreatedBy)
                 .HasConstraintName("FK_Event_User");
+
+            entity.HasMany(d => d.IdModalities).WithMany(p => p.IdEvents)
+                .UsingEntity<Dictionary<string, object>>(
+                    "Event_Modality",
+                    r => r.HasOne<Modality>().WithMany()
+                        .HasForeignKey("modality_id")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .HasConstraintName("FK_EventModality_Modality"),
+                    l => l.HasOne<Event>().WithMany()
+                        .HasForeignKey("event_id")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .HasConstraintName("FK_EventModality_Event"),
+                    j =>
+                    {
+                        j.HasKey("event_id", "modality_id").HasName("PK_Event_Modality");
+                        j.ToTable("Event_Modality");
+                        j.IndexerProperty<int>("event_id").HasColumnName("event_id");
+                        j.IndexerProperty<int>("modality_id").HasColumnName("modality_id");
+                    });
+
+            entity.HasMany(d => d.IdCoaches).WithMany(p => p.IdEvents)
+                .UsingEntity<Dictionary<string, object>>(
+                    "Event_Coach",
+                    r => r.HasOne<Coach>().WithMany()
+                        .HasForeignKey("coach_id")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .HasConstraintName("FK_EventCoach_Coach"),
+                    l => l.HasOne<Event>().WithMany()
+                        .HasForeignKey("event_id")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .HasConstraintName("FK_EventCoach_Event"),
+                    j =>
+                    {
+                        j.HasKey("event_id", "coach_id").HasName("PK_Event_Coach");
+                        j.ToTable("Event_Coach");
+                        j.IndexerProperty<int>("event_id").HasColumnName("event_id");
+                        j.IndexerProperty<int>("coach_id").HasColumnName("coach_id");
+                    });
         });
 
         modelBuilder.Entity<Item>(entity =>

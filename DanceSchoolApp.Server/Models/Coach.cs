@@ -20,4 +20,6 @@ public partial class Coach
     public virtual User CoachNavigation { get; set; } = null!;
 
     public virtual ICollection<Modality> IdModalities { get; set; } = new List<Modality>();
+
+    public virtual ICollection<Event> IdEvents { get; set; } = new List<Event>();
 }

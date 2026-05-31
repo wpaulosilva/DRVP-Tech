@@ -2,7 +2,19 @@
 
 namespace DanceSchoolApp.Server.DTOs.Social
 {
-    //  Responses 
+    //  Responses
+
+    public class EventModalitySummary
+    {
+        public int ModalityId { get; set; }
+        public string Name { get; set; } = null!;
+    }
+
+    public class EventCoachSummary
+    {
+        public int CoachId { get; set; }
+        public string Name { get; set; } = null!;
+    }
 
     public class EventListResponse
     {
@@ -14,6 +26,8 @@ namespace DanceSchoolApp.Server.DTOs.Social
         public string? ImageUrl { get; set; }
         public bool IsActive { get; set; }
         public string? CreatedByName { get; set; }
+        public List<EventModalitySummary> Modalities { get; set; } = new();
+        public List<EventCoachSummary> Coaches { get; set; } = new();
     }
 
     public class EventDetailResponse
@@ -21,15 +35,19 @@ namespace DanceSchoolApp.Server.DTOs.Social
         public int EventId { get; set; }
         public string Title { get; set; } = null!;
         public string? Description { get; set; }
+        // Null when caller is not authorised to read it.
+        public string? SecretDescription { get; set; }
         public DateTime? StartDatetime { get; set; }
         public DateTime? EndDatetime { get; set; }
         public string? ImageUrl { get; set; }
         public bool IsActive { get; set; }
         public int? CreatedByUserId { get; set; }
         public string? CreatedByName { get; set; }
+        public List<EventModalitySummary> Modalities { get; set; } = new();
+        public List<EventCoachSummary> Coaches { get; set; } = new();
     }
 
-    //  Requests 
+    //  Requests
 
     public class EventCreateRequest : IValidatableObject
     {
@@ -50,6 +68,12 @@ namespace DanceSchoolApp.Server.DTOs.Social
 
         [MaxLength(256)]
         public string? ImageUrl { get; set; }
+
+        [Required]
+        [MinLength(1, ErrorMessage = "At least one modality is required.")]
+        public List<int> ModalityIds { get; set; } = new();
+
+        public List<int> CoachIds { get; set; } = new();
 
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
         {
@@ -78,6 +102,12 @@ namespace DanceSchoolApp.Server.DTOs.Social
         [MaxLength(256)]
         public string? ImageUrl { get; set; }
 
+        [Required]
+        [MinLength(1, ErrorMessage = "At least one modality is required.")]
+        public List<int> ModalityIds { get; set; } = new();
+
+        public List<int> CoachIds { get; set; } = new();
+
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
         {
             if (EndDatetime <= StartDatetime)
@@ -85,5 +115,11 @@ namespace DanceSchoolApp.Server.DTOs.Social
                     "EndDatetime must be after StartDatetime.",
                     new[] { nameof(EndDatetime) });
         }
+    }
+
+    // Coach-only: update the secret description of an event they are assigned to.
+    public class EventSecretDescriptionRequest
+    {
+        public string? SecretDescription { get; set; }
     }
 }

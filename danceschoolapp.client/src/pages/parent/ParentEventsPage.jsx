@@ -2,13 +2,33 @@ import { useEffect, useState } from 'react'
 import { getActiveEvents } from '../../services/eventsService'
 import '../../styles/ManageCards.css'
 
-const fmt = {
-    datetime: v => v
-        ? new Date(v).toLocaleDateString('pt-PT', {
-            day: '2-digit', month: 'short', year: 'numeric',
-            hour: '2-digit', minute: '2-digit'
-        })
-        : '—',
+const fmtDt = v => v
+    ? new Date(v).toLocaleDateString('pt-PT', {
+        day: '2-digit', month: 'short', year: 'numeric',
+        hour: '2-digit', minute: '2-digit'
+    })
+    : '—'
+
+// Turns URLs in plain text into clickable <a> elements
+function Linkified({ text }) {
+    if (!text) return null
+    const urlRegex = /(https?:\/\/[^\s]+)/g
+    const parts = text.split(urlRegex)
+    return (
+        <>
+            {parts.map((part, i) =>
+                urlRegex.test(part)
+                    ? <a key={i} href={part} target="_blank" rel="noopener noreferrer">{part}</a>
+                    : part
+            )}
+        </>
+    )
+}
+
+function EventImage({ imageUrl }) {
+    const [failed, setFailed] = useState(false)
+    if (!imageUrl || failed) return <div className="ev-card-placeholder">🎭</div>
+    return <img className="ev-card-image" src={imageUrl} alt="" onError={() => setFailed(true)} />
 }
 
 function ParentEventsPage() {
@@ -38,19 +58,38 @@ function ParentEventsPage() {
             {error && <p style={{ color: 'var(--danger)' }}>{error}</p>}
 
             {!loading && !error && (
-                <div className="mc-grid">
+                <div className="ev-list">
                     {events.length === 0 && (
                         <div className="mc-empty"><p>Não existem eventos ativos de momento.</p></div>
                     )}
                     {events.map(ev => (
-                        <div key={ev.eventId} className="mc-card">
-                            <div className="mc-card-top">
-                                <p className="mc-card-name">{ev.title}</p>
-                            </div>
-                            {ev.description && <p className="mc-card-desc">{ev.description}</p>}
-                            <div className="mc-card-meta">
-                                <span>Início: {fmt.datetime(ev.startDatetime)}</span>
-                                <span>Fim: {fmt.datetime(ev.endDatetime)}</span>
+                        <div key={ev.eventId} className="ev-card">
+                            <EventImage imageUrl={ev.imageUrl} />
+                            <div className="ev-card-body">
+                                <p className="ev-card-title">{ev.title}</p>
+
+                                {ev.description && <p className="ev-card-desc">{ev.description}</p>}
+
+                                <div className="ev-card-meta">
+                                    <span>📅 {fmtDt(ev.startDatetime)} → {fmtDt(ev.endDatetime)}</span>
+                                </div>
+
+                                {ev.modalities?.length > 0 && (
+                                    <div className="mc-tag-row">
+                                        {ev.modalities.map(m => (
+                                            <span key={m.modalityId} className="mc-tag">{m.name}</span>
+                                        ))}
+                                    </div>
+                                )}
+
+                                {ev.secretDescription && (
+                                    <div>
+                                        <p className="ev-secret-label">📋 Informação para participantes</p>
+                                        <div className="ev-secret-box">
+                                            <Linkified text={ev.secretDescription} />
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     ))}

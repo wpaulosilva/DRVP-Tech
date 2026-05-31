@@ -12,3 +12,7 @@ export const updateEvent = (id, body) => put(`/api/events/${id}`, body)
 export const activateEvent = (id) => patch(`/api/events/${id}/activate`)
 export const deactivateEvent = (id) => patch(`/api/events/${id}/deactivate`)
 export const deleteEvent = (id) => del(`/api/events/${id}`)
+
+// Coach — update secret description for assigned events
+export const updateEventSecretDescription = (id, secretDescription) =>
+    patch(`/api/events/${id}/secret-description`, { secretDescription })
