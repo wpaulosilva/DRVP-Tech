@@ -40,15 +40,16 @@ namespace DanceSchoolApp.Server.Controllers.Social
             }
         }
 
-        //  GET /api/events/active 
-        // Parent/Coach use — only active events visible to all users.
+        //  GET /api/events/active
+        // All authenticated roles — only active events. SecretDescription populated per caller eligibility.
         [Authorize]
         [HttpGet("active")]
         public async Task<IActionResult> GetActive()
         {
             try
             {
-                var result = await _eventService.GetActiveAsync();
+                var role = User.FindFirstValue(ClaimTypes.Role) ?? string.Empty;
+                var result = await _eventService.GetActiveAsync(role, GetUserId());
 
                 if (!result.Any())
                     return NoContent();

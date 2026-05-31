@@ -30,7 +30,7 @@ namespace DanceSchoolApp.Server.Services.Social
             return events.Select(e => MapToListResponse(e)).ToList();
         }
 
-        public async Task<List<EventListResponse>> GetActiveAsync()
+        public async Task<List<EventListResponse>> GetActiveAsync(string callerRole, int callerUserId)
         {
             var events = await _context.Events
                 .Include(e => e.CreatedByNavigation)
@@ -42,7 +42,31 @@ namespace DanceSchoolApp.Server.Services.Social
                 .Where(e => e.IsActive)
                 .ToListAsync();
 
-            return events.Select(e => MapToListResponse(e)).ToList();
+            // Pre-compute the set of modality IDs the parent's students are enrolled in
+            // so we only hit the DB once instead of once per event.
+            HashSet<int>? parentModalityIds = null;
+            if (callerRole == "parent")
+            {
+                parentModalityIds = (await _context.Students
+                    .Where(s => s.ParentUserId == callerUserId && s.IsActive)
+                    .SelectMany(s => s.IdModalities.Select(m => m.ModalityId))
+                    .ToListAsync()).ToHashSet();
+            }
+
+            return events.Select(e =>
+            {
+                string? secret = null;
+
+                if (callerRole == "staff")
+                    secret = e.SecretDescription;
+                else if (callerRole == "coach" && e.IdCoaches.Any(c => c.CoachId == callerUserId))
+                    secret = e.SecretDescription;
+                else if (callerRole == "parent" && parentModalityIds is not null
+                    && e.IdModalities.Any(m => parentModalityIds.Contains(m.ModalityId)))
+                    secret = e.SecretDescription;
+
+                return MapToListResponse(e, secret);
+            }).ToList();
         }
 
         // callerRole: "staff" | "coach" | "parent" | other
@@ -239,11 +263,12 @@ namespace DanceSchoolApp.Server.Services.Social
                 : user.Username;
         }
 
-        private static EventListResponse MapToListResponse(Event e) => new()
+        private static EventListResponse MapToListResponse(Event e, string? secretDescription = null) => new()
         {
             EventId = e.EventId,
             Title = e.Title,
             Description = e.Description,
+            SecretDescription = secretDescription,
             StartDatetime = e.StartDatetime,
             EndDatetime = e.EndDatetime,
             ImageUrl = e.ImageUrl,

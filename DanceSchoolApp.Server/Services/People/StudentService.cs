@@ -29,28 +29,11 @@ namespace DanceSchoolApp.Server.Services.People
             var students = await _context.Students
                 .Include(s => s.PersonInfo)
                 .Include(s => s.IdModalities)
+                .Include(s => s.ParentUser)
+                    .ThenInclude(u => u.PersonInfo)
                 .ToListAsync();
 
-            return students.Select(s => new StudentListResponse
-            {
-                StudentId = s.StudentId,
-                ParentUserId = s.ParentUserId,
-                IsActive = s.IsActive,
-                AcceptanceStatus = (StudentAcceptanceStatus)s.AcceptanceStatus,
-                PersonInfo = s.PersonInfo == null ? null : new PersonListResponse
-                {
-                    PersonId = s.PersonInfo.PersonId,
-                    FirstName = s.PersonInfo.FirstName,
-                    LastName = s.PersonInfo.LastName
-                },
-                Modalities = s.IdModalities.Select(m => new ModalityListResponse
-                {
-                    ModalityId = m.ModalityId,
-                    Name = m.Name,
-                    Description = m.Description,
-                    IsActive = m.IsActive
-                }).ToList()
-            }).ToList();
+            return students.Select(s => MapToListResponse(s)).ToList();
         }
 
         public async Task<StudentDetailResponse> GetStudentAsync(int id)
@@ -100,29 +83,12 @@ namespace DanceSchoolApp.Server.Services.People
             var students = await _context.Students
                 .Include(s => s.PersonInfo)
                 .Include(s => s.IdModalities)
+                .Include(s => s.ParentUser)
+                    .ThenInclude(u => u.PersonInfo)
                 .Where(s => s.ParentUserId == parentId)
                 .ToListAsync();
 
-            return students.Select(s => new StudentListResponse
-            {
-                StudentId = s.StudentId,
-                ParentUserId = s.ParentUserId,
-                IsActive = s.IsActive,
-                AcceptanceStatus = (StudentAcceptanceStatus)s.AcceptanceStatus,
-                PersonInfo = s.PersonInfo == null ? null : new PersonListResponse
-                {
-                    PersonId = s.PersonInfo.PersonId,
-                    FirstName = s.PersonInfo.FirstName,
-                    LastName = s.PersonInfo.LastName
-                },
-                Modalities = s.IdModalities.Select(m => new ModalityListResponse
-                {
-                    ModalityId = m.ModalityId,
-                    Name = m.Name,
-                    Description = m.Description,
-                    IsActive = m.IsActive
-                }).ToList()
-            }).ToList();
+            return students.Select(s => MapToListResponse(s)).ToList();
         }
 
         //  Commands 
@@ -383,6 +349,41 @@ namespace DanceSchoolApp.Server.Services.People
             return person is not null
                 ? $"{person.FirstName} {person.LastName}".Trim()
                 : coach.CoachNavigation?.Username ?? $"Coach {coach.CoachId}";
+        }
+
+        private static StudentListResponse MapToListResponse(Student s)
+        {
+            var parentPerson = s.ParentUser?.PersonInfo;
+            var parentName = parentPerson is not null
+                ? $"{parentPerson.FirstName} {parentPerson.LastName}".Trim()
+                : s.ParentUser?.Username;
+
+            return new StudentListResponse
+            {
+                StudentId = s.StudentId,
+                ParentUserId = s.ParentUserId,
+                IsActive = s.IsActive,
+                AcceptanceStatus = (StudentAcceptanceStatus)s.AcceptanceStatus,
+                PersonInfo = s.PersonInfo == null ? null : new PersonDetailResponse
+                {
+                    PersonId = s.PersonInfo.PersonId,
+                    FirstName = s.PersonInfo.FirstName,
+                    LastName = s.PersonInfo.LastName,
+                    BirthDate = s.PersonInfo.BirthDate == default ? null : s.PersonInfo.BirthDate,
+                    Phone = s.PersonInfo.Phone,
+                    Address = s.PersonInfo.Address,
+                    Nif = s.PersonInfo.Nif
+                },
+                Modalities = s.IdModalities.Select(m => new ModalityListResponse
+                {
+                    ModalityId = m.ModalityId,
+                    Name = m.Name,
+                    Description = m.Description,
+                    IsActive = m.IsActive
+                }).ToList(),
+                ParentName = parentName,
+                ParentEmail = s.ParentUser?.Email
+            };
         }
 
     }

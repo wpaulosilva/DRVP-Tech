@@ -19,8 +19,10 @@ namespace DanceSchoolApp.Server.DTOs.People
         public int ParentUserId { get; set; }
         public bool IsActive { get; set; }
         public StudentAcceptanceStatus AcceptanceStatus { get; set; }
-        public PersonListResponse? PersonInfo { get; set; }
+        public PersonDetailResponse? PersonInfo { get; set; }
         public List<ModalityListResponse> Modalities { get; set; } = new();
+        public string? ParentName { get; set; }
+        public string? ParentEmail { get; set; }
     }
 
     public class StudentDetailResponse

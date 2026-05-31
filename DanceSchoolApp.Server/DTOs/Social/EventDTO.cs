@@ -21,6 +21,8 @@ namespace DanceSchoolApp.Server.DTOs.Social
         public int EventId { get; set; }
         public string Title { get; set; } = null!;
         public string? Description { get; set; }
+        // Null when caller is not authorised to read it.
+        public string? SecretDescription { get; set; }
         public DateTime? StartDatetime { get; set; }
         public DateTime? EndDatetime { get; set; }
         public string? ImageUrl { get; set; }

@@ -17,6 +17,44 @@ import Input from '@/components/common/Input'
 import AddStudentModal from '@/features/students/components/AddStudentModal'
 import '@/styles/AdminPage.css'
 
+// ── helpers ──────────────────────────────────────────────────────────────────
+
+const getName = (s) => {
+    const first = s.firstName ?? s.personInfo?.firstName ?? ''
+    const last  = s.lastName  ?? s.personInfo?.lastName  ?? ''
+    return `${first} ${last}`.trim() || '—'
+}
+
+function ValidationBadge({ status }) {
+    if (status === 0) return <span className="val-badge val-badge--pending">Pendente</span>
+    if (status === 1) return <span className="val-badge val-badge--accepted">Aceite</span>
+    if (status === 2) return <span className="val-badge val-badge--rejected">Rejeitado</span>
+    return <span className="muted-status">—</span>
+}
+
+function SensitiveField({ label, value }) {
+    const [shown, setShown] = useState(false)
+    const masked = value ? '•'.repeat(Math.min(value.length, 9)) : '—'
+    return (
+        <div className="student-detail-field">
+            <label>{label}</label>
+            <div className="sensitive-wrap">
+                <span className="sensitive-value">{shown ? (value || '—') : masked}</span>
+                {value && (
+                    <button
+                        type="button"
+                        className="sensitive-toggle"
+                        onClick={e => { e.stopPropagation(); setShown(v => !v) }}
+                        title={shown ? 'Ocultar' : 'Mostrar'}
+                    >
+                        {shown ? '🙈' : '👁'}
+                    </button>
+                )}
+            </div>
+        </div>
+    )
+}
+
 function StaffValidateStudentsPage() {
     const [tab, setTab] = useState('pending')
     const [students, setStudents] = useState([])
@@ -24,11 +62,16 @@ function StaffValidateStudentsPage() {
     const [sortBy, setSortBy] = useState('name')
     const [sortDir, setSortDir] = useState('asc')
 
+    // All-tab filters
+    const [search, setSearch] = useState('')
+    const [filterModality, setFilterModality] = useState('')
+    const [expandedIds, setExpandedIds] = useState(new Set())
+
     const [showRejectModal, setShowRejectModal] = useState(false)
     const [rejectReason, setRejectReason] = useState('')
     const [selectedStudentId, setSelectedStudentId] = useState(null)
 
-    // Edit student modal state
+    // Edit modal state
     const [modalities, setModalities] = useState([])
     const [showEditModal, setShowEditModal] = useState(false)
     const [editingStudent, setEditingStudent] = useState(null)
@@ -44,7 +87,6 @@ function StaffValidateStudentsPage() {
 
     const fetchStudents = async () => {
         setLoading(true)
-
         try {
             if (tab === 'pending') {
                 const data = await getValidateStudents({ status: 'pending' })
@@ -60,9 +102,7 @@ function StaffValidateStudentsPage() {
         }
     }
 
-    useEffect(() => {
-        fetchStudents()
-    }, [tab])
+    useEffect(() => { fetchStudents() }, [tab])
 
     useEffect(() => {
         getModalities().then(data => {
@@ -71,7 +111,18 @@ function StaffValidateStudentsPage() {
         }).catch(() => {})
     }, [])
 
-    const openEditModal = async (student) => {
+    const toggleExpand = (id, e) => {
+        // Don't expand when clicking buttons
+        if (e.target.closest('button')) return
+        setExpandedIds(prev => {
+            const next = new Set(prev)
+            next.has(id) ? next.delete(id) : next.add(id)
+            return next
+        })
+    }
+
+    const openEditModal = async (student, e) => {
+        e?.stopPropagation()
         setEditingStudent(student)
         setEditError('')
         setEditLoading(true)
@@ -83,8 +134,7 @@ function StaffValidateStudentsPage() {
             setEditPhone(data.personInfo?.phone ?? '')
             setEditAddress(data.personInfo?.address ?? '')
             setEditNif(data.personInfo?.nif ?? '')
-            const existingIds = (data.modalities ?? []).map(m => m.modalityId ?? m.ModalityId)
-            setEditModalityIds(existingIds)
+            setEditModalityIds((data.modalities ?? []).map(m => m.modalityId ?? m.ModalityId))
             setShowEditModal(true)
         } catch (err) {
             alert(err.message)
@@ -95,29 +145,20 @@ function StaffValidateStudentsPage() {
     }
 
     const handleEditSubmit = async () => {
-        if (!editFirstName.trim() || !editLastName.trim()) {
-            setEditError('Nome e apelido são obrigatórios.')
-            return
-        }
-        if (!editBirthDate) {
-            setEditError('Data de nascimento é obrigatória.')
-            return
-        }
-        if (editNif && editNif.length !== 9) {
-            setEditError('NIF deve ter 9 dígitos.')
-            return
-        }
+        if (!editFirstName.trim() || !editLastName.trim()) { setEditError('Nome e apelido são obrigatórios.'); return }
+        if (!editBirthDate) { setEditError('Data de nascimento é obrigatória.'); return }
+        if (editNif && editNif.length !== 9) { setEditError('NIF deve ter 9 dígitos.'); return }
         setEditLoading(true)
         setEditError('')
         try {
             await updateStudent(editingStudent.studentId, {
-                parentId:    editingStudent.parentId ?? 0,
-                firstName:   editFirstName.trim(),
-                lastName:    editLastName.trim(),
-                birthDate:   editBirthDate,
-                phone:       editPhone.trim() || null,
-                address:     editAddress.trim() || null,
-                nif:         editNif.trim() || null,
+                parentId: editingStudent.parentId ?? 0,
+                firstName: editFirstName.trim(),
+                lastName: editLastName.trim(),
+                birthDate: editBirthDate,
+                phone: editPhone.trim() || null,
+                address: editAddress.trim() || null,
+                nif: editNif.trim() || null,
                 modalityIds: editModalityIds,
             })
             setShowEditModal(false)
@@ -130,100 +171,66 @@ function StaffValidateStudentsPage() {
         }
     }
 
-    const toggleEditModality = (id) => {
-        setEditModalityIds(prev =>
-            prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
-        )
-    }
+    const toggleEditModality = (id) =>
+        setEditModalityIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id])
 
     const handleSort = (field) => {
-        if (sortBy === field) {
-            setSortDir((current) => current === 'asc' ? 'desc' : 'asc')
-        } else {
-            setSortBy(field)
-            setSortDir('asc')
-        }
+        if (sortBy === field) setSortDir(d => d === 'asc' ? 'desc' : 'asc')
+        else { setSortBy(field); setSortDir('asc') }
     }
 
-    const renderSortIcon = (field) => {
-        if (sortBy !== field) return ''
-        return sortDir === 'asc' ? ' ▲' : ' ▼'
-    }
+    const sortIcon = (field) => sortBy === field ? (sortDir === 'asc' ? ' ▲' : ' ▼') : ''
 
-    const handleAccept = async (id) => {
-        await acceptStudent(id)
-        fetchStudents()
-    }
-
-    const openRejectModal = (id) => {
-        setSelectedStudentId(id)
-        setRejectReason('')
-        setShowRejectModal(true)
-    }
+    const handleAccept = async (id) => { await acceptStudent(id); fetchStudents() }
 
     const confirmReject = async () => {
         if (!rejectReason.trim()) return
-
         await rejectStudent(selectedStudentId, rejectReason.trim())
-
-        setShowRejectModal(false)
-        setSelectedStudentId(null)
-        setRejectReason('')
+        setShowRejectModal(false); setSelectedStudentId(null); setRejectReason('')
         fetchStudents()
     }
 
-    const handleDeactivate = async (id) => {
+    const handleDeactivate = async (id, e) => {
+        e.stopPropagation()
         if (!window.confirm('Desativar este estudante?')) return
-        await deactivateStudent(id)
-        fetchStudents()
+        await deactivateStudent(id); fetchStudents()
     }
 
-    const handleActivate = async (id) => {
+    const handleActivate = async (id, e) => {
+        e.stopPropagation()
         if (!window.confirm('Reativar este estudante?')) return
-        await activateStudent(id)
-        fetchStudents()
+        await activateStudent(id); fetchStudents()
     }
 
-    const getName = (s) => {
-        const first = s.firstName ?? s.personInfo?.firstName ?? ''
-        const last = s.lastName ?? s.personInfo?.lastName ?? ''
-        return `${first} ${last}`.trim() || '—'
+    const fmtDate = v => {
+        if (!v) return '—'
+        const d = new Date(v)
+        return isNaN(d) ? v : d.toLocaleDateString('pt-PT')
     }
 
-    const getValidation = (status) => {
-        if (status === 0) return 'Pendente'
-        if (status === 1) return 'Aceite'
-        if (status === 2) return 'Rejeitado'
-        return '—'
-    }
+    const filteredSorted = useMemo(() => {
+        let list = [...students]
 
-    const shouldShowActiveStatus = (s) => s.acceptanceStatus === 1
+        if (search.trim()) {
+            const q = search.trim().toLowerCase()
+            list = list.filter(s => getName(s).toLowerCase().includes(q))
+        }
 
-    const sortedStudents = useMemo(() => {
-        return [...students].sort((a, b) => {
-            let valueA = ''
-            let valueB = ''
+        if (filterModality) {
+            const mid = Number(filterModality)
+            list = list.filter(s => (s.modalities ?? []).some(m => (m.modalityId ?? m.ModalityId) === mid))
+        }
 
-            if (sortBy === 'name') {
-                valueA = getName(a).toLowerCase()
-                valueB = getName(b).toLowerCase()
-            }
-
-            if (sortBy === 'status') {
-                valueA = a.acceptanceStatus === 1 ? (a.isActive ? 'ativo' : 'inativo') : ''
-                valueB = b.acceptanceStatus === 1 ? (b.isActive ? 'ativo' : 'inativo') : ''
-            }
-
-            if (sortBy === 'validation') {
-                valueA = getValidation(a.acceptanceStatus).toLowerCase()
-                valueB = getValidation(b.acceptanceStatus).toLowerCase()
-            }
-
-            if (valueA < valueB) return sortDir === 'asc' ? -1 : 1
-            if (valueA > valueB) return sortDir === 'asc' ? 1 : -1
+        return list.sort((a, b) => {
+            let va = '', vb = ''
+            if (sortBy === 'name')       { va = getName(a).toLowerCase(); vb = getName(b).toLowerCase() }
+            if (sortBy === 'validation') { va = String(a.acceptanceStatus); vb = String(b.acceptanceStatus) }
+            if (sortBy === 'status')     { va = a.isActive ? '1' : '0'; vb = b.isActive ? '1' : '0' }
+            if (va < vb) return sortDir === 'asc' ? -1 : 1
+            if (va > vb) return sortDir === 'asc' ?  1 : -1
             return 0
         })
-    }, [students, sortBy, sortDir])
+    }, [students, search, filterModality, sortBy, sortDir])
 
     return (
         <section className="dashboard-page-card">
@@ -231,17 +238,10 @@ function StaffValidateStudentsPage() {
             <p>Aprovar ou gerir estudantes introduzidos pelos encarregados.</p>
 
             <div className="staff-tabs">
-                <button
-                    className={tab === 'pending' ? 'staff-tab active' : 'staff-tab'}
-                    onClick={() => setTab('pending')}
-                >
+                <button className={tab === 'pending' ? 'staff-tab active' : 'staff-tab'} onClick={() => setTab('pending')}>
                     Pendentes
                 </button>
-
-                <button
-                    className={tab === 'all' ? 'staff-tab active' : 'staff-tab'}
-                    onClick={() => setTab('all')}
-                >
+                <button className={tab === 'all' ? 'staff-tab active' : 'staff-tab'} onClick={() => setTab('all')}>
                     Todos
                 </button>
             </div>
@@ -256,31 +256,20 @@ function StaffValidateStudentsPage() {
                         {students.map((s) => (
                             <div key={s.studentId} className="validate-card">
                                 <h3>{getName(s)}</h3>
-
                                 <p><strong>Data Nascimento:</strong> {s.birthDate || '—'}</p>
                                 <p><strong>NIF:</strong> {s.nif || '—'}</p>
                                 <p><strong>Telefone:</strong> {s.phone || '—'}</p>
                                 <p><strong>Morada:</strong> {s.address || '—'}</p>
-
                                 <p><strong>Encarregado:</strong> {s.parentName || '—'}</p>
                                 <p><strong>Email:</strong> {s.parentEmail || '—'}</p>
-
                                 {(s.modalities ?? []).length > 0 && (
-                                    <p><strong>Modalidades:</strong> {(s.modalities).join(', ')}</p>
+                                    <p><strong>Modalidades:</strong> {s.modalities.map(m => m.name ?? m).join(', ')}</p>
                                 )}
-
                                 <div className="validate-actions">
-                                    <Button
-                                        variant="secondary"
-                                        onClick={() => openRejectModal(s.studentId)}
-                                    >
+                                    <Button variant="secondary" onClick={() => { setSelectedStudentId(s.studentId); setRejectReason(''); setShowRejectModal(true) }}>
                                         Rejeitar
                                     </Button>
-
-                                    <Button
-                                        variant="primary"
-                                        onClick={() => handleAccept(s.studentId)}
-                                    >
+                                    <Button variant="primary" onClick={() => handleAccept(s.studentId)}>
                                         Aceitar
                                     </Button>
                                 </div>
@@ -289,106 +278,125 @@ function StaffValidateStudentsPage() {
                     </div>
                 )
             ) : (
-                <div className="table-wrap">
-                    <table className="app-table">
-                        <thead>
-                            <tr>
-                                <th onClick={() => handleSort('name')} style={{ cursor: 'pointer' }}>
-                                    Nome{renderSortIcon('name')}
-                                </th>
+                <>
+                    <div className="students-filters">
+                        <input
+                            type="text"
+                            placeholder="Pesquisar por nome..."
+                            value={search}
+                            onChange={e => setSearch(e.target.value)}
+                        />
+                        <select value={filterModality} onChange={e => setFilterModality(e.target.value)}>
+                            <option value="">Todas as modalidades</option>
+                            {modalities.map(m => (
+                                <option key={m.modalityId} value={m.modalityId}>{m.name}</option>
+                            ))}
+                        </select>
+                    </div>
 
-                                <th onClick={() => handleSort('status')} style={{ cursor: 'pointer' }}>
-                                    Estado{renderSortIcon('status')}
-                                </th>
-
-                                <th onClick={() => handleSort('validation')} style={{ cursor: 'pointer' }}>
-                                    Validação{renderSortIcon('validation')}
-                                </th>
-
-                                <th>Ações</th>
-                                <th></th>
-                            </tr>
-                        </thead>
-
-                        <tbody>
-                            {sortedStudents.length === 0 ? (
+                    <div className="table-wrap">
+                        <table className="app-table">
+                            <thead>
                                 <tr>
-                                    <td colSpan={5} className="table-empty">
-                                        Nenhum estudante encontrado.
-                                    </td>
+                                    <th onClick={() => handleSort('name')} style={{ cursor: 'pointer' }}>Nome{sortIcon('name')}</th>
+                                    <th>Modalidades</th>
+                                    <th onClick={() => handleSort('validation')} style={{ cursor: 'pointer' }}>Validação{sortIcon('validation')}</th>
+                                    <th onClick={() => handleSort('status')} style={{ cursor: 'pointer' }}>Estado{sortIcon('status')}</th>
+                                    <th></th>
                                 </tr>
-                            ) : (
-                                sortedStudents.map((s) => (
-                                    <tr key={s.studentId}>
-                                        <td>{getName(s)}</td>
+                            </thead>
+                            <tbody>
+                                {filteredSorted.length === 0 ? (
+                                    <tr><td colSpan={5} className="table-empty">Nenhum estudante encontrado.</td></tr>
+                                ) : (
+                                    filteredSorted.map((s) => {
+                                        const expanded = expandedIds.has(s.studentId)
+                                        const p = s.personInfo ?? {}
+                                        return (
+                                            <>
+                                                <tr
+                                                    key={s.studentId}
+                                                    className={`student-row${expanded ? ' expanded' : ''}`}
+                                                    onClick={e => toggleExpand(s.studentId, e)}
+                                                    title="Clique para ver detalhes"
+                                                >
+                                                    <td>
+                                                        <span style={{ marginRight: 6, color: 'var(--text-3)', fontSize: '0.8rem' }}>
+                                                            {expanded ? '▲' : '▼'}
+                                                        </span>
+                                                        {getName(s)}
+                                                    </td>
 
-                                        <td>
-                                            {shouldShowActiveStatus(s) ? (
-                                                <StatusBadge active={s.isActive} />
-                                            ) : (
-                                                <span className="muted-status">—</span>
-                                            )}
-                                        </td>
+                                                    <td>
+                                                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                                                            {(s.modalities ?? []).map(m => (
+                                                                <span key={m.modalityId ?? m.ModalityId} className="mc-tag" style={{ fontSize: '0.75rem' }}>
+                                                                    {m.name}
+                                                                </span>
+                                                            ))}
+                                                        </div>
+                                                    </td>
 
-                                        <td>{getValidation(s.acceptanceStatus)}</td>
+                                                    <td><ValidationBadge status={s.acceptanceStatus} /></td>
 
-                                        <td>
-                                            {s.acceptanceStatus === 1 && (
-                                                s.isActive ? (
-                                                    <Button
-                                                        variant="danger"
-                                                        onClick={() => handleDeactivate(s.studentId)}
-                                                    >
-                                                        Desativar
-                                                    </Button>
-                                                ) : (
-                                                    <Button
-                                                        variant="secondary"
-                                                        onClick={() => handleActivate(s.studentId)}
-                                                    >
-                                                        Reativar
-                                                    </Button>
-                                                )
-                                            )}
-                                        </td>
-                                        <td>
-                                            <Button
-                                                variant="secondary"
-                                                onClick={() => openEditModal(s)}
-                                            >
-                                                Editar
-                                            </Button>
-                                        </td>
-                                    </tr>
-                                ))
-                            )}
-                        </tbody>
-                    </table>
-                </div>
+                                                    <td>
+                                                        <div className="status-cell">
+                                                            {s.acceptanceStatus === 1 && <StatusBadge active={s.isActive} />}
+                                                            {s.acceptanceStatus === 1 && (
+                                                                s.isActive
+                                                                    ? <Button variant="danger" onClick={e => handleDeactivate(s.studentId, e)}>Desativar</Button>
+                                                                    : <Button variant="secondary" onClick={e => handleActivate(s.studentId, e)}>Reativar</Button>
+                                                            )}
+                                                        </div>
+                                                    </td>
+
+                                                    <td>
+                                                        <Button variant="secondary" onClick={e => openEditModal(s, e)}>Editar</Button>
+                                                    </td>
+                                                </tr>
+
+                                                {expanded && (
+                                                    <tr key={`${s.studentId}-detail`} className="student-detail-row">
+                                                        <td colSpan={5}>
+                                                            <div className="student-detail-panel">
+                                                                <div className="student-detail-field">
+                                                                    <label>Data de Nascimento</label>
+                                                                    <span>{fmtDate(p.birthDate)}</span>
+                                                                </div>
+                                                                <div className="student-detail-field">
+                                                                    <label>Morada</label>
+                                                                    <span>{p.address || '—'}</span>
+                                                                </div>
+                                                                <SensitiveField label="NIF" value={p.nif} />
+                                                                <SensitiveField label="Telefone" value={p.phone} />
+                                                                <div className="student-detail-field">
+                                                                    <label>Encarregado</label>
+                                                                    <span>{s.parentName || '—'}</span>
+                                                                </div>
+                                                                <div className="student-detail-field">
+                                                                    <label>Email do Encarregado</label>
+                                                                    <span>{s.parentEmail || '—'}</span>
+                                                                </div>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                )}
+                                            </>
+                                        )
+                                    })
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                </>
             )}
 
-            <Modal
-                open={showRejectModal}
-                title="Rejeitar Estudante"
-                onClose={() => setShowRejectModal(false)}
-            >
+            <Modal open={showRejectModal} title="Rejeitar Estudante" onClose={() => setShowRejectModal(false)}>
                 <p>Indique o motivo da rejeição:</p>
-
-                <Input
-                    type="text"
-                    value={rejectReason}
-                    placeholder="Motivo da rejeição..."
-                    onChange={setRejectReason}
-                />
-
+                <Input type="text" value={rejectReason} placeholder="Motivo da rejeição..." onChange={setRejectReason} />
                 <div className="modal-actions">
-                    <Button variant="secondary" onClick={() => setShowRejectModal(false)}>
-                        Cancelar
-                    </Button>
-
-                    <Button variant="danger" onClick={confirmReject}>
-                        Confirmar Rejeição
-                    </Button>
+                    <Button variant="secondary" onClick={() => setShowRejectModal(false)}>Cancelar</Button>
+                    <Button variant="danger" onClick={confirmReject}>Confirmar Rejeição</Button>
                 </div>
             </Modal>
 
