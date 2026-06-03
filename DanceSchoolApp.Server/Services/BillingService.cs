@@ -52,12 +52,13 @@ namespace DanceSchoolApp.Server.Services
                 decimal durationHours = DurationHours(cls);
                 bool isSundayOrHoliday = IsSundayOrHoliday(cls.StartDatetime);
 
-                // Prefer class-level per-participant override if set; otherwise use configured rates
-                decimal appliedRate = cls.PerParticipantPrice ?? (isSundayOrHoliday ? weekendRate : weekdayRate);
-                decimal amount = durationHours * appliedRate;
-
                 foreach (var p in cls.Participants)
                 {
+                    // Per-participant price takes precedence; null = fall back to app-settings rates.
+                    // This preserves correct totals for legacy rows that predate the price field.
+                    decimal appliedRate = p.PerParticipantPrice ?? (isSundayOrHoliday ? weekendRate : weekdayRate);
+                    decimal amount = durationHours * appliedRate;
+
                     var student = p.IdStudentNavigation;
                     int studentId = student.StudentId;
                     string name = ResolveStudentName(student);
@@ -85,19 +86,11 @@ namespace DanceSchoolApp.Server.Services
                     {
                         if (isSundayOrHoliday)
                         {
-                            studentTotals[studentId] = (
-                                name,
-                                0m,
-                                durationHours,
-                                amount);
+                            studentTotals[studentId] = (name, 0m, durationHours, amount);
                         }
                         else
                         {
-                            studentTotals[studentId] = (
-                                name,
-                                durationHours,
-                                0m,
-                                amount);
+                            studentTotals[studentId] = (name, durationHours, 0m, amount);
                         }
                     }
                 }

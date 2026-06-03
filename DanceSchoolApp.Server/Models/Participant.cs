@@ -23,6 +23,11 @@ public partial class Participant
 
     public DateTime? ParentEnrollmentAt { get; set; }
 
+    // Price snapshot assigned at enrolment from app settings (weekday/weekend rate).
+    // Staff can override per participant at approval/validation time.
+    // Null on legacy rows — billing falls back to app settings rates.
+    public decimal? PerParticipantPrice { get; set; }
+
     public virtual CoachClass IdCoachClassNavigation { get; set; } = null!;
 
     public virtual Student IdStudentNavigation { get; set; } = null!;

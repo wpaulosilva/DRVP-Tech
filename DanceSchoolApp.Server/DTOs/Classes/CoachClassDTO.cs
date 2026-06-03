@@ -100,6 +100,7 @@ namespace DanceSchoolApp.Server.DTOs.Classes
         public string StudentName { get; set; } = null!;
         public byte ValidationStatus { get; set; }
         public string? ParentName { get; set; }
+        public decimal? PerParticipantPrice { get; set; }
     }
 
     // Used by GET /open — only shows what a parent needs to decide to join.

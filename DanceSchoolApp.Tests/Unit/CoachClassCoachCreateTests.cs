@@ -19,7 +19,7 @@ public class CoachClassCoachCreateTests
         new CoachClassService(db, new NotificationService(db), new AppSettingService(db));
 
     private static ParticipantService CreateParticipantService(AppDbContext db) =>
-        new ParticipantService(db, new NotificationService(db));
+        new ParticipantService(db, new NotificationService(db), new AppSettingService(db));
 
     private static DateTime NextWeekdayAt(DayOfWeek target, int hour)
     {

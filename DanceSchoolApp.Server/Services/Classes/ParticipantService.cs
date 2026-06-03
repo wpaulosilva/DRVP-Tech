@@ -12,12 +12,23 @@ namespace DanceSchoolApp.Server.Services.Classes
     {
         private readonly AppDbContext _context;
         private readonly NotificationService _notificationService;
+        private readonly AppSettingService _appSettingService;
 
         public ParticipantService(AppDbContext context,
-            NotificationService notificationService)
+            NotificationService notificationService,
+            AppSettingService appSettingService)
         {
             _context = context;
             _notificationService = notificationService;
+            _appSettingService = appSettingService;
+        }
+
+        private async Task<decimal> ComputeDefaultPriceAsync(DateTime classStart)
+        {
+            bool isSundayOrHoliday = classStart.DayOfWeek == DayOfWeek.Sunday;
+            decimal weekdayRate = await _appSettingService.GetDecimalAsync("class_price_weekday", 36.00m);
+            decimal weekendRate = await _appSettingService.GetDecimalAsync("class_price_weekend", 43.50m);
+            return isSundayOrHoliday ? weekendRate : weekdayRate;
         }
 
         //  Queries
@@ -132,25 +143,20 @@ namespace DanceSchoolApp.Server.Services.Classes
                 IdStudent              = request.StudentId,
                 JoinedAt               = DateOnly.FromDateTime(DateTime.Now),
                 ValidationStatus       = (byte)ParticipantValidationStatus.Pending,
-                ParentEnrollmentStatus = (byte)ParentEnrollmentStatus.NotRequired
+                ParentEnrollmentStatus = (byte)ParentEnrollmentStatus.NotRequired,
+                PerParticipantPrice    = await ComputeDefaultPriceAsync(coachClass.StartDatetime)
             };
 
             _context.Participants.Add(participant);
             await _context.SaveChangesAsync();
 
-            var classInfo = await _context.CoachClasses
-                .FirstOrDefaultAsync(c => c.ClassId == request.ClassId);
-
-            if (classInfo is not null)
-            {
-                await _notificationService.SendAsync(
-                    userId: classInfo.IdCoach,
-                    title: "Novo aluno inscrito",
-                    message: $"Um aluno inscreveu-se na sua aula em {classInfo.StartDatetime:dd/MM/yyyy HH:mm}.",
-                    type: NotificationType.ClassUpdate,
-                    entityType: "CoachClass",
-                    entityId: request.ClassId);
-            }
+            await _notificationService.SendAsync(
+                userId: coachClass.IdCoach,
+                title: "Novo aluno inscrito",
+                message: $"Um aluno inscreveu-se na sua aula em {coachClass.StartDatetime:dd/MM/yyyy HH:mm}.",
+                type: NotificationType.ClassUpdate,
+                entityType: "CoachClass",
+                entityId: request.ClassId);
 
             return participant.ParticipantId;
         }
@@ -224,25 +230,20 @@ namespace DanceSchoolApp.Server.Services.Classes
                 IdStudent              = request.StudentId,
                 JoinedAt               = DateOnly.FromDateTime(DateTime.Now),
                 ValidationStatus       = (byte)ParticipantValidationStatus.Pending,
-                ParentEnrollmentStatus = (byte)ParentEnrollmentStatus.NotRequired
+                ParentEnrollmentStatus = (byte)ParentEnrollmentStatus.NotRequired,
+                PerParticipantPrice    = await ComputeDefaultPriceAsync(coachClass.StartDatetime)
             };
 
             _context.Participants.Add(participant);
             await _context.SaveChangesAsync();
 
-            var classInfo = await _context.CoachClasses
-                .FirstOrDefaultAsync(c => c.ClassId == request.ClassId);
-
-            if (classInfo is not null)
-            {
-                await _notificationService.SendAsync(
-                    userId: classInfo.IdCoach,
-                    title: "Novo aluno inscrito",
-                    message: $"Um aluno inscreveu-se na sua aula em {classInfo.StartDatetime:dd/MM/yyyy HH:mm}.",
-                    type: NotificationType.ClassUpdate,
-                    entityType: "CoachClass",
-                    entityId: request.ClassId);
-            }
+            await _notificationService.SendAsync(
+                userId: coachClass.IdCoach,
+                title: "Novo aluno inscrito",
+                message: $"Um aluno inscreveu-se na sua aula em {coachClass.StartDatetime:dd/MM/yyyy HH:mm}.",
+                type: NotificationType.ClassUpdate,
+                entityType: "CoachClass",
+                entityId: request.ClassId);
 
             return participant.ParticipantId;
         }

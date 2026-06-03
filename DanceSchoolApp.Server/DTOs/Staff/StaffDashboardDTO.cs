@@ -58,6 +58,8 @@ namespace DanceSchoolApp.Server.DTOs.Staff
         public ParticipantSummaryDto ParticipantSummary { get; set; } = null!;
         // Full per-participant list with individual validation status and parent name
         public List<ParticipantSummaryItem> Participants { get; set; } = new();
+        // Representative price for the class (first participant's price, or null = use app-settings defaults)
+        public decimal? PerParticipantPrice { get; set; }
     }
 
     public class ParticipantSummaryDto

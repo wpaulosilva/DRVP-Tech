@@ -187,13 +187,15 @@ namespace DanceSchoolApp.Server.Services
                     },
                     Participants          = parts.Select(p => new ParticipantSummaryItem
                     {
-                        ParticipantId    = p.ParticipantId,
-                        StudentName      = ResolveStudentName(p.IdStudentNavigation),
-                        ValidationStatus = p.ValidationStatus,
-                        ParentName       = p.IdStudentNavigation.ParentUser is not null
+                        ParticipantId       = p.ParticipantId,
+                        StudentName         = ResolveStudentName(p.IdStudentNavigation),
+                        ValidationStatus    = p.ValidationStatus,
+                        ParentName          = p.IdStudentNavigation.ParentUser is not null
                             ? ResolveUserName(p.IdStudentNavigation.ParentUser)
-                            : null
-                    }).ToList()
+                            : null,
+                        PerParticipantPrice = p.PerParticipantPrice
+                    }).ToList(),
+                    PerParticipantPrice   = parts.FirstOrDefault()?.PerParticipantPrice
                 };
             }).ToList();
 

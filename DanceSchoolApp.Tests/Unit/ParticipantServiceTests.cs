@@ -1,6 +1,7 @@
 using DanceSchoolApp.Server.Data;
 using DanceSchoolApp.Server.DTOs.Classes;
 using DanceSchoolApp.Server.Models;
+using DanceSchoolApp.Server.Services;
 using DanceSchoolApp.Server.Services.Classes;
 using DanceSchoolApp.Server.Services.Social;
 using DanceSchoolApp.Tests.Helpers;
@@ -19,7 +20,7 @@ namespace DanceSchoolApp.Tests.Unit;
 public class ParticipantServiceTests
 {
     private static ParticipantService CreateService(AppDbContext db) =>
-        new ParticipantService(db, new NotificationService(db));
+        new ParticipantService(db, new NotificationService(db), new AppSettingService(db));
 
     private static (AppDbContext db, Coach coach, Modality modality, Studio studio,
                     User parentUser, Student student)

@@ -481,6 +481,9 @@ public partial class AppDbContext : DbContext
                   .HasDefaultValue((byte)0)
                   .HasColumnName("parent_enrollment_status");
             entity.Property(e => e.ParentEnrollmentAt).HasColumnName("parent_enrollment_at");
+            entity.Property(e => e.PerParticipantPrice)
+                  .HasColumnName("per_participant_price")
+                  .HasPrecision(10, 2);
 
             entity.HasOne(d => d.IdCoachClassNavigation).WithMany(p => p.Participants)
                 .HasForeignKey(d => d.IdCoachClass)
