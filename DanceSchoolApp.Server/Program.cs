@@ -46,13 +46,20 @@ var conn = Environment.GetEnvironmentVariable("DanceSchoolApp_DB")
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(conn));
 
-//  CORS 
+//  CORS
+// DanceSchoolApp_AllowedOrigins: comma-separated list of extra origins (e.g. your Vercel URL).
+// https://localhost:5173 is always included for local dev.
+var extraOrigins = (Environment.GetEnvironmentVariable("DanceSchoolApp_AllowedOrigins") ?? "")
+    .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+var allowedOrigins = new[] { "https://localhost:5173" }.Concat(extraOrigins).ToArray();
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend",
         policy =>
         {
-            policy.WithOrigins("https://localhost:5173")
+            policy.WithOrigins(allowedOrigins)
                   .AllowAnyHeader()
                   .AllowAnyMethod()
                   .AllowCredentials();

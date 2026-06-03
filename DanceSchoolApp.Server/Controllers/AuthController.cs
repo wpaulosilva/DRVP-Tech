@@ -142,40 +142,35 @@ namespace DanceSchoolApp.Server.Controllers
             });
         }
 
+        // In dev (same-origin via Vite proxy): Strict is fine, Secure not required.
+        // In production (Vercel → Azure, cross-origin): SameSite=None + Secure=true is required
+        // by browsers for cookies to be sent on cross-origin requests.
+        private CookieOptions BaseCookieOptions() => _env.IsDevelopment()
+            ? new CookieOptions { HttpOnly = true, Secure = false, SameSite = SameSiteMode.Strict }
+            : new CookieOptions { HttpOnly = true, Secure = true,  SameSite = SameSiteMode.None  };
+
         private void SetAccessCookie(string token, DateTime expires)
         {
-            Response.Cookies.Append(AccessCookieName, token, new CookieOptions
-            {
-                HttpOnly = true,
-                Secure   = !_env.IsDevelopment(),
-                SameSite = SameSiteMode.Strict,
-                Expires  = expires,
-                Path     = "/"
-            });
+            var opts = BaseCookieOptions();
+            opts.Expires = expires;
+            opts.Path    = "/";
+            Response.Cookies.Append(AccessCookieName, token, opts);
         }
 
         private void SetRefreshCookie(string raw)
         {
-            Response.Cookies.Append(RefreshCookieName, raw, new CookieOptions
-            {
-                HttpOnly = true,
-                Secure   = !_env.IsDevelopment(),
-                SameSite = SameSiteMode.Strict,
-                Expires  = DateTime.Now.AddDays(7),
-                Path     = "/api/auth"  // only sent to auth endpoints, not every request
-            });
+            var opts = BaseCookieOptions();
+            opts.Expires = DateTime.Now.AddDays(7);
+            opts.Path    = "/api/auth";  // only sent to auth endpoints, not every request
+            Response.Cookies.Append(RefreshCookieName, raw, opts);
         }
 
         private void ClearCookie(string name, string path)
         {
-            Response.Cookies.Append(name, string.Empty, new CookieOptions
-            {
-                HttpOnly = true,
-                Secure   = !_env.IsDevelopment(),
-                SameSite = SameSiteMode.Strict,
-                Expires  = DateTime.Now.AddDays(-1),
-                Path     = path
-            });
+            var opts = BaseCookieOptions();
+            opts.Expires = DateTime.Now.AddDays(-1);
+            opts.Path    = path;
+            Response.Cookies.Append(name, string.Empty, opts);
         }
     }
 }
