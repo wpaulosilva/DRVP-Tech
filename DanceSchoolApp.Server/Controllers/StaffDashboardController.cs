@@ -28,6 +28,19 @@ namespace DanceSchoolApp.Server.Controllers
             _appSettingService = appSettingService;
         }
 
+        // DEBUG: return the computed student billing rows as JSON for inspection
+        [HttpGet("billing/students/debug")]
+        public async Task<IActionResult> DebugBillingStudents(
+            [FromQuery] string month,
+            [FromQuery] string? search = null)
+        {
+            if (!TryParseYearMonth(month, out int year, out int monthInt))
+                return BadRequest("Invalid month format. Expected YYYY-MM.");
+
+            var result = await _billingService.GetStudentBillingAsync(year, monthInt, search, page: 1, pageSize: int.MaxValue);
+            return Ok(result);
+        }
+
         //  GET /api/staff/dashboard 
         [HttpGet("dashboard")]
         public async Task<IActionResult> GetDashboard()

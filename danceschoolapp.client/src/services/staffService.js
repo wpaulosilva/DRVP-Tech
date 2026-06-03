@@ -25,6 +25,12 @@ export function updateClassDetails(classId, body) {
     return patch(`/api/coachclasses/${classId}/update-details`, body)
 }
 
+export function getDefaultPrice(date) {
+    const params = new URLSearchParams()
+    if (date) params.set('date', date)
+    return get(`/api/coachclasses/default-price?${params}`)
+}
+
 export function getAgenda({ from, to, studioId } = {}) {
     const params = new URLSearchParams()
     if (from) params.set('from', from)
@@ -40,4 +46,5 @@ export default {
     staffValidate,
     cancelClass,
     getAgenda,
+    getDefaultPrice,
 }

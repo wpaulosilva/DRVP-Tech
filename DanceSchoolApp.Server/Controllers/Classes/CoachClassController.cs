@@ -23,6 +23,30 @@ namespace DanceSchoolApp.Server.Controllers.Classes
             _appSettingService = appSettingService;
         }
 
+        //  GET /api/coachclasses/default-price?date=YYYY-MM-DD
+        // Returns the default per-participant price according to app settings (weekday/weekend).
+        [Authorize(Roles = "staff")]
+        [HttpGet("default-price")]
+        public async Task<IActionResult> GetDefaultPrice([FromQuery] string? date)
+        {
+            try
+            {
+                DateTime classDate;
+                if (string.IsNullOrWhiteSpace(date) || !DateTime.TryParse(date, out classDate))
+                    classDate = DateTime.Now;
+
+                bool isSunday = classDate.DayOfWeek == DayOfWeek.Sunday;
+                var weekdayRate = await _appSettingService.GetDecimalAsync("class_price_weekday", 36.00m);
+                var weekendRate = await _appSettingService.GetDecimalAsync("class_price_weekend", 43.50m);
+                var price = isSunday ? weekendRate : weekdayRate;
+                return Ok(new { price });
+            }
+            catch (Exception)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, "An unexpected error occurred.");
+            }
+        }
+
         //  GET /api/coachclasses
         // Staff use — returns all classes regardless of status.
         [Authorize(Roles = "staff")]

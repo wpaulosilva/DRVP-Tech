@@ -98,23 +98,42 @@ namespace DanceSchoolApp.Server.Services
 
             var studentIds = studentTotals.Keys.ToList();
 
-            // build parent/guardian info by joining students -> users -> personinfos to ensure data is loaded
-            var parentMap = await (
-                from s in _context.Students
-                where studentIds.Contains(s.StudentId)
-                join u in _context.Users on s.ParentUserId equals u.UserId into pu
-                from u in pu.DefaultIfEmpty()
-                join p in _context.PersonInfos on u.PersonInfoId equals p.PersonId into pp
-                from p in pp.DefaultIfEmpty()
-                select new
+            // build parent/guardian info by loading students with their ParentUser and PersonInfo
+            var studentsWithParents = await _context.Students
+                .Where(s => studentIds.Contains(s.StudentId))
+                .Include(s => s.ParentUser)
+                    .ThenInclude(u => u.PersonInfo)
+                .Include(s => s.PersonInfo)
+                .ToListAsync();
+
+            var parentMap = new List<object>();
+            var nifMap = new Dictionary<int, string?>();
+            var responsibleNameMap = new Dictionary<int, string?>();
+            var responsibleNifMap = new Dictionary<int, string?>();
+
+            foreach (var s in studentsWithParents)
+            {
+                var studentNif = s.PersonInfo != null ? s.PersonInfo.Nif : null;
+                string? parentUsername = s.ParentUser?.Username;
+                string? responsibleName = null;
+                string? responsibleNif = null;
+
+                if (s.ParentUser?.PersonInfo != null)
                 {
-                    s.StudentId,
-                    StudentNif = s.PersonInfo != null ? s.PersonInfo.Nif : null,
-                    ParentUsername = u != null ? u.Username : null,
-                    ResponsibleName = p != null ? (p.FirstName + " " + p.LastName).Trim() : null,
-                    ResponsibleNif = p != null ? p.Nif : null
+                    responsibleName = (s.ParentUser.PersonInfo.FirstName + " " + s.ParentUser.PersonInfo.LastName).Trim();
+                    responsibleNif = s.ParentUser.PersonInfo.Nif;
                 }
-            ).ToListAsync();
+
+                // Fallback to username if no person info
+                if (string.IsNullOrWhiteSpace(responsibleName) && !string.IsNullOrWhiteSpace(parentUsername))
+                    responsibleName = parentUsername;
+
+                nifMap[s.StudentId] = studentNif;
+                responsibleNameMap[s.StudentId] = responsibleName;
+                responsibleNifMap[s.StudentId] = responsibleNif;
+
+                parentMap.Add(new { s.StudentId, StudentNif = studentNif, ParentUsername = parentUsername, ResponsibleName = responsibleName, ResponsibleNif = responsibleNif });
+            }
 
             var nifMap = parentMap.ToDictionary(x => x.StudentId, x => x.StudentNif as string);
             var responsibleNameMap = parentMap.ToDictionary(x => x.StudentId, x => (x.ResponsibleName ?? x.ParentUsername) as string);
@@ -328,12 +347,53 @@ namespace DanceSchoolApp.Server.Services
                 search,
                 page: 1,
                 pageSize: int.MaxValue);
+            // Load authoritative parent/student info from DB to ensure parity with UI
+            var studentIds = result.Items.Select(i => i.StudentId).ToList();
+
+            var studentsWithParents = await _context.Students
+                .Where(s => studentIds.Contains(s.StudentId))
+                .Include(s => s.ParentUser)
+                    .ThenInclude(u => u.PersonInfo)
+                .Include(s => s.PersonInfo)
+                .ToListAsync();
+
+            var studentNifMap = studentsWithParents.ToDictionary(s => s.StudentId, s => s.PersonInfo?.Nif);
+            var responsibleNameMap = new Dictionary<int, string?>();
+            var responsibleNifMap = new Dictionary<int, string?>();
+            var nameKeyMap = new Dictionary<string, (string? respName, string? respNif, string? studentNif)>();
+
+            foreach (var s in studentsWithParents)
+            {
+                string? respName = null;
+                string? respNif = null;
+
+                if (s.ParentUser != null && s.ParentUser.PersonInfo != null)
+                {
+                    respName = (s.ParentUser.PersonInfo.FirstName + " " + s.ParentUser.PersonInfo.LastName).Trim();
+                    respNif = s.ParentUser.PersonInfo.Nif;
+                }
+                else if (s.ParentUser != null)
+                {
+                    respName = s.ParentUser.Username;
+                }
+
+                responsibleNameMap[s.StudentId] = respName;
+                responsibleNifMap[s.StudentId] = respNif;
+
+                // also index by resolved student name as fallback
+                var resolved = ResolveStudentName(s);
+                if (!string.IsNullOrWhiteSpace(resolved))
+                {
+                    nameKeyMap[resolved] = (respName, respNif, s.PersonInfo?.Nif);
+                }
+            }
+
 
             using var wb = new XLWorkbook();
             var ws = wb.Worksheets.Add("Faturação Alunos");
 
             ws.Cell(1, 1).Value = $"Faturação de Alunos — {year}-{month:D2}";
-            ws.Range(1, 1, 1, 6).Merge();
+            ws.Range(1, 1, 1, 8).Merge();
 
             ws.Cell(1, 1).Style
                 .Font.SetBold(true)
@@ -367,14 +427,49 @@ namespace DanceSchoolApp.Server.Services
             foreach (var item in result.Items)
             {
                 ws.Cell(row, 1).Value = item.StudentName;
-                ws.Cell(row, 2).Value = item.Nif ?? "";
-                ws.Cell(row, 3).Value = item.ResponsibleName ?? "";
-                ws.Cell(row, 4).Value = item.ResponsibleNif ?? "";
-                ws.Cell(row, 3).Value = item.HoursWeekday;
-                ws.Cell(row, 4).Value = item.HoursWeekend;
-                ws.Cell(row, 5).Value = item.HoursCompleted;
-                ws.Cell(row, 6).Value = item.TotalAmount;
-                ws.Cell(row, 6).Style.NumberFormat.Format = "#,##0.00 €";
+
+                // Student NIF: prefer the value from the billing result (UI), fallback to DB map
+                string studentNif = item.Nif ?? string.Empty;
+                if (string.IsNullOrWhiteSpace(studentNif) && studentNifMap != null && item.StudentId != 0 && studentNifMap.TryGetValue(item.StudentId, out var sn))
+                    studentNif = sn ?? string.Empty;
+                if (string.IsNullOrWhiteSpace(studentNif))
+                {
+                    var key = item.StudentName ?? string.Empty;
+                    if (!string.IsNullOrWhiteSpace(key) && nameKeyMap.TryGetValue(key, out var kv)) studentNif = kv.studentNif ?? string.Empty;
+                }
+                ws.Cell(row, 2).SetValue(studentNif);
+                ws.Cell(row, 2).Style.NumberFormat.Format = "@";
+
+                // Responsible (parent) name / nif: prefer the values from the billing result (UI), fallback to DB-loaded maps
+                string respName = item.ResponsibleName ?? string.Empty;
+                string respNif = item.ResponsibleNif ?? string.Empty;
+
+                if (string.IsNullOrWhiteSpace(respName) && item.StudentId != 0 && responsibleNameMap != null && responsibleNameMap.TryGetValue(item.StudentId, out var rn))
+                    respName = rn ?? string.Empty;
+
+                if (string.IsNullOrWhiteSpace(respNif) && item.StudentId != 0 && responsibleNifMap != null && responsibleNifMap.TryGetValue(item.StudentId, out var rnf))
+                    respNif = rnf ?? string.Empty;
+
+                // fallback by student name if still missing
+                if ((string.IsNullOrWhiteSpace(respName) || string.IsNullOrWhiteSpace(respNif)))
+                {
+                    var key = item.StudentName ?? string.Empty;
+                    if (!string.IsNullOrWhiteSpace(key) && nameKeyMap.TryGetValue(key, out var kv))
+                    {
+                        if (string.IsNullOrWhiteSpace(respName)) respName = kv.respName ?? string.Empty;
+                        if (string.IsNullOrWhiteSpace(respNif)) respNif = kv.respNif ?? string.Empty;
+                    }
+                }
+
+                ws.Cell(row, 3).Value = respName;
+                ws.Cell(row, 4).SetValue(respNif);
+                ws.Cell(row, 4).Style.NumberFormat.Format = "@";
+
+                ws.Cell(row, 5).Value = item.HoursWeekday;
+                ws.Cell(row, 6).Value = item.HoursWeekend;
+                ws.Cell(row, 7).Value = item.HoursCompleted;
+                ws.Cell(row, 8).Value = item.TotalAmount;
+                ws.Cell(row, 8).Style.NumberFormat.Format = "#,##0.00 €";
 
                 if (row % 2 == 0)
                 {
@@ -386,18 +481,31 @@ namespace DanceSchoolApp.Server.Services
             }
 
             ws.Cell(row, 1).Value = "TOTAL";
-            ws.Cell(row, 6).FormulaA1 = $"=SUM(F5:F{row - 1})";
-            ws.Cell(row, 6).Style.NumberFormat.Format = "#,##0.00 €";
+            // Sum the Total (€) column (column H)
+            ws.Cell(row, 8).FormulaA1 = $"=SUM(H5:H{row - 1})";
+            ws.Cell(row, 8).Style.NumberFormat.Format = "#,##0.00 €";
 
             ws.Range(row, 1, row, 8).Style
                 .Font.SetBold(true)
                 .Fill.SetBackgroundColor(XLColor.FromHtml("#EDF2F7"));
+
+            // Log rows for diagnostics
+            try
+            {
+                foreach (var item in result.Items)
+                {
+                    _logger?.LogDebug("ExportStudentBilling writing item: {Item}", item);
+                }
+            }
+            catch { }
 
             ws.Columns().AdjustToContents();
             ws.Column(3).Width = Math.Max(ws.Column(3).Width, 24);
             ws.Column(4).Width = Math.Max(ws.Column(4).Width, 22);
             ws.Column(5).Width = Math.Max(ws.Column(5).Width, 20);
             ws.Column(6).Width = Math.Max(ws.Column(6).Width, 20);
+            ws.Column(7).Width = Math.Max(ws.Column(7).Width, 18);
+            ws.Column(8).Width = Math.Max(ws.Column(8).Width, 18);
 
             using var stream = new MemoryStream();
             wb.SaveAs(stream);

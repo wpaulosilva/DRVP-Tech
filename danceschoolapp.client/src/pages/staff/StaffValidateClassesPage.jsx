@@ -3,7 +3,7 @@ import ClassValidationCard from '../../components/common/ClassValidationCard'
 import Modal from '../../components/common/Modal'
 import Button from '../../components/common/Button'
 import Select from '../../components/common/Select'
-import { getValidateClasses, staffApprove, staffReject, staffValidate, updateClassDetails } from '../../services/staffService'
+import { getValidateClasses, staffApprove, staffReject, staffValidate, updateClassDetails, getDefaultPrice } from '../../services/staffService'
 import { getStudios } from '../../services/studiosService'
 import '../../styles/ValidateClasses.css'
 
@@ -68,7 +68,19 @@ function StaffValidateClassesPage() {
         setEditStartDate(startDt ? startDt.slice(0, 10) : '')
         setEditStartTime(startDt ? startDt.slice(11, 16) : '')
         setEditEndTime(endDt ? endDt.slice(11, 16) : '')
-        setEditPerParticipantPrice(aula?.PerParticipantPrice ? String(aula.PerParticipantPrice) : (aula?.perParticipantPrice ? String(aula.perParticipantPrice) : ''))
+        const existingPrice = aula?.PerParticipantPrice ?? aula?.perParticipantPrice ?? null
+        if (existingPrice !== null && existingPrice !== undefined) {
+            setEditPerParticipantPrice(String(existingPrice))
+        } else {
+            // fetch default price for the date and prefill
+            const dateStr = startDt ? startDt.slice(0, 10) : ''
+            getDefaultPrice(dateStr)
+                .then(res => {
+                    const price = res?.price ?? res?.Price ?? res?.price ?? null
+                    if (price !== null && price !== undefined) setEditPerParticipantPrice(String(price))
+                })
+                .catch(() => {})
+        }
         setEditError('')
     }
 
@@ -82,6 +94,16 @@ function StaffValidateClassesPage() {
             setEditError('A hora de fim deve ser depois da hora de início.');
             return
         }
+        // Ensure a price is provided (cannot submit empty price)
+        if (editPerParticipantPrice === null || editPerParticipantPrice === undefined || String(editPerParticipantPrice).trim() === '') {
+            setEditError('Insira o preço por participante.')
+            return
+        }
+        const parsedPrice = Number(String(editPerParticipantPrice).replace(',', '.'))
+        if (Number.isNaN(parsedPrice) || parsedPrice < 0) {
+            setEditError('Insira um preço válido (>= 0).')
+            return
+        }
         const id = editTarget?.ClassId ?? editTarget?.classId
         setEditSaving(true); setEditError('')
         try {
@@ -90,7 +112,8 @@ function StaffValidateClassesPage() {
                 endDatetime:   `${editStartDate}T${editEndTime}:00`,
             }
             if (editStudioId) body.studioId = Number(editStudioId)
-            if (editPerParticipantPrice) body.perParticipantPrice = Number(editPerParticipantPrice)
+            // perParticipantPrice is required now and will always be sent
+            body.perParticipantPrice = parsedPrice
             await updateClassDetails(id, body)
             setEditTarget(null)
             fetchData()
@@ -301,6 +324,22 @@ function StaffValidateClassesPage() {
                                 required
                             />
                         </div>
+                    </div>
+
+                    <div className="modal-field" style={{ marginTop: '12px' }}>
+                        <label className="modal-label">Preço por participante (EUR)</label>
+                        <input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            className="input"
+                            value={editPerParticipantPrice}
+                            onChange={e => setEditPerParticipantPrice(e.target.value)}
+                            placeholder="Manter padrão da app se vazio"
+                        />
+                        <p style={{ marginTop: '6px', fontSize: '0.85rem', color: '#9CA3AF' }}>
+                            Deixe vazio para usar o preço padrão definido em app settings.
+                        </p>
                     </div>
 
                     {editError && <p style={{ color: 'var(--danger)', fontSize: '0.875rem', marginTop: '8px' }}>{editError}</p>}
