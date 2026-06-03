@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import NotificationModal from './NotificationModal'
 import { useAuth } from '../context/useAuth'
+import { get } from '../api/client'
 
 export default function NotificationButton() {
   const { user } = useAuth()
@@ -14,11 +15,7 @@ export default function NotificationButton() {
   const fetchUnread = async () => {
     if (!userId) { setUnreadCount(0); return }
     try {
-      const res = await fetch(`/api/notifications/user/${userId}?page=1&pageSize=1`, {
-        credentials: 'include'
-      })
-      if (!res.ok) return
-      const data = await res.json()
+      const data = await get(`/api/notifications/user/${userId}?page=1&pageSize=1`)
       setUnreadCount(data.TotalUnread ?? data.totalUnread ?? 0)
     } catch {
       // silent — badge just won't update

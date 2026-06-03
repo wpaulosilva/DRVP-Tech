@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/useAuth'
+import { get, patch, del } from '../api/client'
 import './notification.css'
 
 const PAGE_SIZE = 20
@@ -56,12 +57,7 @@ export default function NotificationModal({ userId, onClose, onUnreadChange }) {
     if (!userId) return
     setLoading(true)
     try {
-      const res = await fetch(
-        `/api/notifications/user/${userId}?page=${pageNum}&pageSize=${PAGE_SIZE}`,
-        { credentials: 'include' }
-      )
-      if (!res.ok) return
-      const data  = await res.json()
+      const data = await get(`/api/notifications/user/${userId}?page=${pageNum}&pageSize=${PAGE_SIZE}`)
       const list  = Array.isArray(data) ? data : (data.Items ?? data.items ?? [])
 
       // Replace backend text occurrences of 'aula'/'aulas' with 'coaching'/'coachings' for UI consistency
@@ -151,13 +147,9 @@ export default function NotificationModal({ userId, onClose, onUnreadChange }) {
 
   const markAsRead = async (id) => {
     try {
-      const res = await fetch(`/api/notifications/${id}/read`, {
-        method: 'PATCH', credentials: 'include'
-      })
-      if (res.ok) {
-        setItems(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n))
-        if (onUnreadChange) onUnreadChange(c => Math.max(0, c - 1))
-      }
+      await patch(`/api/notifications/${id}/read`)
+      setItems(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n))
+      if (onUnreadChange) onUnreadChange(c => Math.max(0, c - 1))
     } catch (err) { console.error('Erro markAsRead', err) }
   }
 
@@ -165,13 +157,9 @@ export default function NotificationModal({ userId, onClose, onUnreadChange }) {
     if (!userId || markingAll) return
     setMarkingAll(true)
     try {
-      const res = await fetch(`/api/notifications/user/${userId}/read-all`, {
-        method: 'PATCH', credentials: 'include'
-      })
-      if (res.ok) {
-        setItems(prev => prev.map(n => ({ ...n, isRead: true })))
-        if (onUnreadChange) onUnreadChange(0)
-      }
+      await patch(`/api/notifications/user/${userId}/read-all`)
+      setItems(prev => prev.map(n => ({ ...n, isRead: true })))
+      if (onUnreadChange) onUnreadChange(0)
     } catch (err) { console.error('Erro markAllRead', err) }
     finally { setMarkingAll(false) }
   }
@@ -180,15 +168,11 @@ export default function NotificationModal({ userId, onClose, onUnreadChange }) {
     e.stopPropagation()
     if (!id || !window.confirm('Deseja eliminar esta notificação?')) return
     try {
-      const res = await fetch(`/api/notifications/${id}`, {
-        method: 'DELETE', credentials: 'include'
-      })
-      if (res.ok) {
-        const removed = items.find(n => n.id === id)
-        setItems(prev => prev.filter(n => n.id !== id))
-        if (expandedId === id) setExpandedId(null)
-        if (!removed?.isRead && onUnreadChange) onUnreadChange(c => Math.max(0, c - 1))
-      }
+      await del(`/api/notifications/${id}`)
+      const removed = items.find(n => n.id === id)
+      setItems(prev => prev.filter(n => n.id !== id))
+      if (expandedId === id) setExpandedId(null)
+      if (!removed?.isRead && onUnreadChange) onUnreadChange(c => Math.max(0, c - 1))
     } catch (err) { console.error('Erro deleteNotification', err) }
   }
 

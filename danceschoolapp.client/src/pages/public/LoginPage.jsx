@@ -4,6 +4,7 @@ import '../../styles/LoginPage.css'
 import logo from '../../assets/logo-entartes.svg'
 import { useAuth } from '../../context/useAuth'
 import Icon from '../../components/ui/Icon'
+import { API_BASE } from '../../api/client'
 
 function mapLoginError(serverMessage) {
     if (!serverMessage) return 'Ocorreu um erro. Tente novamente.'
@@ -37,7 +38,7 @@ function LoginPage() {
         setLoading(true)
 
         try {
-            const response = await fetch('/api/auth/login', {
+            const response = await fetch(`${API_BASE}/api/auth/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include',

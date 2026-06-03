@@ -4,7 +4,7 @@
 
 import React, { useEffect, useState } from 'react'
 import { getBillingStudentsAll, getBillingCoachesAll } from '../../services/billingService'
-import { get } from '../../api/client'
+import { get, API_BASE } from '../../api/client'
 import DataTable from '../../components/common/DataTable'
 import './StaffBillingPage.css'
 
@@ -228,7 +228,7 @@ function StudentsTable({ month }) {
 
                             if (search) params.append('search', search)
 
-                            const res = await fetch(`/api/staff/billing/students/export?${params}`, {
+                            const res = await fetch(`${API_BASE}/api/staff/billing/students/export?${params}`, {
                                 credentials: 'include'
                             })
 
@@ -407,7 +407,7 @@ function CoachesTable({ month }) {
 
                             if (search) params.append('search', search)
 
-                            const res = await fetch(`/api/staff/billing/coaches/export?${params}`, {
+                            const res = await fetch(`${API_BASE}/api/staff/billing/coaches/export?${params}`, {
                                 credentials: 'include'
                             })
 

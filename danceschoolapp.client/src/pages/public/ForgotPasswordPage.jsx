@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import '../../styles/LoginPage.css'
 import logo from '../../assets/logo-entartes.svg'
+import { post } from '../../api/client'
 
 function ForgotPasswordPage() {
     const [email, setEmail] = useState('')
@@ -15,18 +16,7 @@ function ForgotPasswordPage() {
         setLoading(true)
 
         try {
-            const response = await fetch('/api/auth/forgot-password', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ email }),
-            })
-
-            if (!response.ok) {
-                const text = await response.text()
-                throw new Error(text || 'Erro ao enviar email.')
-            }
+            await post('/api/auth/forgot-password', { email })
 
             setMessage(
                 'Vais receber um link no email para redefinir a palavra-passe.'

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { AuthContext } from './AuthContext'
+import { API_BASE } from '../api/client'
 
 export function AuthProvider({ children }) {
     const [user, setUser] = useState(null)
@@ -8,14 +9,14 @@ export function AuthProvider({ children }) {
     const refreshSession = async () => {
         try {
             // Try the existing access token first (no DB hit)
-            let response = await fetch('/api/auth/me', {
+            let response = await fetch(`${API_BASE}/api/auth/me`, {
                 method: 'GET',
                 credentials: 'include',
             })
 
             if (response.status === 401) {
                 // Access token expired — try the refresh token
-                const refreshRes = await fetch('/api/auth/refresh', {
+                const refreshRes = await fetch(`${API_BASE}/api/auth/refresh`, {
                     method: 'POST',
                     credentials: 'include',
                 })
@@ -56,7 +57,7 @@ export function AuthProvider({ children }) {
 
     const logout = async () => {
         try {
-            await fetch('/api/auth/logout', {
+            await fetch(`${API_BASE}/api/auth/logout`, {
                 method: 'POST',
                 credentials: 'include',
             })

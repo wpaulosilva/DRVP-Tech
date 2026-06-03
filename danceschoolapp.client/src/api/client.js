@@ -1,6 +1,6 @@
 // In dev (no VITE_API_URL set), empty string lets the Vite proxy handle /api/* requests.
 // In production (Vercel), set VITE_API_URL=https://your-api.azurewebsites.net in the Vercel dashboard.
-const API_BASE = import.meta.env.VITE_API_URL || ''
+export const API_BASE = import.meta.env.VITE_API_URL || ''
 
 // Deduplicates concurrent refresh calls: if multiple requests fail with 401
 // at the same time, only one refresh call is made and all waiters share it.
