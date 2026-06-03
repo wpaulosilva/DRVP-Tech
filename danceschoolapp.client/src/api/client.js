@@ -32,11 +32,16 @@ async function request(url, options = {}, retry = true) {
     }
 
     if (!res.ok) {
-        const body = await res.json().catch(() => ({}))
-        const firstError = body?.errors
-            ? Object.values(body.errors).flat()[0]
-            : null
-        throw new Error(firstError || body.message || body.title || `Erro ${res.status}`)
+        const text = await res.text().catch(() => '')
+        let message = `Erro ${res.status}`
+        try {
+            const body = JSON.parse(text)
+            const firstError = body?.errors ? Object.values(body.errors).flat()[0] : null
+            message = firstError || body.message || body.title || message
+        } catch {
+            if (text) message = text
+        }
+        throw new Error(message)
     }
 
     const text = await res.text()

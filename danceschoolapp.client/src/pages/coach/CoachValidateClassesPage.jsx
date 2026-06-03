@@ -168,8 +168,8 @@ function CoachValidateClassesPage() {
         try {
             await coachCreateClass({
                 modalityId:      Number(createModality),
-                startDatetime:   new Date(`${createSelectedDate}T${createStart}:00`).toISOString(),
-                endDatetime:     new Date(`${createSelectedDate}T${createEnd}:00`).toISOString(),
+                startDatetime:   `${createSelectedDate}T${createStart}:00`,
+                endDatetime:     `${createSelectedDate}T${createEnd}:00`,
                 maxParticipants: Number(createMaxParts),
                 studentIds:      [...selectedStudents],
             })
