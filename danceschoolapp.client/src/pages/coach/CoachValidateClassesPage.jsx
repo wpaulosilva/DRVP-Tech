@@ -166,13 +166,11 @@ function CoachValidateClassesPage() {
         if (createEnd <= createStart)    { setCreateError('A hora de fim deve ser depois da hora de início.'); return }
         setCreateSubmitting(true); setCreateError('')
         try {
-            // determine maxParticipants from selected students (use configured max as cap)
-            const computedMax = Math.max(1, Math.min((selectedStudents.size || 1), Number(maxParticipants || 1)))
             await coachCreateClass({
                 modalityId:      Number(createModality),
-                startDatetime:   new Date(`${createSelectedDate}T${createStart}:00`).toISOString(),
-                endDatetime:     new Date(`${createSelectedDate}T${createEnd}:00`).toISOString(),
-                maxParticipants: computedMax,
+                startDatetime:   `${createSelectedDate}T${createStart}:00`,
+                endDatetime:     `${createSelectedDate}T${createEnd}:00`,
+                maxParticipants: Number(createMaxParts),
                 studentIds:      [...selectedStudents],
             })
             setCreateSuccess(true)
@@ -380,7 +378,18 @@ function CoachValidateClassesPage() {
                                         )}
                                     </div>
 
-                                    {/* Max participants removed: computed from selected students */}
+                                    {/* Max participants */}
+                                    <div className="modal-field">
+                                        <label className="modal-label">Número máximo de alunos *</label>
+                                        <input
+                                            type="number"
+                                            className="input"
+                                            min={1}
+                                            max={maxParticipants}
+                                            value={createMaxParts}
+                                            onChange={e => setCreateMaxParts(Number(e.target.value))}
+                                        />
+                                    </div>
 
                                     {/* Time range */}
                                     <div style={{ display: 'flex', gap: '12px' }}>

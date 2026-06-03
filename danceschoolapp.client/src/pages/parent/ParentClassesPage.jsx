@@ -310,16 +310,18 @@ function ParentClassesPage() {
         if (!bookingStartTime)   { setBookingError('Defina a hora de início.'); return }
         if (!bookingEndTime)     { setBookingError('Defina a hora de fim.'); return }
         if (bookingEndTime <= bookingStartTime) { setBookingError('A hora de fim deve ser depois da hora de início.'); return }
-        setBookingSubmitting(true); setBookingError('')
+        setBookingSubmitting(true)
         try {
             const coachId = bookingSlot.CoachId ?? bookingSlot.coachId
-            await parentCreateClass({
+            const payload = {
                 coachId,
                 modalityId:    Number(bookingModalityId),
-                startDatetime: new Date(`${bookingDate}T${bookingStartTime}:00`).toISOString(),
-                endDatetime:   new Date(`${bookingDate}T${bookingEndTime}:00`).toISOString(),
+                startDatetime: `${bookingDate}T${bookingStartTime}:00`,
+                endDatetime:   `${bookingDate}T${bookingEndTime}:00`,
                 studentId:     Number(bookingStudentId),
-            })
+            }
+            console.log('[booking] POST /api/coachclasses', payload)
+            await parentCreateClass(payload)
             setBookingSuccess(true)
             setTimeout(() => {
                 setBookingSlot(null)

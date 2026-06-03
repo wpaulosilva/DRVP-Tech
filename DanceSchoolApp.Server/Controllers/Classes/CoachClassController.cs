@@ -170,15 +170,10 @@ namespace DanceSchoolApp.Server.Controllers.Classes
         //  POST /api/coachclasses
         // Parent use — requests an individual class for one of their own students.
         // MaxParticipants is enforced to 1 server-side.
-        // Returns 423 Locked when join_class_enabled is false.
         [Authorize(Roles = "parent")]
         [HttpPost]
         public async Task<IActionResult> ParentCreate([FromBody] CoachClassParentCreateRequest request)
         {
-            if (!await _appSettingService.GetBoolAsync("join_class_enabled", defaultValue: true))
-                return StatusCode(StatusCodes.Status423Locked,
-                    "A funcionalidade de pedido de aulas está desativada.");
-
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
