@@ -27,6 +27,7 @@ function StaffValidateClassesPage() {
     const [editStartDate, setEditStartDate] = useState('')
     const [editStartTime, setEditStartTime] = useState('')
     const [editEndTime, setEditEndTime] = useState('')
+    const [editPerParticipantPrice, setEditPerParticipantPrice] = useState('')
     const [editError, setEditError] = useState('')
     const [editSaving, setEditSaving] = useState(false)
 
@@ -67,6 +68,7 @@ function StaffValidateClassesPage() {
         setEditStartDate(startDt ? startDt.slice(0, 10) : '')
         setEditStartTime(startDt ? startDt.slice(11, 16) : '')
         setEditEndTime(endDt ? endDt.slice(11, 16) : '')
+        setEditPerParticipantPrice(aula?.PerParticipantPrice ? String(aula.PerParticipantPrice) : (aula?.perParticipantPrice ? String(aula.perParticipantPrice) : ''))
         setEditError('')
     }
 
@@ -88,6 +90,7 @@ function StaffValidateClassesPage() {
                 endDatetime:   `${editStartDate}T${editEndTime}:00`,
             }
             if (editStudioId) body.studioId = Number(editStudioId)
+            if (editPerParticipantPrice) body.perParticipantPrice = Number(editPerParticipantPrice)
             await updateClassDetails(id, body)
             setEditTarget(null)
             fetchData()
@@ -100,7 +103,15 @@ function StaffValidateClassesPage() {
 
     const handleApprove = async (id) => {
         try {
-            await staffApprove(id)
+            // attempt to read price from current item
+            const aula = items.find(a => (a.ClassId ?? a.classId ?? a.id) === id)
+            const price = aula?.PerParticipantPrice ?? aula?.perParticipantPrice ?? null
+            const fn = staffApprove(id)
+            if (typeof fn === 'function') {
+                await fn(price)
+            } else {
+                await staffApprove(id)
+            }
             fetchData()
         } catch (e) { console.error(e) }
     }
@@ -130,7 +141,9 @@ function StaffValidateClassesPage() {
 
     const handleValidate = async (id) => {
         try {
-            await staffValidate(id)
+            const aula = items.find(a => (a.ClassId ?? a.classId ?? a.id) === id)
+            const price = aula?.PerParticipantPrice ?? aula?.perParticipantPrice ?? null
+            await staffValidate(id, true, price)
             fetchData()
         } catch (e) { console.error(e) }
     }

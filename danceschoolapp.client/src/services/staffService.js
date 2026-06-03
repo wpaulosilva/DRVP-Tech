@@ -6,15 +6,15 @@ export function getValidateClasses({ tab = 'requested', page = 1, pageSize = 15 
 }
 
 export function staffApprove(classId) {
-    return patch(`/api/coachclasses/${classId}/staff-respond`, { approve: true })
+    return (perParticipantPrice) => patch(`/api/coachclasses/${classId}/staff-respond`, { approve: true, ...(perParticipantPrice ? { perParticipantPrice } : {}) })
 }
 
 export function staffReject(classId, reason) {
     return patch(`/api/coachclasses/${classId}/staff-respond`, { approve: false, ...(reason ? { reason } : {}) })
 }
 
-export function staffValidate(classId, confirmed = true) {
-    return patch(`/api/coachclasses/${classId}/staff-validate`, { confirmed })
+export function staffValidate(classId, confirmed = true, perParticipantPrice) {
+    return patch(`/api/coachclasses/${classId}/staff-validate`, { confirmed, ...(perParticipantPrice ? { perParticipantPrice } : {}) })
 }
 
 export function cancelClass(classId) {

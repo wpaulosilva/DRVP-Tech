@@ -20,6 +20,9 @@ namespace DanceSchoolApp.Server.DTOs.Billing
         public decimal HoursCompleted => HoursWeekday + HoursWeekend;
         public decimal TotalAmount { get; set; }
         public string? Nif { get; set; }
+        // Responsible / guardian
+        public string? ResponsibleName { get; set; }
+        public string? ResponsibleNif { get; set; }
         public string? PaymentStatus { get; set; }    // null — deferred
         public DateTime? LastPaymentDate { get; set; } // null — deferred
     }

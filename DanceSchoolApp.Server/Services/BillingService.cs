@@ -11,11 +11,13 @@ namespace DanceSchoolApp.Server.Services
     {
         private readonly AppDbContext _context;
         private readonly AppSettingService _appSettings;
+        private readonly Microsoft.Extensions.Logging.ILogger<BillingService> _logger;
 
-        public BillingService(AppDbContext context, AppSettingService appSettings)
+        public BillingService(AppDbContext context, AppSettingService appSettings, Microsoft.Extensions.Logging.ILogger<BillingService> logger)
         {
             _context = context;
             _appSettings = appSettings;
+            _logger = logger;
         }
 
         public async Task<PagedBillingStudentResponse> GetStudentBillingAsync(
@@ -50,11 +52,9 @@ namespace DanceSchoolApp.Server.Services
                 decimal durationHours = DurationHours(cls);
                 bool isSundayOrHoliday = IsSundayOrHoliday(cls.StartDatetime);
 
-                decimal rate = isSundayOrHoliday
-                    ? weekendRate
-                    : weekdayRate;
-
-                decimal amount = durationHours * rate;
+                // Prefer class-level per-participant override if set; otherwise use configured rates
+                decimal appliedRate = cls.PerParticipantPrice ?? (isSundayOrHoliday ? weekendRate : weekdayRate);
+                decimal amount = durationHours * appliedRate;
 
                 foreach (var p in cls.Participants)
                 {
@@ -105,14 +105,27 @@ namespace DanceSchoolApp.Server.Services
 
             var studentIds = studentTotals.Keys.ToList();
 
-            var nifMap = await _context.Students
-                .Where(s => studentIds.Contains(s.StudentId))
-                .Select(s => new
+            // build parent/guardian info by joining students -> users -> personinfos to ensure data is loaded
+            var parentMap = await (
+                from s in _context.Students
+                where studentIds.Contains(s.StudentId)
+                join u in _context.Users on s.ParentUserId equals u.UserId into pu
+                from u in pu.DefaultIfEmpty()
+                join p in _context.PersonInfos on u.PersonInfoId equals p.PersonId into pp
+                from p in pp.DefaultIfEmpty()
+                select new
                 {
                     s.StudentId,
-                    Nif = s.PersonInfo != null ? s.PersonInfo.Nif : null
-                })
-                .ToDictionaryAsync(x => x.StudentId, x => x.Nif);
+                    StudentNif = s.PersonInfo != null ? s.PersonInfo.Nif : null,
+                    ParentUsername = u != null ? u.Username : null,
+                    ResponsibleName = p != null ? (p.FirstName + " " + p.LastName).Trim() : null,
+                    ResponsibleNif = p != null ? p.Nif : null
+                }
+            ).ToListAsync();
+
+            var nifMap = parentMap.ToDictionary(x => x.StudentId, x => x.StudentNif as string);
+            var responsibleNameMap = parentMap.ToDictionary(x => x.StudentId, x => (x.ResponsibleName ?? x.ParentUsername) as string);
+            var responsibleNifMap = parentMap.ToDictionary(x => x.StudentId, x => x.ResponsibleNif as string);
 
             var allRows = studentTotals
                 .Select(kv => new BillingStudentRow
@@ -123,11 +136,21 @@ namespace DanceSchoolApp.Server.Services
                     HoursWeekend = Math.Round(kv.Value.HoursWeekend, 2),
                     TotalAmount = Math.Round(kv.Value.Amount, 2),
                     Nif = nifMap.TryGetValue(kv.Key, out var nif) ? nif : null,
+                    ResponsibleName = responsibleNameMap.TryGetValue(kv.Key, out var rn) ? rn : null,
+                    ResponsibleNif = responsibleNifMap.TryGetValue(kv.Key, out var rnf) ? rnf : null,
                     PaymentStatus = null,
                     LastPaymentDate = null
                 })
                 .OrderBy(r => r.StudentName)
                 .ToList();
+
+            // Debug logging: show what parentMap and allRows contain to aid diagnosis
+            try
+            {
+                _logger?.LogDebug("BillingService parentMap: {ParentMap}", parentMap);
+                _logger?.LogDebug("BillingService allRows: {AllRows}", allRows);
+            }
+            catch { }
 
             var summary = new BillingStudentSummary
             {
@@ -333,12 +356,14 @@ namespace DanceSchoolApp.Server.Services
 
             ws.Cell(4, 1).Value = "Nome";
             ws.Cell(4, 2).Value = "NIF";
-            ws.Cell(4, 3).Value = "Horas segunda a sábado";
-            ws.Cell(4, 4).Value = "Horas domingo ou feriados";
-            ws.Cell(4, 5).Value = "Total Horas";
-            ws.Cell(4, 6).Value = "Total (€)";
+            ws.Cell(4, 3).Value = "Nome do Responsável";
+            ws.Cell(4, 4).Value = "NIF do Responsável";
+            ws.Cell(4, 5).Value = "Horas segunda a sábado";
+            ws.Cell(4, 6).Value = "Horas domingo ou feriados";
+            ws.Cell(4, 7).Value = "Total Horas";
+            ws.Cell(4, 8).Value = "Total (€)";
 
-            ws.Range(4, 1, 4, 6).Style
+            ws.Range(4, 1, 4, 8).Style
                 .Font.SetBold(true)
                 .Fill.SetBackgroundColor(XLColor.FromHtml("#2D3748"))
                 .Font.SetFontColor(XLColor.White)
@@ -350,6 +375,8 @@ namespace DanceSchoolApp.Server.Services
             {
                 ws.Cell(row, 1).Value = item.StudentName;
                 ws.Cell(row, 2).Value = item.Nif ?? "";
+                ws.Cell(row, 3).Value = item.ResponsibleName ?? "";
+                ws.Cell(row, 4).Value = item.ResponsibleNif ?? "";
                 ws.Cell(row, 3).Value = item.HoursWeekday;
                 ws.Cell(row, 4).Value = item.HoursWeekend;
                 ws.Cell(row, 5).Value = item.HoursCompleted;
@@ -358,7 +385,7 @@ namespace DanceSchoolApp.Server.Services
 
                 if (row % 2 == 0)
                 {
-                    ws.Range(row, 1, row, 6).Style
+                    ws.Range(row, 1, row, 8).Style
                         .Fill.SetBackgroundColor(XLColor.FromHtml("#F7FAFC"));
                 }
 
@@ -366,17 +393,18 @@ namespace DanceSchoolApp.Server.Services
             }
 
             ws.Cell(row, 1).Value = "TOTAL";
-            ws.Cell(row, 5).FormulaA1 = $"=SUM(E5:E{row - 1})";
             ws.Cell(row, 6).FormulaA1 = $"=SUM(F5:F{row - 1})";
             ws.Cell(row, 6).Style.NumberFormat.Format = "#,##0.00 €";
 
-            ws.Range(row, 1, row, 6).Style
+            ws.Range(row, 1, row, 8).Style
                 .Font.SetBold(true)
                 .Fill.SetBackgroundColor(XLColor.FromHtml("#EDF2F7"));
 
             ws.Columns().AdjustToContents();
             ws.Column(3).Width = Math.Max(ws.Column(3).Width, 24);
             ws.Column(4).Width = Math.Max(ws.Column(4).Width, 22);
+            ws.Column(5).Width = Math.Max(ws.Column(5).Width, 20);
+            ws.Column(6).Width = Math.Max(ws.Column(6).Width, 20);
 
             using var stream = new MemoryStream();
             wb.SaveAs(stream);

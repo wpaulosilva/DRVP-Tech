@@ -245,7 +245,7 @@ namespace DanceSchoolApp.Server.Controllers.Classes
 
             try
             {
-                await _coachClassService.StaffRespondAsync(id, request.Approve, request.Reason);
+                await _coachClassService.StaffRespondAsync(id, request.Approve, request.Reason, request.PerParticipantPrice);
                 return NoContent();
             }
             catch (KeyNotFoundException ex) { return NotFound(ex.Message); }
@@ -313,7 +313,7 @@ namespace DanceSchoolApp.Server.Controllers.Classes
 
             try
             {
-                await _coachClassService.StaffValidateAsync(id, request.Confirmed, request.Reason);
+                await _coachClassService.StaffValidateAsync(id, request.Confirmed, request.Reason, request.PerParticipantPrice);
                 return NoContent();
             }
             catch (KeyNotFoundException ex) { return NotFound(ex.Message); }

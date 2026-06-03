@@ -126,6 +126,8 @@ function StudentsTable({ month }) {
                     let hoursWeekend = Number(readProp(i, ['hoursWeekend', 'HoursWeekend', 'hours_weekend']) ?? 0)
                     const totalAmount = Number(readProp(i, ['totalAmount', 'TotalAmount', 'total_amount']) ?? 0)
                     const nif = readProp(i, ['nif', 'Nif', 'personInfo.nif']) ?? ''
+                    const responsibleName = readProp(i, ['responsibleName', 'ResponsibleName', 'parentName', 'ParentName', 'parent.user.personInfo.firstName']) ?? ''
+                    const responsibleNif = readProp(i, ['responsibleNif', 'ResponsibleNif', 'parentNif', 'ParentNif', 'parent.user.personInfo.nif']) ?? ''
 
                     if (totalAmount && !hoursWeekday && !hoursWeekend) {
                         const est = weekdayRate > 0 ? totalAmount / weekdayRate : 0
@@ -143,6 +145,8 @@ function StudentsTable({ month }) {
                         id: readProp(i, ['studentId', 'StudentId']) ?? null,
                         Aluno: resolveName(i, ['studentName', 'StudentName', 'name']),
                         Nif: nif,
+                        Responsavel: responsibleName,
+                        ResponsavelNif: responsibleNif,
                         'Horas Realizadas Dias': hoursWeekday,
                         'Horas Realizadas FimDeSemana': hoursWeekend,
                         'Total a Pagar': totalAmount
@@ -161,6 +165,8 @@ function StudentsTable({ month }) {
     const columns = [
         { key: 'Aluno', label: 'Aluno' },
         { key: 'Nif', label: 'NIF' },
+        { key: 'Responsavel', label: 'Nome do Responsável' },
+        { key: 'ResponsavelNif', label: 'NIF do Responsável' },
         { key: 'Horas Realizadas Dias', label: 'Horas Realizadas (segunda a sábado)' },
         { key: 'Horas Realizadas FimDeSemana', label: 'Horas Realizadas (domingo ou feriados)' },
         { key: 'Total a Pagar', label: 'Total a Pagar' }

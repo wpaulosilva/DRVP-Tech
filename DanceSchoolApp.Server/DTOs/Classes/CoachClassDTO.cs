@@ -200,6 +200,8 @@ namespace DanceSchoolApp.Server.DTOs.Classes
         [Required]
         public bool Approve { get; set; }
         public string? Reason { get; set; }
+        // Optional override price to apply per participant when staff approves/validates a class.
+        public decimal? PerParticipantPrice { get; set; }
     }
 
     public class CoachRespondRequest
@@ -221,6 +223,8 @@ namespace DanceSchoolApp.Server.DTOs.Classes
         public bool Confirmed { get; set; }
 
         public string? Reason { get; set; }
+        // Optional override price to apply per participant for this validation
+        public decimal? PerParticipantPrice { get; set; }
     }
 
     // Staff can adjust logistical details (studio, schedule) before accepting a class request.
@@ -229,5 +233,7 @@ namespace DanceSchoolApp.Server.DTOs.Classes
         public int? StudioId { get; set; }
         public DateTime? StartDatetime { get; set; }
         public DateTime? EndDatetime { get; set; }
+        // Optional per-participant price to set when updating details
+        public decimal? PerParticipantPrice { get; set; }
     }
 }

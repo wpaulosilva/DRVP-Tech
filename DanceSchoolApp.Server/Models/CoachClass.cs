@@ -30,6 +30,10 @@ public partial class CoachClass
 
     public byte CoachValidationStatus { get; set; }
 
+    // Optional override price applied per participant when class is validated by staff.
+    // If null, billing falls back to app settings (weekday/weekend rates).
+    public decimal? PerParticipantPrice { get; set; }
+
     public DateTime? FinishedAt { get; set; }
 
     public DateTime? CoachValidatedAt { get; set; }
