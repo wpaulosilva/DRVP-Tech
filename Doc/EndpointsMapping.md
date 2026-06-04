@@ -255,11 +255,14 @@ The header mounts once per session. It does NOT call an endpoint on every naviga
 | Page mount | `GET /api/auth/me` |
 | Tab "Tabela de Alunos" (default) | `GET /api/staff/billing/students?month={YYYY-MM}&page=1&pageSize=25` |
 | Tab "Tabela de Professores" | `GET /api/staff/billing/coaches?month={YYYY-MM}&page=1&pageSize=25` |
-| Month picker change | re-calls with new `month` param |
+| Tab "Gráfico Anual" | `GET /api/staff/billing/annual?year={YYYY}` — returns 12 monthly points (totalRevenue, totalHours, totalSessions) plus year totals |
+| Month picker change (students/coaches tabs) | re-calls with new `month` param |
+| Year prev/next (annual tab) | re-calls with new `year` param |
+| Metric toggle (Receita/Horas/Coachings) | client-side only — re-renders SVG chart from cached response |
 | Search box | re-calls with `&search={query}` |
-| Status filter | re-calls with `&status={value}` |
 | Pagination | re-calls with `&page={n}` |
-| "Exportar Excel" button | `GET /api/staff/billing/students/export?month={YYYY-MM}` *(deferred — not yet implemented)* |
+| "Exportar Excel" — students | `GET /api/staff/billing/students/export?month={YYYY-MM}` → streams .xlsx |
+| "Exportar Excel" — coaches | `GET /api/staff/billing/coaches/export?month={YYYY-MM}` → streams .xlsx |
 
 
 
@@ -330,6 +333,18 @@ Coach selects modality, students, date, and time. Parents of selected students r
 | Navigation arrows | `GET /api/coach/agenda?from={newStart}&to={newEnd}` |
 | Day click → detail below | uses data already in response |
 | "Cancelar" button on Approved class | `PATCH /api/coachclasses/{id}/cancel` *(staff only — coach cannot cancel; remove this button from coach view)* |
+
+### `/coach/marketplace` — Marketplace (read-only)
+
+| Element | Call |
+|---|---|
+| Page mount | `GET /api/auth/me` |
+| Item grid (all items) | `GET /api/items?page=1&pageSize=12` |
+| Category filter | `GET /api/item-categories` (populate dropdown) then re-call with `&categoryId={id}` |
+| Search box | re-call with `&search={query}` |
+| Pagination | re-call with `&page={n}&pageSize=12` |
+
+> Coaches see all items (school + community) but have **no** requisition capability. Cards are non-clickable and show no loan/request buttons.
 
 ### `/coach/events` — Eventos (read-only)
 
@@ -420,7 +435,7 @@ Shown when a coach created a class and the parent's student was included. Parent
 | "Editar" → modal → form submit | `PUT /api/students/{id}` body: `{ firstName, lastName, birthDate, phone, address, nif }` |
 | "Remover" button | `PATCH /api/students/{id}/deactivate` |
 
-### `/ee/inventario` — Inventário (lista: tabs Escolar, Comunidade)
+### `/ee/inventario` — Inventário (lista: tabs Escolar, Comunidade, Pedidos)
 
 #### Tab: Escolar
 
@@ -431,8 +446,6 @@ Shown when a coach created a class and the parent's student was included. Parent
 | Search box | re-call with `&search={query}` |
 | Pagination | `GET /api/ee/inventory/school?page={n}` |
 | Item card click → detail page | navigate to `/ee/inventario/:itemId` (no API call on list page) |
-| My Requisitions (section below grid) | `GET /api/requisitions` (parent sees own only) |
-| Return requisition | `PATCH /api/requisitions/{id}/return` body: `{ returnQuantity }` |
 
 #### Tab: Comunidade
 
@@ -446,6 +459,25 @@ Shown when a coach created a class and the parent's student was included. Parent
 | Item card click → detail page | navigate to `/ee/inventario/:itemId` (no API call on list page) |
 | "Anunciar Item" → form submit | `POST /api/items/personal` body: `{ name, description?, contactPhone?, contactEmail?, contactAddress?, idCategory? }` → navigates to new item's detail page |
 
+#### Tab: Pedidos
+
+Two sections on the same tab:
+
+**Os meus pedidos** (outgoing — requisitions the parent made)
+
+| Element | Call |
+|---|---|
+| Section mount | `GET /api/requisitions` (parent sees their own only) |
+| Return item | `PATCH /api/requisitions/{id}/return` body: `{ returnQuantity }` |
+
+**Pedidos recebidos** (incoming — requisitions on items the parent owns)
+
+| Element | Call |
+|---|---|
+| Section mount | `GET /api/requisitions/received` — returns community-item requisitions where `item.idOwner === authenticatedUserId` |
+| "Aprovar" → modal submit | `PATCH /api/requisitions/{id}/owner-review` body: `{ approve: true, expectedReturnDate?, note? }` |
+| "Rejeitar" button | `PATCH /api/requisitions/{id}/owner-review` body: `{ approve: false }` |
+
 ### `/ee/inventario/:itemId` — Detalhe do Item (parent)
 
 Three access modes determined client-side by `item.fromSchool` and `item.idOwner === user.userId`:
@@ -458,12 +490,14 @@ Three access modes determined client-side by `item.fromSchool` and `item.idOwner
 | Variants for loan dropdown | embedded in `GET /api/items/{id}` response |
 | "Pedir Empréstimo" → form submit | `POST /api/requisitions` body: `{ itemVariantId, quantity, needFrom?, needUntil?, note? }` |
 
-#### Mode B — Community item, not owner (read-only + contact info)
+#### Mode B — Community item, not owner (contact info + request form)
 
 | Element | Call |
 |---|---|
 | Page mount | `GET /api/items/{id}` |
 | Contact info display | no API call — `contactPhone`/`contactEmail` from loaded item |
+| Variants dropdown (active, quantity > 0) | embedded in `GET /api/items/{id}` response |
+| "Enviar Pedido" → form submit | `POST /api/requisitions` body: `{ itemVariantId, quantity, needFrom?, needUntil?, note? }` — same endpoint as school loans; `fromSchool=false` routes review to the item owner instead of staff |
 
 #### Mode C — Community item, owner (full management)
 
@@ -487,6 +521,16 @@ Three access modes determined client-side by `item.fromSchool` and `item.idOwner
 |---|---|
 | Page mount | `GET /api/auth/me` |
 | Events list | `GET /api/events/active` (non-staff use `/active` — `GET /api/events` is staff-only) |
+
+---
+
+## Changelog
+
+| Session | Changes |
+|---|---|
+| Task 1 — Parent-to-parent requisitions | `POST /api/requisitions` now accepts community items (school-only guard removed). Staff `PATCH /api/requisitions/{id}/review` rejects community items (returns 400). New `GET /api/requisitions/received` and `PATCH /api/requisitions/{id}/owner-review` for item owners. `ItemRequisitionListResponse` now includes `fromSchool` flag. |
+| Task 2 — Coach marketplace | `/coach/marketplace` page added (read-only, no requisition). Uses `GET /api/items` — same endpoint as staff inventory, role-gated client-side only. |
+| Task 3 — Annual billing graph | `GET /api/staff/billing/annual?year=YYYY` added. Returns `BillingAnnualResponse` with 12 `BillingAnnualMonthPoint` entries. Staff billing page gains "Gráfico Anual" tab with SVG bar chart switchable between Receita/Horas/Coachings. Excel exports (`/students/export`, `/coaches/export`) were already implemented — marked as deferred in previous docs, now corrected. |
 
 ---
 

@@ -5839,6 +5839,122 @@
             "description": "[staff] Own staff profile."
           },
           "response": []
+        },
+        {
+          "name": "GET Staff Billing Annual",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 200 or 204\", () => pm.expect(pm.response.code).to.be.oneOf([200, 204]));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/staff/billing/annual?year=2026",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "staff",
+                "billing",
+                "annual"
+              ],
+              "query": [
+                {
+                  "key": "year",
+                  "value": "2026"
+                }
+              ]
+            },
+            "description": "[staff,admin] Annual overview — 12 monthly points: totalRevenue, totalHours, totalSessions + year totals."
+          },
+          "response": []
+        },
+        {
+          "name": "GET Staff Billing Students Export",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 200 or 204\", () => pm.expect(pm.response.code).to.be.oneOf([200, 204]));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/staff/billing/students/export?month=2026-04",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "staff",
+                "billing",
+                "students",
+                "export"
+              ],
+              "query": [
+                {
+                  "key": "month",
+                  "value": "2026-04"
+                }
+              ]
+            },
+            "description": "[staff,admin] Download student billing as .xlsx."
+          },
+          "response": []
+        },
+        {
+          "name": "GET Staff Billing Coaches Export",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 200 or 204\", () => pm.expect(pm.response.code).to.be.oneOf([200, 204]));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/staff/billing/coaches/export?month=2026-04",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "staff",
+                "billing",
+                "coaches",
+                "export"
+              ],
+              "query": [
+                {
+                  "key": "month",
+                  "value": "2026-04"
+                }
+              ]
+            },
+            "description": "[staff,admin] Download coach billing as .xlsx."
+          },
+          "response": []
         }
       ],
       "description": "Staff portal dashboard, agenda, validation queues, billing, and settings."
@@ -6020,6 +6136,46 @@
               ]
             },
             "description": "[coach] Own coach profile with modalities."
+          },
+          "response": []
+        },
+        {
+          "name": "GET Coach Marketplace (read-only)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 200 or 204\", () => pm.expect(pm.response.code).to.be.oneOf([200, 204]));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/items?page=1&pageSize=12",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "items"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "12"
+                }
+              ]
+            },
+            "description": "[coach] Read-only view of all active items (school + community). No requisition from this role."
           },
           "response": []
         }
@@ -6362,6 +6518,83 @@
               ]
             },
             "description": "[parent] Own parent profile."
+          },
+          "response": []
+        },
+        {
+          "name": "GET Requisitions Received (owner)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 200 or 204\", () => pm.expect(pm.response.code).to.be.oneOf([200, 204]));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/requisitions/received",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "requisitions",
+                "received"
+              ]
+            },
+            "description": "[parent] Community-item requisitions where the authenticated parent is the item owner."
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH Requisition Owner Review",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"approve\": true,\n  \"expectedReturnDate\": \"2026-07-01\",\n  \"note\": \"Pode levantar na 5 feira.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/requisitions/{{requisition_id}}/owner-review",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "requisitions",
+                "{{requisition_id}}",
+                "owner-review"
+              ]
+            },
+            "description": "[parent] Owner approves or rejects a community-item requisition. Body: { approve, expectedReturnDate?, note? }."
           },
           "response": []
         }
