@@ -69,4 +69,24 @@ namespace DanceSchoolApp.Server.DTOs.Billing
         public int Page { get; set; }
         public int PageSize { get; set; }
     }
+
+    //  Annual billing
+
+    public class BillingAnnualMonthPoint
+    {
+        public int Month { get; set; }
+        public string MonthLabel { get; set; } = null!;
+        public decimal TotalRevenue { get; set; }
+        public decimal TotalHours { get; set; }
+        public int TotalSessions { get; set; }
+    }
+
+    public class BillingAnnualResponse
+    {
+        public int Year { get; set; }
+        public List<BillingAnnualMonthPoint> Months { get; set; } = new();
+        public decimal YearTotalRevenue { get; set; }
+        public decimal YearTotalHours { get; set; }
+        public int YearTotalSessions { get; set; }
+    }
 }

@@ -53,3 +53,7 @@ export async function exportBillingCoaches(month, search = '') {
     const q = new URLSearchParams({ month, search })
     window.location.href = `/api/staff/billing/coaches/export?${q.toString()}`
 }
+
+export async function getBillingAnnual(year) {
+    return get(`/api/staff/billing/annual?year=${year}`)
+}

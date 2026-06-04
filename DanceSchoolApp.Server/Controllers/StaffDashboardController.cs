@@ -234,7 +234,28 @@ namespace DanceSchoolApp.Server.Controllers
         }
 
 
-        //  Private helpers 
+        //  GET /api/staff/billing/annual
+        // Query: year (int, defaults to current year)
+        [HttpGet("billing/annual")]
+        public async Task<IActionResult> GetBillingAnnual([FromQuery] int? year = null)
+        {
+            int targetYear = year ?? DateTime.UtcNow.Year;
+
+            if (targetYear < 2000 || targetYear > 2100)
+                return BadRequest("Invalid year.");
+
+            try
+            {
+                var result = await _billingService.GetAnnualBillingAsync(targetYear);
+                return Ok(result);
+            }
+            catch (Exception)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, "An unexpected error occurred.");
+            }
+        }
+
+        //  Private helpers
 
         private static bool TryParseYearMonth(string? input, out int year, out int month)
         {

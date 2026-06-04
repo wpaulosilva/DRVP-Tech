@@ -595,6 +595,61 @@ namespace DanceSchoolApp.Server.Services
             return stream.ToArray();
         }
 
+        public async Task<BillingAnnualResponse> GetAnnualBillingAsync(int year)
+        {
+            decimal weekdayRate = await _appSettings.GetDecimalAsync("class_price_weekday", 36.00m);
+            decimal weekendRate = await _appSettings.GetDecimalAsync("class_price_weekend", 43.50m);
+
+            var classes = await _context.CoachClasses
+                .Include(c => c.Participants)
+                .Where(c =>
+                    c.Status == (byte)CoachClassStatus.Validated &&
+                    c.StartDatetime.Year == year)
+                .ToListAsync();
+
+            var monthNames = new[] { "Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez" };
+            var monthPoints = new List<BillingAnnualMonthPoint>();
+
+            for (int m = 1; m <= 12; m++)
+            {
+                var monthClasses = classes.Where(c => c.StartDatetime.Month == m).ToList();
+                decimal revenue = 0m;
+                decimal hours = 0m;
+
+                foreach (var cls in monthClasses)
+                {
+                    decimal durationHours = DurationHours(cls);
+                    bool isSundayOrHoliday = IsSundayOrHoliday(cls.StartDatetime);
+
+                    hours += durationHours;
+
+                    foreach (var p in cls.Participants)
+                    {
+                        decimal appliedRate = p.PerParticipantPrice ?? (isSundayOrHoliday ? weekendRate : weekdayRate);
+                        revenue += durationHours * appliedRate;
+                    }
+                }
+
+                monthPoints.Add(new BillingAnnualMonthPoint
+                {
+                    Month = m,
+                    MonthLabel = monthNames[m - 1],
+                    TotalRevenue = Math.Round(revenue, 2),
+                    TotalHours = Math.Round(hours, 2),
+                    TotalSessions = monthClasses.Count
+                });
+            }
+
+            return new BillingAnnualResponse
+            {
+                Year = year,
+                Months = monthPoints,
+                YearTotalRevenue = Math.Round(monthPoints.Sum(p => p.TotalRevenue), 2),
+                YearTotalHours = Math.Round(monthPoints.Sum(p => p.TotalHours), 2),
+                YearTotalSessions = monthPoints.Sum(p => p.TotalSessions)
+            };
+        }
+
         private static bool IsSundayOrHoliday(DateTime date)
         {
             // Regra atual:

@@ -3,7 +3,7 @@
 // GET /api/staff/billing/coaches?month={YYYY-MM}&page=1&pageSize=25
 
 import React, { useEffect, useState } from 'react'
-import { getBillingStudentsAll, getBillingCoachesAll } from '../../services/billingService'
+import { getBillingStudentsAll, getBillingCoachesAll, getBillingAnnual } from '../../services/billingService'
 import { get, API_BASE } from '../../api/client'
 import DataTable from '../../components/common/DataTable'
 import './StaffBillingPage.css'
@@ -443,6 +443,220 @@ function CoachesTable({ month }) {
     )
 }
 
+function AnnualChart() {
+    const [year, setYear] = useState(() => new Date().getFullYear())
+    const [metric, setMetric] = useState('revenue')
+    const [annualData, setAnnualData] = useState(null)
+    const [loading, setLoading] = useState(false)
+    const [hoveredIdx, setHoveredIdx] = useState(null)
+
+    useEffect(() => {
+        let mounted = true
+
+        void (async () => {
+            setLoading(true)
+            setAnnualData(null)
+            try {
+                const res = await getBillingAnnual(year)
+                if (!mounted) return
+                setAnnualData(res)
+            } catch {
+                if (mounted) setAnnualData(null)
+            } finally {
+                if (mounted) setLoading(false)
+            }
+        })()
+
+        return () => { mounted = false }
+    }, [year])
+
+    const months  = annualData?.months  ?? annualData?.Months  ?? []
+    const yearRev = Number(annualData?.yearTotalRevenue  ?? annualData?.YearTotalRevenue  ?? 0)
+    const yearHrs = Number(annualData?.yearTotalHours    ?? annualData?.YearTotalHours    ?? 0)
+    const yearSes = Number(annualData?.yearTotalSessions ?? annualData?.YearTotalSessions ?? 0)
+
+    const getValue = m => {
+        if (metric === 'revenue')  return Number(m.totalRevenue  ?? m.TotalRevenue  ?? 0)
+        if (metric === 'hours')    return Number(m.totalHours    ?? m.TotalHours    ?? 0)
+        return Number(m.totalSessions ?? m.TotalSessions ?? 0)
+    }
+
+    const formatVal = v => {
+        if (metric === 'revenue') return formatMoney(v)
+        if (metric === 'hours')   return `${v.toFixed(1)}h`
+        return String(v)
+    }
+
+    // SVG chart dimensions
+    const W  = 740, H = 270
+    const PAD = { top: 20, right: 16, bottom: 44, left: 62 }
+    const chartW = W - PAD.left - PAD.right
+    const chartH = H - PAD.top  - PAD.bottom
+
+    const maxVal  = months.length > 0 ? Math.max(...months.map(getValue), 0.01) : 0.01
+    const barSlot = chartW / 12
+    const barW    = barSlot * 0.54
+    const YTICKS  = 5
+
+    const fmtY = v => {
+        if (metric === 'revenue') return v >= 1000 ? `${(v / 1000).toFixed(1)}k€` : `${v.toFixed(0)}€`
+        if (metric === 'hours')   return `${v.toFixed(0)}h`
+        return String(Math.round(v))
+    }
+
+    const currentYear = new Date().getFullYear()
+
+    return (
+        <div className="billing-annual-chart">
+            <div className="bac-header">
+                <div className="bac-year-nav">
+                    <button className="bac-year-btn" onClick={() => setYear(y => y - 1)}>&#8249;</button>
+                    <span className="bac-year-label">{year}</span>
+                    <button className="bac-year-btn" onClick={() => setYear(y => y + 1)} disabled={year >= currentYear}>&#8250;</button>
+                </div>
+                <div className="bac-metrics">
+                    {[
+                        { key: 'revenue',  label: 'Receita'   },
+                        { key: 'hours',    label: 'Horas'     },
+                        { key: 'sessions', label: 'Coachings' }
+                    ].map(m => (
+                        <button
+                            key={m.key}
+                            className={`bac-metric-pill${metric === m.key ? ' active' : ''}`}
+                            onClick={() => setMetric(m.key)}
+                        >
+                            {m.label}
+                        </button>
+                    ))}
+                </div>
+            </div>
+
+            <div className="bac-summary">
+                <div className="bac-chip">
+                    <span className="bac-chip-label">Receita Anual</span>
+                    <span className="bac-chip-value bac-chip-money">{formatMoney(yearRev)}</span>
+                </div>
+                <div className="bac-chip">
+                    <span className="bac-chip-label">Horas Totais</span>
+                    <span className="bac-chip-value">{yearHrs.toFixed(1)}h</span>
+                </div>
+                <div className="bac-chip">
+                    <span className="bac-chip-label">Coachings</span>
+                    <span className="bac-chip-value">{yearSes}</span>
+                </div>
+            </div>
+
+            <div className="bac-chart-wrap">
+                {loading ? (
+                    <div className="bac-placeholder">A carregar...</div>
+                ) : months.length === 0 ? (
+                    <div className="bac-placeholder">Sem dados para {year}</div>
+                ) : (
+                    <svg
+                        viewBox={`0 0 ${W} ${H}`}
+                        preserveAspectRatio="xMidYMid meet"
+                        className="bac-svg"
+                        onMouseLeave={() => setHoveredIdx(null)}
+                    >
+                        {/* Horizontal grid lines + Y labels */}
+                        {Array.from({ length: YTICKS + 1 }, (_, i) => {
+                            const v = (maxVal / YTICKS) * i
+                            const y = PAD.top + chartH - (v / maxVal) * chartH
+                            return (
+                                <g key={i}>
+                                    <line
+                                        x1={PAD.left} y1={y}
+                                        x2={PAD.left + chartW} y2={y}
+                                        stroke="var(--border)"
+                                        strokeWidth={i === 0 ? 1.5 : 0.8}
+                                        strokeDasharray={i === 0 ? undefined : '4 3'}
+                                    />
+                                    <text
+                                        x={PAD.left - 8} y={y + 4}
+                                        textAnchor="end"
+                                        fontSize={10}
+                                        fill="var(--text-3)"
+                                    >{fmtY(v)}</text>
+                                </g>
+                            )
+                        })}
+
+                        {/* Bars */}
+                        {months.map((m, idx) => {
+                            const val    = getValue(m)
+                            const barH   = (val / maxVal) * chartH
+                            const x      = PAD.left + idx * barSlot + (barSlot - barW) / 2
+                            const y      = PAD.top + chartH - barH
+                            const label  = m.monthLabel ?? m.MonthLabel ?? String(m.month ?? m.Month)
+                            const isHov  = hoveredIdx === idx
+
+                            return (
+                                <g
+                                    key={idx}
+                                    onMouseEnter={() => setHoveredIdx(idx)}
+                                    style={{ cursor: 'default' }}
+                                >
+                                    <rect
+                                        x={x} y={y}
+                                        width={barW} height={Math.max(barH, 0)}
+                                        rx={5}
+                                        fill={isHov ? 'var(--accent-hover, #4f46e5)' : 'var(--accent, #6366f1)'}
+                                        opacity={isHov ? 1 : 0.78}
+                                    />
+                                    {barH > 24 && (
+                                        <text
+                                            x={x + barW / 2} y={y + 14}
+                                            textAnchor="middle"
+                                            fontSize={9}
+                                            fontWeight={600}
+                                            fill="white"
+                                        >
+                                            {metric === 'revenue'
+                                                ? `${(val / 1000).toFixed(1)}k`
+                                                : metric === 'hours'
+                                                    ? `${val.toFixed(0)}h`
+                                                    : String(val)
+                                            }
+                                        </text>
+                                    )}
+                                    <text
+                                        x={x + barW / 2}
+                                        y={PAD.top + chartH + 16}
+                                        textAnchor="middle"
+                                        fontSize={11}
+                                        fill={isHov ? 'var(--accent, #6366f1)' : 'var(--text-2)'}
+                                        fontWeight={isHov ? 700 : 400}
+                                    >{label}</text>
+                                </g>
+                            )
+                        })}
+
+                        {/* Tooltip */}
+                        {hoveredIdx !== null && months[hoveredIdx] && (() => {
+                            const m    = months[hoveredIdx]
+                            const val  = getValue(m)
+                            const barH = (val / maxVal) * chartH
+                            const cx   = PAD.left + hoveredIdx * barSlot + barSlot / 2
+                            const by   = PAD.top + chartH - barH
+                            const TW   = 110, TH = 40
+                            const tx   = Math.min(Math.max(cx - TW / 2, PAD.left + 2), PAD.left + chartW - TW - 2)
+                            const ty   = Math.max(by - TH - 8, PAD.top)
+                            const label = m.monthLabel ?? m.MonthLabel ?? ''
+                            return (
+                                <g pointerEvents="none">
+                                    <rect x={tx} y={ty} width={TW} height={TH} rx={6} fill="#1f2937" opacity={0.93} />
+                                    <text x={tx + TW / 2} y={ty + 14} textAnchor="middle" fontSize={11} fontWeight={700} fill="white">{label} {year}</text>
+                                    <text x={tx + TW / 2} y={ty + 28} textAnchor="middle" fontSize={10} fill="#d1d5db">{formatVal(val)}</text>
+                                </g>
+                            )
+                        })()}
+                    </svg>
+                )}
+            </div>
+        </div>
+    )
+}
+
 function StaffBillingPage() {
     const [tab, setTab] = useState('students')
     const [month, setMonth] = useState(() => new Date().toISOString().slice(0, 7))
@@ -453,7 +667,7 @@ function StaffBillingPage() {
             <p>Gerir tabelas de alunos e professores</p>
 
             <div style={{ marginTop: 18 }}>
-                <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 12 }}>
+                <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 12, flexWrap: 'wrap' }}>
                     <button
                         className={`pill ${tab === 'students' ? 'active' : ''}`}
                         onClick={() => setTab('students')}
@@ -468,20 +682,37 @@ function StaffBillingPage() {
                         Tabela de Professores
                     </button>
 
-                    <div style={{ marginLeft: 'auto', display: 'flex', gap: 8, alignItems: 'center' }}>
-                        <input
-                            type="month"
-                            value={month}
-                            onChange={event => setMonth(event.target.value)}
-                        />
-                    </div>
+                    <button
+                        className={`pill ${tab === 'annual' ? 'active' : ''}`}
+                        onClick={() => setTab('annual')}
+                    >
+                        Gráfico Anual
+                    </button>
+
+                    {tab !== 'annual' && (
+                        <div style={{ marginLeft: 'auto' }}>
+                            <div className="billing-month-picker">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
+                                    <rect x="3" y="4" width="18" height="18" rx="2" stroke="var(--text-3)" strokeWidth="1.5"/>
+                                    <path d="M16 2v4M8 2v4M3 10h18" stroke="var(--text-3)" strokeWidth="1.5" strokeLinecap="round"/>
+                                </svg>
+                                <input
+                                    type="month"
+                                    value={month}
+                                    onChange={event => setMonth(event.target.value)}
+                                />
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 <div style={{ marginTop: 12 }}>
                     {tab === 'students' ? (
                         <StudentsTable month={month} />
-                    ) : (
+                    ) : tab === 'coaches' ? (
                         <CoachesTable month={month} />
+                    ) : (
+                        <AnnualChart />
                     )}
                 </div>
             </div>
