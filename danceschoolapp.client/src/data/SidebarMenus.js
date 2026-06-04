@@ -20,11 +20,12 @@ export const sidebarMenus = {
     ],
 
     coach: [
-        { label: 'Dashboard',      to: '/coach',                  icon: 'dashboard'    },
-        { label: 'Disponibilidade', to: '/coach/disponibilidade', icon: 'availability' },
-        { label: 'Validar Coachings',   to: '/coach/validar-aulas',  icon: 'validate'     },
-        { label: 'Agenda',          to: '/coach/agenda',          icon: 'agenda'       },
-        { label: 'Eventos',         to: '/coach/eventos',         icon: 'events'       },
+        { label: 'Dashboard',        to: '/coach',                  icon: 'dashboard'    },
+        { label: 'Disponibilidade',  to: '/coach/disponibilidade',  icon: 'availability' },
+        { label: 'Validar Coachings', to: '/coach/validar-aulas',   icon: 'validate'     },
+        { label: 'Agenda',           to: '/coach/agenda',           icon: 'agenda'       },
+        { label: 'Eventos',          to: '/coach/eventos',          icon: 'events'       },
+        { label: 'Marketplace',      to: '/coach/marketplace',      icon: 'inventory'    },
     ],
 
     parent: [

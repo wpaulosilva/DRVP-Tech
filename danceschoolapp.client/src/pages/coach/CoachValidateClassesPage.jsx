@@ -172,7 +172,7 @@ function CoachValidateClassesPage() {
                 modalityId:      Number(createModality),
                 startDatetime:   `${createSelectedDate}T${createStart}:00`,
                 endDatetime:     `${createSelectedDate}T${createEnd}:00`,
-                maxParticipants: Number(createMaxParts),
+                maxParticipants: computedMax,
                 studentIds:      [...selectedStudents],
             })
             setCreateSuccess(true)

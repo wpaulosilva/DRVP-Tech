@@ -84,11 +84,7 @@ namespace DanceSchoolApp.Server.Services.Inventory
             if (variant is null)
                 throw new KeyNotFoundException($"Variant with id {request.ItemVariantId} was not found or is inactive.");
 
-            //  Só itens da escola podem ser requisitados 
-            if (!variant.IdItemNavigation.FromSchool)
-                throw new InvalidOperationException(
-                    "Only school items can be requisitioned. Community items cannot be requisitioned.");
-            //  Validação de datas 
+            //  Validação de datas
             var today = DateTime.Now.Date;
 
             if (request.NeedFrom.HasValue && request.NeedFrom.Value.Date < today)
@@ -140,6 +136,9 @@ namespace DanceSchoolApp.Server.Services.Inventory
 
             if (requisition.Status != RequisitionStatus.Pending)
                 throw new InvalidOperationException("Only pending requisitions can be reviewed.");
+
+            if (!requisition.ItemVariant.IdItemNavigation.FromSchool)
+                throw new InvalidOperationException("Community item requisitions must be reviewed by the item owner, not staff.");
 
             if (request.Approve)
             {
@@ -231,6 +230,86 @@ namespace DanceSchoolApp.Server.Services.Inventory
             await _context.SaveChangesAsync();
         }
 
+        /// <summary>Returns all pending/active requisitions made against items owned by the given parent.</summary>
+        public async Task<List<ItemRequisitionListResponse>> GetReceivedAsync(int ownerUserId)
+        {
+            var reqs = await _context.ItemRequisitions
+                .Include(r => r.ItemVariant)
+                    .ThenInclude(v => v.IdItemNavigation)
+                        .ThenInclude(i => i.ItemImages)
+                .Include(r => r.IdParentNavigation)
+                    .ThenInclude(u => u.PersonInfo)
+                .Where(r => r.ItemVariant.IdItemNavigation.IdOwner == ownerUserId
+                         && !r.ItemVariant.IdItemNavigation.FromSchool)
+                .OrderByDescending(r => r.RequestedAt)
+                .ToListAsync();
+
+            return reqs.Select(MapToList).ToList();
+        }
+
+        /// <summary>Item owner (parent) approves or rejects a requisition for one of their community items.</summary>
+        public async Task OwnerReviewAsync(int id, ItemRequisitionReviewRequest request, int ownerUserId)
+        {
+            var requisition = await _context.ItemRequisitions
+                .Include(r => r.ItemVariant)
+                    .ThenInclude(v => v.IdItemNavigation)
+                .FirstOrDefaultAsync(r => r.RequisitionId == id);
+
+            if (requisition is null)
+                throw new KeyNotFoundException($"Requisition with id {id} was not found.");
+
+            if (requisition.ItemVariant.IdItemNavigation.FromSchool)
+                throw new InvalidOperationException("School item requisitions are reviewed by staff.");
+
+            if (requisition.ItemVariant.IdItemNavigation.IdOwner != ownerUserId)
+                throw new UnauthorizedAccessException("You can only review requisitions for your own items.");
+
+            if (requisition.Status != RequisitionStatus.Pending)
+                throw new InvalidOperationException("Only pending requisitions can be reviewed.");
+
+            if (request.Approve)
+            {
+                if (requisition.ItemVariant.Quantity < requisition.Quantity)
+                    throw new InvalidOperationException("Insufficient quantity at time of approval.");
+
+                requisition.ItemVariant.Quantity -= requisition.Quantity;
+                requisition.Status = RequisitionStatus.Approved;
+                requisition.ExpectedReturnDate = request.ExpectedReturnDate;
+            }
+            else
+            {
+                requisition.Status = RequisitionStatus.Rejected;
+            }
+
+            if (request.Note is not null)
+                requisition.Note = request.Note;
+
+            await _context.SaveChangesAsync();
+
+            if (request.Approve)
+            {
+                await _notificationService.SendAsync(
+                    userId: requisition.IdParent,
+                    title: "Pedido Aprovado",
+                    message: request.ExpectedReturnDate.HasValue
+                        ? $"O seu pedido de '{requisition.ItemVariant.IdItemNavigation.Name}' foi aprovado. Por favor, devolva até {request.ExpectedReturnDate.Value:dd/MM/yyyy}."
+                        : $"O seu pedido de '{requisition.ItemVariant.IdItemNavigation.Name}' foi aprovado.",
+                    type: NotificationType.Success,
+                    entityType: "ItemRequisition",
+                    entityId: requisition.RequisitionId);
+            }
+            else
+            {
+                await _notificationService.SendAsync(
+                    userId: requisition.IdParent,
+                    title: "Pedido Rejeitado",
+                    message: $"O seu pedido de '{requisition.ItemVariant.IdItemNavigation.Name}' não foi aprovado.",
+                    type: NotificationType.Warning,
+                    entityType: "ItemRequisition",
+                    entityId: requisition.RequisitionId);
+            }
+        }
+
         //  Helpers
 
         private static ItemRequisitionListResponse MapToList(ItemRequisition r)
@@ -240,6 +319,7 @@ namespace DanceSchoolApp.Server.Services.Inventory
             {
                 RequisitionId = r.RequisitionId,
                 ItemId        = r.ItemVariant.IdItemNavigation.ItemId,
+                FromSchool    = r.ItemVariant.IdItemNavigation.FromSchool,
                 ItemVariantId = r.ItemVariantId,
                 ItemName      = r.ItemVariant.IdItemNavigation.Name,
                 ItemImageUrl  = r.ItemVariant.IdItemNavigation.ItemImages.FirstOrDefault()?.ImageUrl,

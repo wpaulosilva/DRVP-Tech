@@ -320,7 +320,6 @@ function ParentClassesPage() {
                 endDatetime:   `${bookingDate}T${bookingEndTime}:00`,
                 studentId:     Number(bookingStudentId),
             }
-            console.log('[booking] POST /api/coachclasses', payload)
             await parentCreateClass(payload)
             setBookingSuccess(true)
             setTimeout(() => {

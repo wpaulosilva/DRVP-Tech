@@ -96,6 +96,14 @@ export function cancelRequisition(id) {
     return del(`/api/requisitions/${id}`)
 }
 
+export function getReceivedRequisitions() {
+    return get('/api/requisitions/received')
+}
+
+export function ownerReviewRequisition(id, body) {
+    return patch(`/api/requisitions/${id}/owner-review`, body)
+}
+
 // ── Parent portal inventory endpoints ─────────────────────────────────────────
 
 export function getSchoolInventory({ categoryId, search, page = 1, pageSize = 12 } = {}) {

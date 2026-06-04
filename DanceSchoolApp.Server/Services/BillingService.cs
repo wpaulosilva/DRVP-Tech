@@ -135,10 +135,6 @@ namespace DanceSchoolApp.Server.Services
                 parentMap.Add(new { s.StudentId, StudentNif = studentNif, ParentUsername = parentUsername, ResponsibleName = responsibleName, ResponsibleNif = responsibleNif });
             }
 
-            var nifMap = parentMap.ToDictionary(x => x.StudentId, x => x.StudentNif as string);
-            var responsibleNameMap = parentMap.ToDictionary(x => x.StudentId, x => (x.ResponsibleName ?? x.ParentUsername) as string);
-            var responsibleNifMap = parentMap.ToDictionary(x => x.StudentId, x => x.ResponsibleNif as string);
-
             var allRows = studentTotals
                 .Select(kv => new BillingStudentRow
                 {

@@ -250,12 +250,12 @@ export default function ParentItemDetailPage() {
         </section>
     )
 
-    const images         = item.images ?? []
-    const currentImg     = images[imgIndex]
-    const activeVariants = variants.filter(v => v.isActive !== false)
-    const schoolVariants = (item.variants ?? []).filter(v => v.isActive !== false && v.quantity > 0)
-    const selectedLoanV  = schoolVariants.find(v => v.variantId === Number(loanForm.itemVariantId))
-    const isVisible      = item.isActive && (item.fromSchool ? schoolVariants.length > 0 : activeVariants.length > 0)
+    const images            = item.images ?? []
+    const currentImg        = images[imgIndex]
+    const activeVariants    = variants.filter(v => v.isActive !== false)
+    const availableVariants = (item.variants ?? []).filter(v => v.isActive !== false && v.quantity > 0)
+    const selectedLoanV     = availableVariants.find(v => v.variantId === Number(loanForm.itemVariantId))
+    const isVisible      = item.isActive && (item.fromSchool ? availableVariants.length > 0 : activeVariants.length > 0)
 
     const setIF  = (k, v) => setItemForm(f => ({ ...f, [k]: v }))
     const setVF  = (k, v) => setVariantForm(f => ({ ...f, [k]: v }))
@@ -530,7 +530,7 @@ export default function ParentItemDetailPage() {
 
                 ) : (() => {
                     /* Read-only variant display */
-                    const readVariants = item.fromSchool ? schoolVariants : (item.variants ?? []).filter(v => v.isActive !== false)
+                    const readVariants = item.fromSchool ? availableVariants : (item.variants ?? []).filter(v => v.isActive !== false)
                     if (readVariants.length === 0) return null
                     return (
                         <div className="inv-section-card">
@@ -556,17 +556,17 @@ export default function ParentItemDetailPage() {
                     )
                 })()}
 
-                {/* ── Loan request (school items, non-owner) ───────────────────── */}
-                {item.fromSchool && (
+                {/* ── Loan / request form (non-owner) ──────────────────────────── */}
+                {!isOwner && (
                     <div className="inv-section-card">
-                        <p className="inv-section-title">Pedir Empréstimo</p>
+                        <p className="inv-section-title">{item.fromSchool ? 'Pedir Empréstimo' : 'Pedir Artigo'}</p>
                         {loanDone ? (
                             <div className="inv-status-banner inv-status-banner--ok">
-                                ✓ Pedido enviado com sucesso! Pode acompanhar o estado em &quot;As minhas requisições&quot;.
+                                ✓ Pedido enviado com sucesso! Pode acompanhar o estado em &quot;Pedidos&quot;.
                             </div>
-                        ) : schoolVariants.length === 0 ? (
+                        ) : availableVariants.length === 0 ? (
                             <div className="inv-status-banner inv-status-banner--info">
-                                Não existem variantes disponíveis em stock neste momento.
+                                Não existem variantes disponíveis neste momento.
                             </div>
                         ) : (
                             <form className="inv-loan-form" onSubmit={handleLoanSubmit}>
@@ -579,7 +579,7 @@ export default function ParentItemDetailPage() {
                                         required
                                     >
                                         <option value="">Selecionar variante...</option>
-                                        {schoolVariants.map(v => (
+                                        {availableVariants.map(v => (
                                             <option key={v.variantId} value={v.variantId}>
                                                 {[v.color, v.size].filter(Boolean).join(' / ') || `Variante #${v.variantId}`}
                                                 {' '}— {v.quantity} disponível
@@ -624,7 +624,7 @@ export default function ParentItemDetailPage() {
                                 {loanError && <div className="inv-form-error">{loanError}</div>}
                                 <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
                                     <button type="submit" className="btn btn-primary" disabled={savingLoan}>
-                                        {savingLoan ? 'A enviar...' : 'Pedir Empréstimo'}
+                                        {savingLoan ? 'A enviar...' : item.fromSchool ? 'Pedir Empréstimo' : 'Enviar Pedido'}
                                     </button>
                                 </div>
                             </form>

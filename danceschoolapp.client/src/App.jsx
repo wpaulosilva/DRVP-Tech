@@ -35,6 +35,7 @@ import CoachAvailabilityPage from './pages/coach/CoachAvailabilityPage'
 import CoachValidateClassesPage from './pages/coach/CoachValidateClassesPage'
 import CoachAgendaPage from './pages/coach/CoachAgendaPage'
 import CoachEventsPage from './pages/coach/CoachEventsPage'
+import CoachInventoryPage from './pages/coach/CoachInventoryPage'
 
 // Parent
 import ParentDashboardPage from './pages/parent/ParentDashboardPage'
@@ -108,6 +109,7 @@ function App() {
                 <Route path="/coach/validar-aulas" element={<CoachValidateClassesPage />} />
                 <Route path="/coach/agenda" element={<CoachAgendaPage />} />
                 <Route path="/coach/eventos" element={<CoachEventsPage />} />
+                <Route path="/coach/marketplace" element={<CoachInventoryPage />} />
             </Route>
 
             {/* PARENT */}

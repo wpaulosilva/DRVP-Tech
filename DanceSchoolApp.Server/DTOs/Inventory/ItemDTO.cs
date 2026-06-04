@@ -188,6 +188,7 @@ namespace DanceSchoolApp.Server.DTOs.Inventory
     {
         public int RequisitionId { get; set; }
         public int ItemId { get; set; }
+        public bool FromSchool { get; set; }
         public int ItemVariantId { get; set; }
         public string? ItemName { get; set; }
         public string? ItemImageUrl { get; set; }

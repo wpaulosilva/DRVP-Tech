@@ -7,6 +7,7 @@ import {
     createPersonalItem,
     getCategories,
     getRequisitions, cancelRequisition, returnRequisition,
+    getReceivedRequisitions, ownerReviewRequisition,
 } from '../../services/inventoryService'
 import '../../styles/Inventory.css'
 
@@ -15,6 +16,7 @@ const PAGE_SIZE = 12
 const TABS = [
     { value: 'marketplace', label: 'Marketplace' },
     { value: 'me', label: 'Meus Artigos' },
+    { value: 'pedidos', label: 'Pedidos' },
 ]
 
 const REQ_STATUS = {
@@ -74,6 +76,18 @@ export default function ParentInventoryPage() {
     const [returnNote, setReturnNote]     = useState('')
     const [returnError, setReturnError]   = useState(null)
     const [savingReturn, setSavingReturn] = useState(false)
+
+    // ── Received requisitions (items I own) ──────────────────────────────────
+    const [receivedReqs, setReceivedReqs]               = useState([])
+    const [loadingReceivedReqs, setLoadingReceivedReqs] = useState(false)
+
+    // ── Owner review (approve) modal ──────────────────────────────────────────
+    const [showOwnerApprove, setShowOwnerApprove]       = useState(false)
+    const [ownerReviewTarget, setOwnerReviewTarget]     = useState(null)
+    const [ownerReviewDate, setOwnerReviewDate]         = useState('')
+    const [ownerReviewNote, setOwnerReviewNote]         = useState('')
+    const [ownerReviewError, setOwnerReviewError]       = useState(null)
+    const [savingOwnerReview, setSavingOwnerReview]     = useState(false)
 
     // ── Announce (create personal item) modal ─────────────────────────────────
     const [showAnnounce, setShowAnnounce]     = useState(false)
@@ -164,6 +178,21 @@ export default function ParentInventoryPage() {
 
     useEffect(() => { loadReqs() }, [loadReqs])
 
+    // ── Load received requisitions ────────────────────────────────────────────
+    const loadReceivedReqs = useCallback(async () => {
+        setLoadingReceivedReqs(true)
+        try {
+            const data = await getReceivedRequisitions()
+            setReceivedReqs(Array.isArray(data) ? data : [])
+        } catch (e) {
+            console.error(e)
+        } finally {
+            setLoadingReceivedReqs(false)
+        }
+    }, [])
+
+    useEffect(() => { loadReceivedReqs() }, [loadReceivedReqs])
+
     // ── Tab change ────────────────────────────────────────────────────────────
     const handleTabChange = (t) => {
         setTab(t)
@@ -191,6 +220,44 @@ export default function ParentInventoryPage() {
             loadReqs()
         } catch (e) {
             alert(e.message)
+        }
+    }
+
+    // ── Owner review handlers ─────────────────────────────────────────────────
+    const openOwnerApprove = (req) => {
+        setOwnerReviewTarget(req)
+        setOwnerReviewDate('')
+        setOwnerReviewNote('')
+        setOwnerReviewError(null)
+        setShowOwnerApprove(true)
+    }
+
+    const handleOwnerReject = async (req) => {
+        if (!window.confirm(`Rejeitar pedido de "${req.parentName}" para "${req.itemName}"?`)) return
+        try {
+            await ownerReviewRequisition(req.requisitionId, { approve: false })
+            loadReceivedReqs()
+        } catch (e) {
+            alert(e.message)
+        }
+    }
+
+    const handleOwnerApproveSubmit = async (e) => {
+        e.preventDefault()
+        setSavingOwnerReview(true)
+        setOwnerReviewError(null)
+        try {
+            await ownerReviewRequisition(ownerReviewTarget.requisitionId, {
+                approve: true,
+                ...(ownerReviewDate ? { expectedReturnDate: ownerReviewDate } : {}),
+                ...(ownerReviewNote ? { note: ownerReviewNote }              : {}),
+            })
+            setShowOwnerApprove(false)
+            loadReceivedReqs()
+        } catch (e) {
+            setOwnerReviewError(e.message)
+        } finally {
+            setSavingOwnerReview(false)
         }
     }
 
@@ -366,6 +433,99 @@ export default function ParentInventoryPage() {
 
             {/* legacy community tab removed */}
 
+            {/* ═══════════════════════════════ PEDIDOS TAB ══════════════════════════════════ */}
+            {tab === 'pedidos' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 32, marginTop: 8 }}>
+
+                    {/* ── Os meus pedidos (outgoing) ── */}
+                    <div>
+                        <p className="inv-my-req-title">Os meus pedidos</p>
+                        {loadingReqs ? (
+                            <p className="inv-loading">A carregar...</p>
+                        ) : requisitions.length === 0 ? (
+                            <p style={{ color: 'var(--text-2)', fontSize: '0.9rem' }}>Sem pedidos registados.</p>
+                        ) : (
+                            <div className="inv-req-list">
+                                {requisitions.map(req => (
+                                    <div key={req.requisitionId} className="inv-req-card">
+                                        {req.itemImageUrl
+                                            ? <img src={req.itemImageUrl} alt={req.itemName} className="inv-req-img" />
+                                            : <div className="inv-req-img-placeholder">{(req.itemName ?? '?')[0]}</div>
+                                        }
+                                        <div className="inv-req-body">
+                                            <p className="inv-req-title">{req.itemName}</p>
+                                            {(req.variantColor || req.variantSize) && (
+                                                <p className="inv-req-sub">{[req.variantColor, req.variantSize].filter(Boolean).join(' / ')}</p>
+                                            )}
+                                            <div className="inv-req-meta">
+                                                <span className="inv-req-meta-label">Qtd.</span><span>{req.quantity}</span>
+                                                <span className="inv-req-meta-label">Data</span><span>{fmtDate(req.requestedAt)}</span>
+                                                {req.needFrom  && <><span className="inv-req-meta-label">De</span><span>{fmtDate(req.needFrom)}</span></>}
+                                                {req.needUntil && <><span className="inv-req-meta-label">Até</span><span>{fmtDate(req.needUntil)}</span></>}
+                                                {req.expectedReturnDate && <><span className="inv-req-meta-label">Dev.</span><span>{fmtDate(req.expectedReturnDate)}</span></>}
+                                            </div>
+                                        </div>
+                                        <div className="inv-req-actions">
+                                            <span className={`inv-status-pill ${REQ_STATUS[req.status]?.cls}`}>{REQ_STATUS[req.status]?.label}</span>
+                                            {req.status === 0 && (
+                                                <button className="btn btn-danger btn-sm" onClick={() => handleCancelReq(req)}>Cancelar</button>
+                                            )}
+                                            {req.status === 1 && (
+                                                <button className="btn btn-primary btn-sm" onClick={() => openReturn(req)}>Devolver</button>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* ── Pedidos recebidos (incoming for my items) ── */}
+                    <div>
+                        <p className="inv-my-req-title">Pedidos recebidos</p>
+                        {loadingReceivedReqs ? (
+                            <p className="inv-loading">A carregar...</p>
+                        ) : receivedReqs.length === 0 ? (
+                            <p style={{ color: 'var(--text-2)', fontSize: '0.9rem' }}>Sem pedidos recebidos para os seus artigos.</p>
+                        ) : (
+                            <div className="inv-req-list">
+                                {receivedReqs.map(req => (
+                                    <div key={req.requisitionId} className="inv-req-card">
+                                        {req.itemImageUrl
+                                            ? <img src={req.itemImageUrl} alt={req.itemName} className="inv-req-img" />
+                                            : <div className="inv-req-img-placeholder">{(req.itemName ?? '?')[0]}</div>
+                                        }
+                                        <div className="inv-req-body">
+                                            <p className="inv-req-title">{req.itemName}</p>
+                                            {(req.variantColor || req.variantSize) && (
+                                                <p className="inv-req-sub">{[req.variantColor, req.variantSize].filter(Boolean).join(' / ')}</p>
+                                            )}
+                                            <p className="inv-req-sub">Pedido por: <strong>{req.parentName}</strong></p>
+                                            <div className="inv-req-meta">
+                                                <span className="inv-req-meta-label">Qtd.</span><span>{req.quantity}</span>
+                                                <span className="inv-req-meta-label">Data</span><span>{fmtDate(req.requestedAt)}</span>
+                                                {req.needFrom  && <><span className="inv-req-meta-label">De</span><span>{fmtDate(req.needFrom)}</span></>}
+                                                {req.needUntil && <><span className="inv-req-meta-label">Até</span><span>{fmtDate(req.needUntil)}</span></>}
+                                            </div>
+                                            {req.note && <p className="inv-req-sub" style={{ fontStyle: 'italic', marginTop: 4 }}>"{req.note}"</p>}
+                                        </div>
+                                        <div className="inv-req-actions">
+                                            <span className={`inv-status-pill ${REQ_STATUS[req.status]?.cls}`}>{REQ_STATUS[req.status]?.label}</span>
+                                            {req.status === 0 && (
+                                                <>
+                                                    <button className="btn btn-primary btn-sm" onClick={() => openOwnerApprove(req)}>Aprovar</button>
+                                                    <button className="btn btn-danger btn-sm" onClick={() => handleOwnerReject(req)}>Rejeitar</button>
+                                                </>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
+
             {/* ═══════════════════════ RETURN MODAL ══════════════════════════════════════ */}
             <Modal
                 open={showReturn}
@@ -413,6 +573,58 @@ export default function ParentInventoryPage() {
                             <button type="button" className="btn btn-secondary" onClick={() => setShowReturn(false)}>Cancelar</button>
                             <button type="submit" className="btn btn-primary" disabled={savingReturn}>
                                 {savingReturn ? 'A registar...' : 'Confirmar Devolução'}
+                            </button>
+                        </div>
+                    </form>
+                )}
+            </Modal>
+
+            {/* ═══════════════════════ OWNER APPROVE MODAL ══════════════════════════════ */}
+            <Modal
+                open={showOwnerApprove}
+                title="Aprovar Pedido"
+                onClose={() => setShowOwnerApprove(false)}
+            >
+                {ownerReviewTarget && (
+                    <form className="inv-modal-form" onSubmit={handleOwnerApproveSubmit}>
+                        <p style={{ margin: 0 }}>
+                            Aprovar pedido de <strong>{ownerReviewTarget.parentName}</strong> para{' '}
+                            <strong>{ownerReviewTarget.itemName}</strong>
+                            {(ownerReviewTarget.variantColor || ownerReviewTarget.variantSize) && (
+                                <span style={{ color: '#6b7280' }}>
+                                    {' — '}{[ownerReviewTarget.variantColor, ownerReviewTarget.variantSize].filter(Boolean).join(' / ')}
+                                </span>
+                            )}
+                            ?
+                        </p>
+
+                        <div className="inv-form-group">
+                            <label className="inv-form-label">Data de devolução prevista (opcional)</label>
+                            <input
+                                className="inv-form-input"
+                                type="date"
+                                value={ownerReviewDate}
+                                onChange={e => setOwnerReviewDate(e.target.value)}
+                            />
+                        </div>
+
+                        <div className="inv-form-group">
+                            <label className="inv-form-label">Nota (opcional)</label>
+                            <textarea
+                                className="inv-form-textarea"
+                                rows={2}
+                                placeholder="Instruções de entrega, local de encontro, etc."
+                                value={ownerReviewNote}
+                                onChange={e => setOwnerReviewNote(e.target.value)}
+                            />
+                        </div>
+
+                        {ownerReviewError && <div className="inv-form-error">{ownerReviewError}</div>}
+
+                        <div className="modal-actions">
+                            <button type="button" className="btn btn-secondary" onClick={() => setShowOwnerApprove(false)}>Cancelar</button>
+                            <button type="submit" className="btn btn-primary" disabled={savingOwnerReview}>
+                                {savingOwnerReview ? 'A aprovar...' : 'Confirmar Aprovação'}
                             </button>
                         </div>
                     </form>

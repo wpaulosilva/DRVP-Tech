@@ -53,7 +53,60 @@ namespace DanceSchoolApp.Server.Controllers.Inventory
             }
         }
 
-        //  GET /api/requisitions/parent/{parentId} 
+        //  GET /api/requisitions/received
+        /// <summary>Returns all requisitions made against community items owned by the current parent.</summary>
+        [HttpGet("received")]
+        [Authorize(Roles = "parent")]
+        public async Task<IActionResult> GetReceivedRequisitions()
+        {
+            try
+            {
+                var result = await _requisitionService.GetReceivedAsync(GetUserId());
+
+                if (!result.Any())
+                    return NoContent();
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, "An unexpected error occurred.");
+            }
+        }
+
+        //  PATCH /api/requisitions/{id}/owner-review
+        /// <summary>Item owner (parent) approves or rejects a requisition for their community item.</summary>
+        [HttpPatch("{id}/owner-review")]
+        [Authorize(Roles = "parent")]
+        public async Task<IActionResult> OwnerReviewRequisition(int id, [FromBody] ItemRequisitionReviewRequest request)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            try
+            {
+                await _requisitionService.OwnerReviewAsync(id, request, GetUserId());
+                return NoContent();
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Forbid(ex.Message);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Conflict(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, "An unexpected error occurred.");
+            }
+        }
+
+        //  GET /api/requisitions/parent/{parentId}
         /// <summary>Get all requisitions for a specific parent. Staff may fetch any parent; a parent may fetch their own only.</summary>
         [HttpGet("parent/{parentId}")]
         [Authorize(Roles = "staff")]
