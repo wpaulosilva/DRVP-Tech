@@ -107,9 +107,6 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.Biography)
                 .HasMaxLength(256)
                 .HasColumnName("biography");
-            entity.Property(e => e.PhotoUrl)
-                .HasMaxLength(256)
-                .HasColumnName("photo_url");
 
             entity.HasOne(d => d.CoachNavigation).WithOne(p => p.Coach)
                 .HasForeignKey<Coach>(d => d.CoachId)
@@ -225,9 +222,6 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.SecretDescription)
                 .HasColumnName("secret_description");
             entity.Property(e => e.EndDatetime).HasColumnName("end_datetime");
-            entity.Property(e => e.ImageUrl)
-                .HasMaxLength(256)
-                .HasColumnName("image_url");
             entity.Property(e => e.IsActive)
                 .HasDefaultValue(true)
                 .HasColumnName("is_active");

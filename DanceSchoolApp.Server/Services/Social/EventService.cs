@@ -117,7 +117,6 @@ namespace DanceSchoolApp.Server.Services.Social
                 SecretDescription = secretDescription,
                 StartDatetime = ev.StartDatetime,
                 EndDatetime = ev.EndDatetime,
-                ImageUrl = ev.ImageUrl,
                 IsActive = ev.IsActive,
                 CreatedByUserId = ev.CreatedBy,
                 CreatedByName = ResolveAuthorName(ev.CreatedByNavigation),
@@ -164,7 +163,6 @@ namespace DanceSchoolApp.Server.Services.Social
                 Description = request.Description,
                 StartDatetime = request.StartDatetime,
                 EndDatetime = request.EndDatetime,
-                ImageUrl = request.ImageUrl,
                 IsActive = true,
                 CreatedBy = createdByUserId
             };
@@ -208,7 +206,6 @@ namespace DanceSchoolApp.Server.Services.Social
             ev.Description = request.Description;
             ev.StartDatetime = request.StartDatetime;
             ev.EndDatetime = request.EndDatetime;
-            ev.ImageUrl = request.ImageUrl;
             ev.IdModalities = modalities;
             ev.IdCoaches = coaches;
 
@@ -271,7 +268,6 @@ namespace DanceSchoolApp.Server.Services.Social
             SecretDescription = secretDescription,
             StartDatetime = e.StartDatetime,
             EndDatetime = e.EndDatetime,
-            ImageUrl = e.ImageUrl,
             IsActive = e.IsActive,
             CreatedByName = ResolveAuthorName(e.CreatedByNavigation),
             Modalities = e.IdModalities.Select(m => new EventModalitySummary

@@ -21,29 +21,11 @@ const fmtDt = v => v
 
 const toLocal = v => v ? new Date(v).toISOString().slice(0, 16) : ''
 
-function EventImage({ imageUrl }) {
-    const [failed, setFailed] = useState(false)
-
-    if (!imageUrl || failed) {
-        return <div className="ev-card-placeholder">🎭</div>
-    }
-
-    return (
-        <img
-            className="ev-card-image"
-            src={imageUrl}
-            alt=""
-            onError={() => setFailed(true)}
-        />
-    )
-}
-
 function EventCard({ event, onEdit, onToggleActive, onDelete }) {
-    const { eventId, title, description, startDatetime, endDatetime, isActive, createdByName, imageUrl, modalities = [], coaches = [] } = event
+    const { eventId, title, description, startDatetime, endDatetime, isActive, createdByName, modalities = [], coaches = [] } = event
 
     return (
         <div className={`ev-card${isActive ? '' : ' ev-card--inactive'}`}>
-            <EventImage imageUrl={imageUrl} />
             <div className="ev-card-body">
                 <div className="ev-card-header">
                     <p className="ev-card-title">{title}</p>
@@ -87,7 +69,7 @@ function EventCard({ event, onEdit, onToggleActive, onDelete }) {
 
 function EventFormModal({ open, editEvent, onClose, onSaved }) {
     const isEdit = !!editEvent
-    const emptyForm = { title: '', description: '', startDatetime: '', endDatetime: '', imageUrl: '' }
+    const emptyForm = { title: '', description: '', startDatetime: '', endDatetime: '' }
 
     const [form, setForm] = useState(emptyForm)
     const [selectedModalityIds, setSelectedModalityIds] = useState([])
@@ -111,7 +93,6 @@ function EventFormModal({ open, editEvent, onClose, onSaved }) {
                 description: editEvent.description ?? '',
                 startDatetime: toLocal(editEvent.startDatetime),
                 endDatetime: toLocal(editEvent.endDatetime),
-                imageUrl: editEvent.imageUrl ?? ''
             })
             setSelectedModalityIds((editEvent.modalities ?? []).map(m => m.modalityId))
             setSelectedCoaches(editEvent.coaches ?? [])
@@ -156,7 +137,6 @@ function EventFormModal({ open, editEvent, onClose, onSaved }) {
                 description: form.description.trim() || null,
                 startDatetime: form.startDatetime,
                 endDatetime: form.endDatetime,
-                imageUrl: form.imageUrl.trim() || null,
                 modalityIds: selectedModalityIds,
                 coachIds: selectedCoaches.map(c => c.coachId)
             }
@@ -197,12 +177,6 @@ function EventFormModal({ open, editEvent, onClose, onSaved }) {
                     <label className="mc-label">Data de Fim *</label>
                     <input className="mc-input" type="datetime-local" required value={form.endDatetime}
                         onChange={e => set('endDatetime', e.target.value)} />
-                </div>
-
-                <div className="mc-form-group">
-                    <label className="mc-label">URL da Imagem</label>
-                    <input className="mc-input" type="url" maxLength={256} placeholder="https://..." value={form.imageUrl}
-                        onChange={e => set('imageUrl', e.target.value)} />
                 </div>
 
                 <div className="mc-form-group">

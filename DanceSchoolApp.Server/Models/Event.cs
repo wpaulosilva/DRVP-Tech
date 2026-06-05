@@ -17,8 +17,6 @@ public partial class Event
 
     public DateTime? EndDatetime { get; set; }
 
-    public string? ImageUrl { get; set; }
-
     public bool IsActive { get; set; }
 
     public int? CreatedBy { get; set; }

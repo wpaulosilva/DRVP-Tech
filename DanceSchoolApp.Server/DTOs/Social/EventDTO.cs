@@ -25,7 +25,6 @@ namespace DanceSchoolApp.Server.DTOs.Social
         public string? SecretDescription { get; set; }
         public DateTime? StartDatetime { get; set; }
         public DateTime? EndDatetime { get; set; }
-        public string? ImageUrl { get; set; }
         public bool IsActive { get; set; }
         public string? CreatedByName { get; set; }
         public List<EventModalitySummary> Modalities { get; set; } = new();
@@ -41,7 +40,6 @@ namespace DanceSchoolApp.Server.DTOs.Social
         public string? SecretDescription { get; set; }
         public DateTime? StartDatetime { get; set; }
         public DateTime? EndDatetime { get; set; }
-        public string? ImageUrl { get; set; }
         public bool IsActive { get; set; }
         public int? CreatedByUserId { get; set; }
         public string? CreatedByName { get; set; }
@@ -67,9 +65,6 @@ namespace DanceSchoolApp.Server.DTOs.Social
 
         [Required]
         public DateTime EndDatetime { get; set; }
-
-        [MaxLength(256)]
-        public string? ImageUrl { get; set; }
 
         [Required]
         [MinLength(1, ErrorMessage = "At least one modality is required.")]
@@ -100,9 +95,6 @@ namespace DanceSchoolApp.Server.DTOs.Social
 
         [Required]
         public DateTime EndDatetime { get; set; }
-
-        [MaxLength(256)]
-        public string? ImageUrl { get; set; }
 
         [Required]
         [MinLength(1, ErrorMessage = "At least one modality is required.")]

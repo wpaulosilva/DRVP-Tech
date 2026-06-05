@@ -68,7 +68,6 @@ namespace DanceSchoolApp.Server.Services.People
                     ? $"{r.PersonInfo.FirstName} {r.PersonInfo.LastName}".Trim()
                     : r.Username,
                 Biography = r.Coach?.Biography,
-                PhotoUrl  = r.Coach?.PhotoUrl,
                 IsActive  = r.IsActive,
                 PersonInfo = r.PersonInfo is null ? null : new PersonListResponse
                 {
@@ -99,7 +98,6 @@ namespace DanceSchoolApp.Server.Services.People
                 CoachId    = coach.CoachId,
                 Biography  = coach.Biography,
                 Title      = null,
-                PhotoUrl   = coach.PhotoUrl,
                 IsActive   = user.IsActive,
                 Name       = p is not null
                     ? $"{p.FirstName} {p.LastName}".Trim()
@@ -132,7 +130,6 @@ namespace DanceSchoolApp.Server.Services.People
             {
                 CoachId = coach.UserId,
                 Biography = coach.Coach == null ? null : coach.Coach.Biography,
-                PhotoUrl = coach.Coach == null ? null : coach.Coach.PhotoUrl,
                 IsActive = coach.IsActive,
                 PersonInfo = coach.PersonInfo is null ? null : new PersonDetailResponse
                 {
@@ -165,44 +162,6 @@ namespace DanceSchoolApp.Server.Services.People
 
             return true;
         }
-
-        public async Task SetPhotoAsync(int coachId, string? photoUrl)
-        {
-            var coach = await _context.Coaches.FirstOrDefaultAsync(c => c.CoachId == coachId);
-
-            if (coach is null)
-                throw new KeyNotFoundException($"Coach with id {coachId} was not found.");
-
-            coach.PhotoUrl = photoUrl?.Trim();
-            await _context.SaveChangesAsync();
-        }
-
-        public async Task ReplacePhotoFileAsync(int coachId, string? newPhotoUrl, string webRootPath)
-        {
-            var coach = await _context.Coaches.FirstOrDefaultAsync(c => c.CoachId == coachId);
-
-            if (coach is null)
-                throw new KeyNotFoundException($"Coach with id {coachId} was not found.");
-
-            // if existing photo exists, attempt to delete physical file
-            if (!string.IsNullOrEmpty(coach.PhotoUrl))
-            {
-                var existing = coach.PhotoUrl.TrimStart('/').Replace('/', Path.DirectorySeparatorChar);
-                var existingFull = Path.Combine(webRootPath, existing);
-                try
-                {
-                    if (File.Exists(existingFull)) File.Delete(existingFull);
-                }
-                catch
-                {
-                    // swallow exceptions for file delete to avoid failing the request
-                }
-            }
-
-            coach.PhotoUrl = newPhotoUrl?.Trim();
-            await _context.SaveChangesAsync();
-        }
-
 
     }
 }

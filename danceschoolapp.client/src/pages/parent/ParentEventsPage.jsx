@@ -25,12 +25,6 @@ function Linkified({ text }) {
     )
 }
 
-function EventImage({ imageUrl }) {
-    const [failed, setFailed] = useState(false)
-    if (!imageUrl || failed) return <div className="ev-card-placeholder">🎭</div>
-    return <img className="ev-card-image" src={imageUrl} alt="" onError={() => setFailed(true)} />
-}
-
 function ParentEventsPage() {
     const [events, setEvents] = useState([])
     const [loading, setLoading] = useState(true)
@@ -64,7 +58,6 @@ function ParentEventsPage() {
                     )}
                     {events.map(ev => (
                         <div key={ev.eventId} className="ev-card">
-                            <EventImage imageUrl={ev.imageUrl} />
                             <div className="ev-card-body">
                                 <p className="ev-card-title">{ev.title}</p>
 

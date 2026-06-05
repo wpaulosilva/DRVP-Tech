@@ -27,12 +27,6 @@ function Linkified({ text }) {
     )
 }
 
-function EventImage({ imageUrl }) {
-    const [failed, setFailed] = useState(false)
-    if (!imageUrl || failed) return <div className="ev-card-placeholder">🎭</div>
-    return <img className="ev-card-image" src={imageUrl} alt="" onError={() => setFailed(true)} />
-}
-
 function SecretDescriptionModal({ open, eventId, current, onClose, onSaved }) {
     const [text, setText] = useState('')
     const [saving, setSaving] = useState(false)
@@ -129,7 +123,6 @@ function CoachEventsPage() {
                     )}
                     {events.map(ev => (
                         <div key={ev.eventId} className="ev-card">
-                            <EventImage imageUrl={ev.imageUrl} />
                             <div className="ev-card-body">
                                 <div className="ev-card-header">
                                     <p className="ev-card-title">{ev.title}</p>
