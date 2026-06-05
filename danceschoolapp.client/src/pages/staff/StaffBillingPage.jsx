@@ -2,7 +2,7 @@
 // GET /api/staff/billing/students?month={YYYY-MM}&page=1&pageSize=25
 // GET /api/staff/billing/coaches?month={YYYY-MM}&page=1&pageSize=25
 
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { getBillingStudentsAll, getBillingCoachesAll, getBillingAnnual } from '../../services/billingService'
 import { get, API_BASE } from '../../api/client'
 import DataTable from '../../components/common/DataTable'
@@ -660,6 +660,7 @@ function AnnualChart() {
 function StaffBillingPage() {
     const [tab, setTab] = useState('students')
     const [month, setMonth] = useState(() => new Date().toISOString().slice(0, 7))
+    const monthInputRef = useRef(null)
 
     return (
         <section className="dashboard-page-card">
@@ -691,12 +692,19 @@ function StaffBillingPage() {
 
                     {tab !== 'annual' && (
                         <div style={{ marginLeft: 'auto' }}>
-                            <div className="billing-month-picker">
+                            <div
+                                className="billing-month-picker"
+                                onClick={() => {
+                                    try { monthInputRef.current?.showPicker() }
+                                    catch { monthInputRef.current?.click() }
+                                }}
+                            >
                                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
                                     <rect x="3" y="4" width="18" height="18" rx="2" stroke="var(--text-3)" strokeWidth="1.5"/>
                                     <path d="M16 2v4M8 2v4M3 10h18" stroke="var(--text-3)" strokeWidth="1.5" strokeLinecap="round"/>
                                 </svg>
                                 <input
+                                    ref={monthInputRef}
                                     type="month"
                                     value={month}
                                     onChange={event => setMonth(event.target.value)}

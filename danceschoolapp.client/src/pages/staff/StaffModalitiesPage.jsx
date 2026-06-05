@@ -254,6 +254,8 @@ function StaffModalitiesPage() {
             const mList = Array.isArray(mRes) ? mRes : (mRes?.items ?? mRes?.Items ?? [])
             const cList = Array.isArray(cRes) ? cRes : (cRes?.items ?? cRes?.Items ?? [])
 
+            mList.sort((a, b) => (a.Name ?? a.name ?? '').localeCompare(b.Name ?? b.name ?? '', 'pt'))
+            cList.sort((a, b) => (a.Name ?? a.name ?? '').localeCompare(b.Name ?? b.name ?? '', 'pt'))
             setModalities(mList)
             setAllCoaches(cList)
 

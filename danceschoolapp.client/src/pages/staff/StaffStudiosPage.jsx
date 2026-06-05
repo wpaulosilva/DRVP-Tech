@@ -211,12 +211,14 @@ function StaffStudiosPage() {
         setLoading(true)
         try {
             const [s, m] = await Promise.all([getStudios(), getModalities()])
-            setStudios(Array.isArray(s) ? s : (s?.items ?? s?.Items ?? []))
-            setModalities(
-                (Array.isArray(m) ? m : (m?.items ?? m?.Items ?? [])).filter(
-                    x => x.IsActive ?? x.isActive ?? true
-                )
+            const studioList = Array.isArray(s) ? s : (s?.items ?? s?.Items ?? [])
+            studioList.sort((a, b) => (a.Name ?? a.name ?? '').localeCompare(b.Name ?? b.name ?? '', 'pt'))
+            setStudios(studioList)
+            const modalityList = (Array.isArray(m) ? m : (m?.items ?? m?.Items ?? [])).filter(
+                x => x.IsActive ?? x.isActive ?? true
             )
+            modalityList.sort((a, b) => (a.Name ?? a.name ?? '').localeCompare(b.Name ?? b.name ?? '', 'pt'))
+            setModalities(modalityList)
         } catch (e) {
             console.error(e)
         } finally {

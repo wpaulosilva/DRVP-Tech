@@ -72,9 +72,6 @@ function AdminDashboardPage() {
                 <Link to="/admin/utilizadores" className="btn btn-secondary">
                     Ver todas as contas
                 </Link>
-                <Link to="/staff" className="btn btn-secondary">
-                    Ir para portal de Direção
-                </Link>
             </div>
         </PageCard>
     )

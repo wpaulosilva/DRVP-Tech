@@ -255,6 +255,22 @@ namespace DanceSchoolApp.Server.Controllers
             }
         }
 
+        //  GET /api/staff/appsettings
+        // Returns all app settings — staff need pricing values for billing display.
+        [HttpGet("appsettings")]
+        public async Task<IActionResult> GetAppSettings()
+        {
+            try
+            {
+                var result = await _appSettingService.GetAllAsync();
+                return Ok(result);
+            }
+            catch (Exception)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, "An unexpected error occurred.");
+            }
+        }
+
         //  Private helpers
 
         private static bool TryParseYearMonth(string? input, out int year, out int month)
