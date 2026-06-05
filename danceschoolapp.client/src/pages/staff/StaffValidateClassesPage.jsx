@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import ClassValidationCard from '../../components/common/ClassValidationCard'
 import Modal from '../../components/common/Modal'
 import Button from '../../components/common/Button'
@@ -12,6 +12,10 @@ function StaffValidateClassesPage() {
     const [items, setItems] = useState([])
     const [loading, setLoading] = useState(false)
     const [stats, setStats] = useState({ requested: 0, pending: 0 })
+
+    // Filter bar state
+    const [search, setSearch]       = useState('')
+    const [sortOrder, setSortOrder] = useState('asc') // 'asc' = oldest first
 
     // Studios for edit modal
     const [studios, setStudios] = useState([])
@@ -50,6 +54,7 @@ function StaffValidateClassesPage() {
     }
 
     useEffect(() => {
+        setSearch('')
         fetchData()
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [activeTab])
@@ -180,6 +185,25 @@ function StaffValidateClassesPage() {
 
     const isRequested = activeTab === 'requested'
 
+    const filteredItems = useMemo(() => {
+        let result = [...items]
+        if (search.trim()) {
+            const q = search.trim().toLowerCase()
+            result = result.filter(a => {
+                const coach    = (a.CoachName    ?? a.coachName    ?? '').toLowerCase()
+                const modality = (a.ModalityName ?? a.modalityName ?? '').toLowerCase()
+                const studio   = (a.StudioName   ?? a.studioName   ?? '').toLowerCase()
+                return coach.includes(q) || modality.includes(q) || studio.includes(q)
+            })
+        }
+        result.sort((a, b) => {
+            const da = new Date(a.StartDatetime ?? a.startDatetime ?? 0).getTime()
+            const db = new Date(b.StartDatetime ?? b.startDatetime ?? 0).getTime()
+            return sortOrder === 'asc' ? da - db : db - da
+        })
+        return result
+    }, [items, search, sortOrder])
+
     return (
         <section className="dashboard-page-card">
             <h2>Coachings</h2>
@@ -225,6 +249,35 @@ function StaffValidateClassesPage() {
                 </button>
             </div>
 
+            {/* Filter bar */}
+            {!loading && items.length > 0 && (
+                <div className="class-filter-bar">
+                    <div className="class-filter-search">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
+                            <path d="M21 21l-4.35-4.35" stroke="var(--text-3)" strokeWidth="1.5" strokeLinecap="round"/>
+                            <circle cx="11" cy="11" r="8" stroke="var(--text-3)" strokeWidth="1.5"/>
+                        </svg>
+                        <input
+                            placeholder="Pesquisar por coach, modalidade, estúdio..."
+                            value={search}
+                            onChange={e => setSearch(e.target.value)}
+                        />
+                    </div>
+                    <button
+                        type="button"
+                        className={`class-filter-sort${sortOrder === 'desc' ? ' class-filter-sort--active' : ''}`}
+                        onClick={() => setSortOrder(o => o === 'asc' ? 'desc' : 'asc')}
+                    >
+                        {sortOrder === 'asc' ? '↑ Mais antigos' : '↓ Mais recentes'}
+                    </button>
+                    {search && (
+                        <span className="class-filter-count">
+                            {filteredItems.length} / {items.length}
+                        </span>
+                    )}
+                </div>
+            )}
+
             {/* Content */}
             {loading && (
                 <div className="validate-empty">
@@ -232,19 +285,21 @@ function StaffValidateClassesPage() {
                 </div>
             )}
 
-            {!loading && items.length === 0 && (
+            {!loading && filteredItems.length === 0 && (
                 <div className="validate-empty">
                     <div className="validate-empty-icon">{'\u2713'}</div>
-                    <h3>Tudo em ordem!</h3>
+                    <h3>{search ? 'Sem resultados' : 'Tudo em ordem!'}</h3>
                     <p>
-                        {isRequested
-                            ? 'Não há pedidos de coaching aguardando aprovação.'
-                            : 'Não há coachings pendentes de validação.'}
+                        {search
+                            ? `Nenhum coaching corresponde a "${search}".`
+                            : isRequested
+                                ? 'Não há pedidos de coaching aguardando aprovação.'
+                                : 'Não há coachings pendentes de validação.'}
                     </p>
                 </div>
             )}
 
-            {!loading && items.map(aula => (
+            {!loading && filteredItems.map(aula => (
                 <ClassValidationCard
                     key={aula.ClassId ?? aula.classId ?? aula.id}
                     aula={aula}

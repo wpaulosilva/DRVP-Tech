@@ -20,6 +20,10 @@ function CoachValidateClassesPage() {
     const [rejectReason, setRejectReason] = useState('')
     const [rejecting, setRejecting] = useState(false)
 
+    // Filter bar state (for requests + validations tabs)
+    const [search, setSearch]       = useState('')
+    const [sortOrder, setSortOrder] = useState('asc')
+
     // ===== Coach-create class state =====
     const [modalities, setModalities]         = useState([])
     const [createModality, setCreateModality] = useState('')
@@ -72,6 +76,7 @@ function CoachValidateClassesPage() {
     }, [])
 
     useEffect(() => {
+        setSearch('')
         fetchAulas(activeTab)
     }, [activeTab])
 
@@ -187,6 +192,26 @@ function CoachValidateClassesPage() {
 
     const isRequests = activeTab === 'requests'
 
+    const filteredAulas = useMemo(() => {
+        let result = [...aulas]
+        if (search.trim()) {
+            const q = search.trim().toLowerCase()
+            result = result.filter(a => {
+                const modality = (a.ModalityName ?? a.modalityName ?? '').toLowerCase()
+                const students = (a.StudentNames ?? a.studentNames ?? []).join(' ').toLowerCase()
+                const participants = (a.Participants ?? a.participants ?? [])
+                    .map(p => p.StudentName ?? p.studentName ?? '').join(' ').toLowerCase()
+                return modality.includes(q) || students.includes(q) || participants.includes(q)
+            })
+        }
+        result.sort((a, b) => {
+            const da = new Date(a.StartDatetime ?? a.startDatetime ?? a.PreferredDatetime ?? a.preferredDatetime ?? 0).getTime()
+            const db = new Date(b.StartDatetime ?? b.startDatetime ?? b.PreferredDatetime ?? b.preferredDatetime ?? 0).getTime()
+            return sortOrder === 'asc' ? da - db : db - da
+        })
+        return result
+    }, [aulas, search, sortOrder])
+
     return (
         <section className="dashboard-page-card">
             <h2>Validar Coachings</h2>
@@ -234,25 +259,56 @@ function CoachValidateClassesPage() {
             {/* ===== Requests / Validations tab content ===== */}
             {activeTab !== 'criar' && (
                 <>
+                    {/* Filter bar */}
+                    {!loading && aulas.length > 0 && (
+                        <div className="class-filter-bar">
+                            <div className="class-filter-search">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
+                                    <path d="M21 21l-4.35-4.35" stroke="var(--text-3)" strokeWidth="1.5" strokeLinecap="round"/>
+                                    <circle cx="11" cy="11" r="8" stroke="var(--text-3)" strokeWidth="1.5"/>
+                                </svg>
+                                <input
+                                    placeholder="Pesquisar por modalidade, aluno..."
+                                    value={search}
+                                    onChange={e => setSearch(e.target.value)}
+                                />
+                            </div>
+                            <button
+                                type="button"
+                                className={`class-filter-sort${sortOrder === 'desc' ? ' class-filter-sort--active' : ''}`}
+                                onClick={() => setSortOrder(o => o === 'asc' ? 'desc' : 'asc')}
+                            >
+                                {sortOrder === 'asc' ? '↑ Mais antigos' : '↓ Mais recentes'}
+                            </button>
+                            {search && (
+                                <span className="class-filter-count">
+                                    {filteredAulas.length} / {aulas.length}
+                                </span>
+                            )}
+                        </div>
+                    )}
+
                     {loading && (
                         <div className="validate-empty">
                             <p>Carregando...</p>
                         </div>
                     )}
 
-                    {!loading && aulas.length === 0 && (
+                    {!loading && filteredAulas.length === 0 && (
                         <div className="validate-empty">
                             <div className="validate-empty-icon">{'\u2713'}</div>
-                            <h3>{isRequests ? 'Sem pedidos pendentes' : 'Sem validações pendentes'}</h3>
+                            <h3>{search ? 'Sem resultados' : isRequests ? 'Sem pedidos pendentes' : 'Sem validações pendentes'}</h3>
                             <p>
-                                {isRequests
-                                    ? 'Não há coachings aprovados pela direção a aguardar a sua resposta.'
-                                    : 'Não há coachings em estado pendente para validar.'}
+                                {search
+                                    ? `Nenhum coaching corresponde a "${search}".`
+                                    : isRequests
+                                        ? 'Não há coachings aprovados pela direção a aguardar a sua resposta.'
+                                        : 'Não há coachings em estado pendente para validar.'}
                             </p>
                         </div>
                     )}
 
-                    {!loading && aulas.map(aula => {
+                    {!loading && filteredAulas.map(aula => {
                         const classId = aula.ClassId ?? aula.classId ?? aula.id
                         return (
                             <ClassValidationCard
@@ -438,8 +494,8 @@ function CoachValidateClassesPage() {
                                 Modalidade: {rejectTarget?.ModalityName ?? rejectTarget?.modalityName ?? rejectTarget?.Modality ?? rejectTarget?.modality ?? '\u2014'}
                             </div>
                             <div>
-                                Data: {rejectTarget?.StartDatetime ?? rejectTarget?.startDatetime
-                                    ? new Date(rejectTarget.StartDatetime ?? rejectTarget.startDatetime).toLocaleString('pt-PT')
+                                Data: {(rejectTarget?.StartDatetime ?? rejectTarget?.startDatetime ?? rejectTarget?.PreferredDatetime ?? rejectTarget?.preferredDatetime)
+                                    ? new Date(rejectTarget.StartDatetime ?? rejectTarget.startDatetime ?? rejectTarget.PreferredDatetime ?? rejectTarget.preferredDatetime).toLocaleString('pt-PT')
                                     : '\u2014'}
                             </div>
                             <div>
