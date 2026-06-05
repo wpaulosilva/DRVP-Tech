@@ -4,8 +4,8 @@ import Modal from '../../components/common/Modal'
 import Button from '../../components/common/Button'
 import Select from '../../components/common/Select'
 import MonthCalendar, { isoDate, getMonthRange, fmtDateLong } from '../../components/common/MonthCalendar'
-import { getCoachValidate, coachAccept, coachReject, coachValidate, getStudentsByModality, coachCreateClass, getMaxParticipants } from '../../services/coachClassesService'
-import { getModalities } from '../../services/modalitiesService'
+import { getCoachValidate, coachAccept, coachReject, coachValidate, getStudentsByModality, coachCreateClass, getMaxParticipants, getCoachAgenda } from '../../services/coachClassesService'
+import { getMyCoachProfile, getCoachAvailability } from '../../services/coachAvailabilityService'
 import '../../styles/ValidateClasses.css'
 import '../../styles/ParentClasses.css'
 
@@ -25,7 +25,10 @@ function CoachValidateClassesPage() {
     const [sortOrder, setSortOrder] = useState('asc')
 
     // ===== Coach-create class state =====
-    const [modalities, setModalities]         = useState([])
+    const [modalities, setModalities]         = useState([])  // coach's own assigned modalities
+    const [coachAvailability, setCoachAvailability] = useState([])  // CoachAvailabilityListResponse[]
+    const [agendaByDate, setAgendaByDate]     = useState({})  // "YYYY-MM-DD" → AgendaClassItem[]
+    const [agendaLoading, setAgendaLoading]   = useState(false)
     const [createModality, setCreateModality] = useState('')
     const [createMonth, setCreateMonth]       = useState(new Date())
     const [createSelectedDate, setCreateSelectedDate] = useState(null)  // "YYYY-MM-DD"
@@ -33,6 +36,7 @@ function CoachValidateClassesPage() {
     const [createEnd, setCreateEnd]           = useState('11:00')
     const [createMaxParts, setCreateMaxParts] = useState(1)
     const [allStudents, setAllStudents]       = useState([])
+    const [studentSearch, setStudentSearch]   = useState('')
     const [selectedStudents, setSelectedStudents] = useState(new Set())
     const [studentsLoading, setStudentsLoading]   = useState(false)
     const [createSubmitting, setCreateSubmitting] = useState(false)
@@ -122,22 +126,51 @@ function CoachValidateClassesPage() {
         }
     }
 
-    // Load modalities and max group size once
+    // Load coach profile (own modalities + coachId), availability windows, and max group size once
     useEffect(() => {
-        getModalities().then(data => {
-            const items = Array.isArray(data) ? data : (data?.Items ?? data?.items ?? [])
-            setModalities(items)
-        }).catch(() => {})
         getMaxParticipants().then(data => {
             const v = data?.maxParticipants ?? data?.MaxParticipants
             if (v) setMaxParticipants(v)
         }).catch(() => {})
+
+        getMyCoachProfile().then(profile => {
+            const mods = profile?.Modalities ?? profile?.modalities ?? []
+            setModalities(mods)
+            const coachId = profile?.CoachId ?? profile?.coachId
+            if (coachId) {
+                getCoachAvailability(coachId)
+                    .then(avList => setCoachAvailability(Array.isArray(avList) ? avList : []))
+                    .catch(() => {})
+            }
+        }).catch(() => {})
     }, [])
+
+    // Fetch agenda (booked classes) for the current create-month so we can show conflicts in the calendar
+    useEffect(() => {
+        if (activeTab !== 'criar') return
+        let cancelled = false
+        setAgendaLoading(true)
+        const { from, to } = getMonthRange(createMonth)
+        getCoachAgenda({ from, to })
+            .then(data => {
+                if (cancelled) return
+                const byDate = {}
+                const items = Array.isArray(data) ? data : []
+                for (const c of items) {
+                    const key = (c.StartDatetime ?? c.startDatetime ?? '').slice(0, 10)
+                    if (key) (byDate[key] ||= []).push(c)
+                }
+                setAgendaByDate(byDate)
+            })
+            .catch(() => {})
+            .finally(() => { if (!cancelled) setAgendaLoading(false) })
+        return () => { cancelled = true }
+    }, [activeTab, createMonth])
 
     // Load students when modality changes
     useEffect(() => {
-        if (!createModality) { setAllStudents([]); return }
-        setStudentsLoading(true); setSelectedStudents(new Set())
+        if (!createModality) { setAllStudents([]); setStudentSearch(''); return }
+        setStudentsLoading(true); setSelectedStudents(new Set()); setStudentSearch('')
         getStudentsByModality(Number(createModality))
             .then(data => setAllStudents(Array.isArray(data) ? data : []))
             .catch(() => setAllStudents([]))
@@ -360,27 +393,60 @@ function CoachValidateClassesPage() {
                                 </div>
                             </div>
 
-                            {/* Month calendar — all future days clickable */}
+                            {/* Month calendar — available days show time windows + any booked classes */}
                             {(() => {
                                 const todayIso = isoDate(new Date())
                                 const renderDay = (key, dayNum) => {
                                     const isPast     = key < todayIso
                                     const isSelected = key === createSelectedDate
+
+                                    // Availability windows for this day-of-week (Weekday enum matches JS getDay())
+                                    const dow = new Date(key + 'T00:00:00').getDay()
+                                    const dayWindows = isPast ? [] : coachAvailability.filter(av => {
+                                        const weekday    = av.Weekday    ?? av.weekday
+                                        const validFrom  = av.ValidFrom  ?? av.validFrom  ?? null
+                                        const validUntil = av.ValidUntil ?? av.validUntil ?? null
+                                        if (weekday !== dow) return false
+                                        if (validFrom  && key < validFrom)  return false
+                                        if (validUntil && key > validUntil) return false
+                                        return true
+                                    })
+                                    const hasSlot   = dayWindows.length > 0
+                                    const booked    = agendaByDate[key] ?? []
+
+                                    // Build chip list: availability windows first, booked classes after
+                                    const chips = [
+                                        ...dayWindows.map(av => ({
+                                            type: 'avail',
+                                            label: `${(av.StartTime ?? av.startTime ?? '').slice(0, 5)}–${(av.EndTime ?? av.endTime ?? '').slice(0, 5)}`,
+                                        })),
+                                        ...booked.map(c => ({
+                                            type: 'booked',
+                                            label: `${(c.StartDatetime ?? c.startDatetime ?? '').slice(11, 16)} ocupado`,
+                                        })),
+                                    ]
+
                                     return (
                                         <div
                                             key={key}
                                             className={[
                                                 'pc-day-cell',
-                                                isPast     ? 'pc-day-cell--past'     : 'pc-day-cell--has-slot',
+                                                isPast || !hasSlot ? 'pc-day-cell--past' : 'pc-day-cell--has-slot',
                                                 isSelected ? 'pc-day-cell--selected' : '',
                                             ].join(' ').trim()}
                                             onClick={() => {
-                                                if (isPast) return
+                                                if (isPast || !hasSlot) return
                                                 setCreateSelectedDate(isSelected ? null : key)
                                                 setCreateError('')
                                             }}
                                         >
                                             <span className="pc-day-num">{dayNum}</span>
+                                            {chips.slice(0, 2).map((chip, ci) => (
+                                                <div key={ci} className={`pc-slot-chip${chip.type === 'booked' ? ' pc-slot-chip--booked' : ''}`}>
+                                                    {chip.label}
+                                                </div>
+                                            ))}
+                                            {chips.length > 2 && <div className="pc-event-more">+{chips.length - 2}</div>}
                                         </div>
                                     )
                                 }
@@ -390,7 +456,7 @@ function CoachValidateClassesPage() {
                                         onPrev={() => { prevCreateMonth(); setCreateSelectedDate(null) }}
                                         onNext={() => { nextCreateMonth(); setCreateSelectedDate(null) }}
                                         renderDay={renderDay}
-                                        loading={false}
+                                        loading={agendaLoading}
                                     />
                                 )
                             })()}
@@ -402,11 +468,55 @@ function CoachValidateClassesPage() {
                             )}
 
                             {/* Form shown after day is selected */}
-                            {createSelectedDate && (
+                            {createSelectedDate && (() => {
+                                // Availability windows and booked classes for the selected day
+                                const selDow = new Date(createSelectedDate + 'T00:00:00').getDay()
+                                const selWindows = coachAvailability.filter(av => {
+                                    const weekday    = av.Weekday    ?? av.weekday
+                                    const validFrom  = av.ValidFrom  ?? av.validFrom  ?? null
+                                    const validUntil = av.ValidUntil ?? av.validUntil ?? null
+                                    if (weekday !== selDow) return false
+                                    if (validFrom  && createSelectedDate < validFrom)  return false
+                                    if (validUntil && createSelectedDate > validUntil) return false
+                                    return true
+                                })
+                                const selBooked = agendaByDate[createSelectedDate] ?? []
+
+                                // Sorted + filtered students
+                                const sortedStudents = [...allStudents].sort((a, b) =>
+                                    (a.StudentName ?? a.studentName ?? '').localeCompare(b.StudentName ?? b.studentName ?? '', 'pt')
+                                )
+                                const filteredStudents = studentSearch.trim()
+                                    ? sortedStudents.filter(s =>
+                                        (s.StudentName ?? s.studentName ?? '').toLowerCase().includes(studentSearch.toLowerCase())
+                                    )
+                                    : sortedStudents
+
+                                return (
                                 <form onSubmit={handleCoachCreate} className="modal-form" style={{ marginTop: '16px', maxWidth: '520px' }}>
-                                    <h3 className="validate-section-heading" style={{ marginBottom: '12px' }}>
+                                    <h3 className="validate-section-heading" style={{ marginBottom: '8px' }}>
                                         {fmtDateLong(createSelectedDate)}
                                     </h3>
+
+                                    {/* Day schedule summary */}
+                                    <div style={{ marginBottom: '16px', fontSize: '0.85rem', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                        {selWindows.length > 0 && (
+                                            <div style={{ color: 'var(--success)' }}>
+                                                <strong>Disponibilidade:</strong>{' '}
+                                                {selWindows.map((av, i) =>
+                                                    `${(av.StartTime ?? av.startTime ?? '').slice(0, 5)}–${(av.EndTime ?? av.endTime ?? '').slice(0, 5)}`
+                                                ).join(', ')}
+                                            </div>
+                                        )}
+                                        {selBooked.length > 0 && (
+                                            <div style={{ color: 'var(--warning)' }}>
+                                                <strong>Já marcado:</strong>{' '}
+                                                {selBooked.map(c =>
+                                                    `${(c.StartDatetime ?? c.startDatetime ?? '').slice(11, 16)}–${(c.EndDatetime ?? c.endDatetime ?? '').slice(11, 16)} (${c.ModalityName ?? c.modalityName ?? ''})`
+                                                ).join(', ')}
+                                            </div>
+                                        )}
+                                    </div>
 
                                     {/* Students */}
                                     <div className="modal-field">
@@ -418,20 +528,33 @@ function CoachValidateClassesPage() {
                                         ) : allStudents.length === 0 ? (
                                             <p style={{ fontSize: '0.875rem', color: 'var(--text-2)' }}>Nenhum aluno inscrito nesta modalidade.</p>
                                         ) : (
-                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', maxHeight: '200px', overflowY: 'auto', padding: '4px 0' }}>
-                                                {allStudents.map(s => {
-                                                    const sid = s.StudentId ?? s.studentId
-                                                    return (
-                                                        <label key={sid} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.9rem' }}>
-                                                            <input
-                                                                type="checkbox"
-                                                                checked={selectedStudents.has(sid)}
-                                                                onChange={() => toggleStudent(sid)}
-                                                            />
-                                                            {s.StudentName ?? s.studentName}
-                                                        </label>
-                                                    )
-                                                })}
+                                            <div style={{ border: '1px solid var(--border)', borderRadius: '8px', overflow: 'hidden' }}>
+                                                <div style={{ padding: '6px 10px', borderBottom: '1px solid var(--border)', background: 'var(--surface-2)' }}>
+                                                    <input
+                                                        type="search"
+                                                        placeholder="Pesquisar aluno..."
+                                                        value={studentSearch}
+                                                        onChange={e => setStudentSearch(e.target.value)}
+                                                        style={{ border: 'none', outline: 'none', background: 'transparent', color: 'var(--text-1)', fontFamily: 'inherit', fontSize: '0.875rem', width: '100%' }}
+                                                    />
+                                                </div>
+                                                <div style={{ display: 'flex', flexDirection: 'column', maxHeight: '180px', overflowY: 'auto', padding: '4px 10px' }}>
+                                                    {filteredStudents.length === 0 ? (
+                                                        <p style={{ fontSize: '0.8rem', color: 'var(--text-3)', padding: '6px 0' }}>Sem resultados.</p>
+                                                    ) : filteredStudents.map(s => {
+                                                        const sid = s.StudentId ?? s.studentId
+                                                        return (
+                                                            <label key={sid} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.9rem', padding: '4px 0' }}>
+                                                                <input
+                                                                    type="checkbox"
+                                                                    checked={selectedStudents.has(sid)}
+                                                                    onChange={() => toggleStudent(sid)}
+                                                                />
+                                                                {s.StudentName ?? s.studentName}
+                                                            </label>
+                                                        )
+                                                    })}
+                                                </div>
                                             </div>
                                         )}
                                     </div>
@@ -473,7 +596,8 @@ function CoachValidateClassesPage() {
                                         </Button>
                                     </div>
                                 </form>
-                            )}
+                                )
+                            })()}
                         </>
                     )}
                 </div>

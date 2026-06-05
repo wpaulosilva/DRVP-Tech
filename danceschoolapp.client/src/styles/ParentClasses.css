@@ -226,6 +226,11 @@
     line-height: 1.4;
 }
 
+.pc-slot-chip--booked {
+    background: var(--warning-bg, #fef3c7);
+    color: var(--warning, #d97706);
+}
+
 /* ---- Slot detail card (below weekly grid) ---- */
 .pc-slot-card {
     display: flex;
